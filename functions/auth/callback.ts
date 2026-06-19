@@ -1,6 +1,6 @@
 import { getCookie, serializeCookie, verifySignedValue } from "../_shared/cookies";
 import { exchangeCode, getUserInfo } from "../_shared/oidc";
-import { createSession, isAllowedAdminIdentity } from "../_shared/session";
+import { createSession } from "../_shared/session";
 import type { Env } from "../_shared/types";
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
@@ -19,12 +19,6 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
   if (!identity) {
     return new Response("登录成功，但 Authentik 没有返回邮箱或用户名，无法创建后台会话。", {
-      status: 403,
-    });
-  }
-
-  if (!isAllowedAdminIdentity(env, [userInfo.email ?? "", userInfo.preferred_username ?? ""])) {
-    return new Response("当前账号没有博客后台管理权限，请检查 ADMIN_EMAIL_ALLOWLIST。", {
       status: 403,
     });
   }

@@ -50,26 +50,7 @@ export async function getSession(env: Env, request: Request): Promise<UserSessio
 }
 
 export function isAllowedAdmin(env: Env, email: string): boolean {
-  const allowlist = (env.ADMIN_EMAIL_ALLOWLIST ?? "")
-    .split(",")
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-
-  return allowlist.length === 0 || allowlist.includes(email.toLowerCase());
-}
-
-export function isAllowedAdminIdentity(env: Env, identities: string[]): boolean {
-  const allowlist = (env.ADMIN_EMAIL_ALLOWLIST ?? "")
-    .split(",")
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-
-  if (allowlist.length === 0) return true;
-
-  return identities
-    .map((identity) => identity.trim().toLowerCase())
-    .filter(Boolean)
-    .some((identity) => allowlist.includes(identity));
+  return Boolean(email);
 }
 
 async function currentSessionId(env: Env, request: Request): Promise<string | null> {

@@ -8,7 +8,7 @@ export interface Env {
   AUTHENTIK_CLIENT_SECRET: string;
   AUTHENTIK_REDIRECT_PATH: string;
   SESSION_SECRET: string;
-  ADMIN_EMAIL_ALLOWLIST?: string;
+  ADMIN_IDENTITY_ALLOWLIST?: string;
 }
 
 export interface PostRecord {

@@ -68,10 +68,10 @@ PUBLIC_BASE_URL = "https://yuna.liugu.cc"
 AUTHENTIK_ISSUER = "https://sso.yuna.welain.com/application/o/yuna-docs/"
 AUTHENTIK_CLIENT_ID = "..."
 AUTHENTIK_REDIRECT_PATH = "/auth/callback"
-ADMIN_EMAIL_ALLOWLIST = "admin@example.com"
+ADMIN_IDENTITY_ALLOWLIST = ""
 ```
 
-`ADMIN_EMAIL_ALLOWLIST` is optional. If it is empty, any Authentik user with a verified OIDC email can enter the admin panel. For production, set it to a comma-separated list of admin emails.
+`ADMIN_IDENTITY_ALLOWLIST` is reserved for a local allowlist if you want one later. The current framework trusts Authentik application access control: any user who can complete the Authentik OIDC flow and returns an email or username can enter the admin panel.
 
 Add secrets locally in `.dev.vars`:
 
