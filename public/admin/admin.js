@@ -15,7 +15,9 @@ const fields = {
   mediaMessage: document.querySelector("[data-media-message]"),
   insertMedia: document.querySelector("[data-insert-media]"),
   structuredKey: document.querySelector("[data-structured-key]"),
-  structuredGroup: document.querySelector("[data-structured-group]"),
+  structuredTerm: document.querySelector("[data-structured-term]"),
+  structuredDepartment: document.querySelector("[data-structured-department]"),
+  structuredRole: document.querySelector("[data-structured-role]"),
   structuredName: document.querySelector("[data-structured-name]"),
   structuredTitle: document.querySelector("[data-structured-title]"),
   structuredAvatar: document.querySelector("[data-structured-avatar]"),
@@ -44,6 +46,7 @@ async function bootAdmin() {
   });
   await refreshPosts();
   updatePreview();
+  updateStructuredMode();
 
   const slug = new URLSearchParams(location.search).get("slug");
   if (slug) await loadPost(slug);
@@ -208,10 +211,13 @@ async function loadStructuredRecord() {
 }
 
 function addStructuredItem() {
+  const isMembers = fields.structuredKey.value === "members";
   const item = {
-    group: fields.structuredGroup.value.trim(),
+    term: fields.structuredTerm.value.trim(),
+    department: isMembers ? fields.structuredDepartment.value : "",
+    role: isMembers ? fields.structuredRole.value : "",
     name: fields.structuredName.value.trim(),
-    title: fields.structuredTitle.value.trim(),
+    title: isMembers ? fields.structuredRole.value : fields.structuredTitle.value.trim(),
     avatar: fields.structuredAvatar.value.trim(),
     desc: fields.structuredDesc.value.trim(),
     links: [],
@@ -267,7 +273,7 @@ function renderStructuredList() {
     .map(
       (item, index) => `
         <article class="post-card">
-          <p class="meta">${window.blog.escapeHtml(item.group || "未分组")}</p>
+          <p class="meta">${window.blog.escapeHtml(item.term || "未填写届数")} · ${window.blog.escapeHtml(item.department || "名人堂")}</p>
           <h2>${window.blog.escapeHtml(item.name)}</h2>
           <p>${window.blog.escapeHtml(item.title || "")}</p>
           <p>${window.blog.escapeHtml(item.desc || "")}</p>
@@ -285,6 +291,18 @@ function renderStructuredList() {
       renderStructuredList();
     });
   });
+}
+
+function updateStructuredMode() {
+  const isMembers = fields.structuredKey.value === "members";
+  document.querySelectorAll("[data-members-only]").forEach((node) => {
+    node.hidden = !isMembers;
+  });
+  document.querySelectorAll("[data-fame-only]").forEach((node) => {
+    node.hidden = isMembers;
+  });
+  fields.structuredTerm.placeholder = isMembers ? "第九届" : "第六届 / 2024";
+  fields.structuredName.placeholder = isMembers ? "成员姓名" : "名人堂条目标题";
 }
 
 async function deletePost() {
@@ -340,7 +358,10 @@ document.querySelector("[data-insert-media]").addEventListener("click", insertMe
 document.querySelector("[data-load-structured]").addEventListener("click", loadStructuredRecord);
 document.querySelector("[data-add-structured]").addEventListener("click", addStructuredItem);
 document.querySelector("[data-save-structured]").addEventListener("click", saveStructuredRecord);
-fields.structuredKey.addEventListener("change", loadStructuredRecord);
+fields.structuredKey.addEventListener("change", () => {
+  updateStructuredMode();
+  loadStructuredRecord();
+});
 document.querySelector("[data-new]").addEventListener("click", resetEditor);
 fields.delete.addEventListener("click", deletePost);
 fields.search.addEventListener("input", renderAdminPostList);

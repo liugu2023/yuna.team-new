@@ -103,8 +103,37 @@
               </select>
             </label>
             <label>
-              分组
-              <input data-structured-group placeholder="开发部 / 主席团 / 第六届" />
+              届数
+              <input data-structured-term placeholder="第九届" />
+            </label>
+          </div>
+          <div class="grid">
+            <label data-members-only>
+              部门
+              <select data-structured-department>
+                <option value="主席团">主席团</option>
+                <option value="开发部">开发部</option>
+                <option value="网络安全部">网络安全部</option>
+                <option value="运维部">运维部</option>
+                <option value="组宣部">组宣部</option>
+                <option value="秘书处">秘书处</option>
+              </select>
+            </label>
+            <label data-members-only>
+              职位
+              <select data-structured-role>
+                <option value="主席">总主席（主席）</option>
+                <option value="开发部副主席">开发部副主席</option>
+                <option value="网络安全部副主席">网络安全部副主席</option>
+                <option value="运维部副主席">运维部副主席</option>
+                <option value="组宣部副主席">组宣部副主席</option>
+                <option value="秘书处副主席">秘书处副主席</option>
+                <option value="开发部部长">开发部部长</option>
+                <option value="网络安全部部长">网络安全部部长</option>
+                <option value="运维部部长">运维部部长</option>
+                <option value="组宣部部长">组宣部部长</option>
+                <option value="秘书处部长">秘书处部长</option>
+              </select>
             </label>
           </div>
           <div class="grid">
@@ -112,9 +141,9 @@
               姓名 / 标题
               <input data-structured-name placeholder="成员姓名或名人堂条目标题" />
             </label>
-            <label>
-              头衔
-              <input data-structured-title placeholder="开发部部长 / 第六届主席" />
+            <label data-fame-only hidden>
+              名人堂头衔
+              <input data-structured-title placeholder="第六届主席 / 竞赛获奖成员" />
             </label>
           </div>
           <label>

@@ -274,9 +274,13 @@ function renderStructuredRecord(record) {
   const items = JSON.parse(record.content || "[]");
   if (!items.length) return '<p class="empty">暂无内容。</p>';
 
+  if (record.key === "members") {
+    return renderMembersRecord(record, items);
+  }
+
   const groups = new Map();
   for (const item of items) {
-    const group = item.group || "未分组";
+    const group = item.term || item.group || "未分组";
     if (!groups.has(group)) groups.set(group, []);
     groups.get(group).push(item);
   }
@@ -295,6 +299,45 @@ function renderStructuredRecord(record) {
         )
         .join("")}
     </div>
+  `;
+}
+
+function renderMembersRecord(record, items) {
+  const terms = [...new Set(items.map((item) => item.term || "未填写届数"))];
+  const activeTerm = terms[0];
+  return `
+    <div class="article-body">
+      <h1>${escapeHtml(record.title)}</h1>
+      <label class="inline-control">
+        届数
+        <select data-term-switch>
+          ${terms.map((term) => `<option value="${escapeHtml(term)}">${escapeHtml(term)}</option>`).join("")}
+        </select>
+      </label>
+      <div data-term-panels>
+        ${terms.map((term) => renderMemberTerm(term, items.filter((item) => (item.term || "未填写届数") === term), term === activeTerm)).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderMemberTerm(term, items, active) {
+  const departments = ["主席团", "开发部", "网络安全部", "运维部", "组宣部", "秘书处"];
+  return `
+    <section data-term-panel="${escapeHtml(term)}" ${active ? "" : "hidden"}>
+      ${departments
+        .map((department) => {
+          const departmentItems = items.filter((item) => (item.department || "未分组") === department);
+          if (!departmentItems.length) return "";
+          return `
+            <h2>${escapeHtml(department)}</h2>
+            <div class="profile-grid">
+              ${departmentItems.map(renderProfileCard).join("")}
+            </div>
+          `;
+        })
+        .join("")}
+    </section>
   `;
 }
 
@@ -318,6 +361,14 @@ function renderProfileCard(item) {
     </article>
   `;
 }
+
+document.addEventListener("change", (event) => {
+  if (!event.target.matches("[data-term-switch]")) return;
+  const term = event.target.value;
+  document.querySelectorAll("[data-term-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.termPanel !== term;
+  });
+});
 
 function firstHeading(markdown) {
   const match = stripFrontmatter(markdown).match(/^#\s+(.+)$/m);
