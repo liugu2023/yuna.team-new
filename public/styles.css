@@ -66,6 +66,11 @@ a:hover {
   font-size: 14px;
 }
 
+.nav span {
+  display: flex;
+  gap: 16px;
+}
+
 .page {
   padding: 48px 0 72px;
 }
@@ -97,6 +102,46 @@ h1 {
   display: grid;
   gap: 14px;
   margin-top: 24px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 18px 0 34px;
+}
+
+.feature-card {
+  display: block;
+  min-height: 190px;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+}
+
+.feature-card h2 {
+  font-size: 22px;
+}
+
+.feature-card p:last-child {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 22px;
+}
+
+.section-head p {
+  color: var(--muted);
+  margin: 0;
 }
 
 .post-card,
@@ -196,6 +241,32 @@ button.danger {
   padding: 18px;
 }
 
+.admin-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.preview {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.preview-body {
+  max-height: 520px;
+  overflow: auto;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 150px;
+  gap: 10px;
+  margin: 14px 0;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -244,6 +315,12 @@ textarea {
   .grid {
     align-items: stretch;
     flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+
+  .feature-grid,
+  .admin-layout,
+  .filters {
     grid-template-columns: 1fr;
   }
 

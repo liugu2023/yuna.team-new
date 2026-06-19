@@ -3,23 +3,28 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Yuna 文档</title>
+    <title>Yuna 最新动态</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="topbar">
       <div class="shell">
-        <a class="brand" href="/">Yuna 文档</a>
+        <a class="brand" href="/">Yuna 最新动态</a>
         <nav class="nav">
-          <a href="/admin/">管理后台</a>
+          <span data-user-nav></span>
         </nav>
       </div>
     </header>
     <main class="page">
       <div class="shell">
         <section class="hero">
-          <h1>基于 Markdown 的文档与博客系统</h1>
-          <p class="lede">文章正文存储在 R2，元数据存储在 D1，后台登录由 Authentik 保护。</p>
+          <h1>最新动态</h1>
+          <p class="lede">记录 Yuna 的产品更新、工程笔记和团队近况。</p>
+        </section>
+        <section class="feature-grid" data-feature-grid></section>
+        <section class="section-head">
+          <h2>全部动态</h2>
+          <p>按发布时间倒序排列。</p>
         </section>
         <section class="post-list" data-post-list></section>
       </div>
@@ -27,6 +32,7 @@
     <script src="/app.js"></script>
     <script>
       window.blog.renderPostList();
+      window.blog.renderUserNav();
     </script>
   </body>
 </html>

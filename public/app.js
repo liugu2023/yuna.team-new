@@ -78,6 +78,7 @@ function inlineMarkdown(html) {
 
 async function renderPostList({ admin = false } = {}) {
   const list = document.querySelector("[data-post-list]");
+  const featureGrid = document.querySelector("[data-feature-grid]");
   if (!list) return;
 
   try {
@@ -85,6 +86,21 @@ async function renderPostList({ admin = false } = {}) {
     if (!data.posts.length) {
       list.innerHTML = '<p class="empty">暂无文章。</p>';
       return;
+    }
+
+    if (featureGrid && !admin) {
+      featureGrid.innerHTML = data.posts
+        .slice(0, 3)
+        .map(
+          (post) => `
+            <a class="feature-card" href="/post.html?slug=${post.slug}">
+              <p class="meta">${formatDate(post.published_at || post.updated_at)}</p>
+              <h2>${escapeHtml(post.title)}</h2>
+              <p>${escapeHtml(post.excerpt || "")}</p>
+            </a>
+          `,
+        )
+        .join("");
     }
 
     list.innerHTML = data.posts
@@ -103,6 +119,20 @@ async function renderPostList({ admin = false } = {}) {
   }
 }
 
+async function renderUserNav() {
+  const nav = document.querySelector("[data-user-nav]");
+  if (!nav) return;
+
+  try {
+    const me = await fetchJson("/api/auth/me");
+    nav.innerHTML = me.admin
+      ? '<a href="/admin/">管理后台</a><a href="/api/auth/logout">退出登录</a>'
+      : '<a href="/api/auth/login">登录</a>';
+  } catch {
+    nav.innerHTML = '<a href="/api/auth/login">登录</a>';
+  }
+}
+
 async function renderPost() {
   const article = document.querySelector("[data-article]");
   if (!article) return;
@@ -115,7 +145,7 @@ async function renderPost() {
 
   try {
     const data = await fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
-    document.title = `${data.post.title} · Yuna 文档`;
+    document.title = `${data.post.title} · Yuna 最新动态`;
     article.innerHTML = `
       <p class="meta">${formatDate(data.post.published_at || data.post.updated_at)}</p>
       <h1>${escapeHtml(data.post.title)}</h1>
@@ -133,4 +163,5 @@ window.blog = {
   markdownToHtml,
   renderPostList,
   renderPost,
+  renderUserNav,
 };

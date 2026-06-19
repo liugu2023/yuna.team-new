@@ -1,6 +1,6 @@
-# Cloudflare Markdown Blog
+# Yuna 最新动态
 
-A Cloudflare Pages + Pages Functions blog framework using:
+一个基于 Cloudflare Pages + Pages Functions 的类博客动态系统：
 
 - Cloudflare Pages for static UI
 - Pages Functions for API routes
@@ -18,7 +18,7 @@ migrations/             D1 migrations
 wrangler.toml           Cloudflare bindings and public vars
 ```
 
-Posts are split intentionally:
+文章存储方式：
 
 - D1 stores title, slug, excerpt, status, author, dates, and the R2 object key.
 - R2 stores the Markdown body at `posts/{slug}.md`.
@@ -108,7 +108,7 @@ http://localhost:8788
 http://localhost:8788/admin/
 ```
 
-The admin page redirects through Authentik. After login, it can create, update, publish, and delete Markdown posts.
+首页导航会先显示登录入口。通过 Authentik 登录后，首页才会显示管理后台入口。后台可以创建、更新、发布、转草稿、删除 Markdown 文章，并支持实时预览、搜索和状态筛选。
 
 ## API
 
@@ -123,6 +123,7 @@ Admin:
 - `POST /api/posts` creates a post.
 - `PUT /api/posts/:slug` updates metadata and Markdown.
 - `DELETE /api/posts/:slug` deletes D1 metadata and the R2 Markdown object.
+- `POST /api/admin/seed` creates sample posts for testing.
 
 Auth:
 

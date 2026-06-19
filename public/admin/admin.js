@@ -1,4 +1,4 @@
-const state = { editingSlug: null };
+const state = { editingSlug: null, posts: [] };
 const fields = {
   title: document.querySelector("[data-title]"),
   slug: document.querySelector("[data-slug]"),
@@ -7,6 +7,9 @@ const fields = {
   markdown: document.querySelector("[data-markdown]"),
   message: document.querySelector("[data-message]"),
   delete: document.querySelector("[data-delete]"),
+  preview: document.querySelector("[data-preview]"),
+  search: document.querySelector("[data-search]"),
+  filterStatus: document.querySelector("[data-filter-status]"),
 };
 
 async function bootAdmin() {
@@ -15,16 +18,61 @@ async function bootAdmin() {
   const me = await window.blog.fetchJson("/api/auth/me");
 
   if (!me.admin) {
-    authPanel.innerHTML = '<a class="button" href="/api/auth/login">使用 Authentik 登录</a>';
+    authPanel.innerHTML = '<p>请先从首页登录，然后再进入管理后台。</p><a class="button" href="/">返回首页</a>';
     return;
   }
 
   authPanel.hidden = true;
   editor.hidden = false;
-  await window.blog.renderPostList({ admin: true });
+  await refreshPosts();
+  updatePreview();
 
   const slug = new URLSearchParams(location.search).get("slug");
   if (slug) await loadPost(slug);
+}
+
+async function refreshPosts() {
+  const data = await window.blog.fetchJson("/api/posts?drafts=1");
+  state.posts = data.posts;
+  renderAdminPostList();
+}
+
+function renderAdminPostList() {
+  const list = document.querySelector("[data-post-list]");
+  const keyword = fields.search.value.trim().toLowerCase();
+  const status = fields.filterStatus.value;
+  const posts = state.posts.filter((post) => {
+    const matchesStatus = status === "all" || post.status === status;
+    const haystack = `${post.title} ${post.excerpt || ""} ${post.slug}`.toLowerCase();
+    return matchesStatus && (!keyword || haystack.includes(keyword));
+  });
+
+  if (!posts.length) {
+    list.innerHTML = '<p class="empty">没有匹配的文章。</p>';
+    return;
+  }
+
+  list.innerHTML = posts
+    .map(
+      (post) => `
+        <article class="post-card">
+          <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${window.blog.formatDate(post.published_at || post.updated_at)}</p>
+          <h2><a href="/admin/?slug=${post.slug}">${window.blog.escapeHtml(post.title)}</a></h2>
+          <p>${window.blog.escapeHtml(post.excerpt || "")}</p>
+          <div class="actions">
+            <a class="button secondary" href="/post.html?slug=${post.slug}" target="_blank" rel="noreferrer">查看</a>
+            <button class="secondary" data-quick-status="${post.status === "published" ? "draft" : "published"}" data-slug="${post.slug}">
+              ${post.status === "published" ? "转草稿" : "发布"}
+            </button>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+
+  list.querySelectorAll("[data-quick-status]").forEach((button) => {
+    button.addEventListener("click", () => quickSetStatus(button.dataset.slug, button.dataset.quickStatus));
+  });
 }
 
 async function loadPost(slug) {
@@ -38,6 +86,7 @@ async function loadPost(slug) {
   fields.markdown.value = data.markdown;
   fields.delete.hidden = false;
   fields.message.textContent = `正在编辑 ${slug}`;
+  updatePreview();
 }
 
 async function savePost() {
@@ -64,11 +113,35 @@ async function savePost() {
     fields.slug.disabled = true;
     fields.delete.hidden = false;
     fields.message.textContent = "已保存。";
-    await window.blog.renderPostList({ admin: true });
+    await refreshPosts();
     history.replaceState(null, "", `/admin/?slug=${data.post.slug}`);
   } catch (error) {
     fields.message.textContent = error.message;
   }
+}
+
+async function quickSetStatus(slug, status) {
+  const data = await window.blog.fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
+  await window.blog.fetchJson(`/api/posts/${encodeURIComponent(slug)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ status, markdown: data.markdown }),
+  });
+  await refreshPosts();
+  if (state.editingSlug === slug) {
+    fields.status.value = status;
+  }
+}
+
+async function saveWithStatus(status) {
+  fields.status.value = status;
+  await savePost();
+}
+
+async function seedPosts() {
+  const data = await window.blog.fetchJson("/api/admin/seed", { method: "POST" });
+  fields.message.textContent = `已生成 ${data.created.length} 篇测试文章，跳过 ${data.skipped.length} 篇已有文章。`;
+  await refreshPosts();
 }
 
 async function deletePost() {
@@ -79,7 +152,7 @@ async function deletePost() {
     method: "DELETE",
   });
   resetEditor();
-  await window.blog.renderPostList({ admin: true });
+  await refreshPosts();
 }
 
 function resetEditor() {
@@ -92,12 +165,31 @@ function resetEditor() {
   fields.markdown.value = "";
   fields.delete.hidden = true;
   fields.message.textContent = "";
+  updatePreview();
   history.replaceState(null, "", "/admin/");
 }
 
+function updatePreview() {
+  const title = fields.title.value.trim() || "未命名文章";
+  const excerpt = fields.excerpt.value.trim();
+  fields.preview.innerHTML = `
+    <h1>${window.blog.escapeHtml(title)}</h1>
+    ${excerpt ? `<p>${window.blog.escapeHtml(excerpt)}</p>` : ""}
+    ${window.blog.markdownToHtml(fields.markdown.value || "开始输入 Markdown 内容。")}
+  `;
+}
+
 document.querySelector("[data-save]").addEventListener("click", savePost);
+document.querySelector("[data-publish]").addEventListener("click", () => saveWithStatus("published"));
+document.querySelector("[data-draft]").addEventListener("click", () => saveWithStatus("draft"));
+document.querySelector("[data-seed]").addEventListener("click", seedPosts);
 document.querySelector("[data-new]").addEventListener("click", resetEditor);
 fields.delete.addEventListener("click", deletePost);
+fields.search.addEventListener("input", renderAdminPostList);
+fields.filterStatus.addEventListener("change", renderAdminPostList);
+fields.title.addEventListener("input", updatePreview);
+fields.excerpt.addEventListener("input", updatePreview);
+fields.markdown.addEventListener("input", updatePreview);
 bootAdmin().catch((error) => {
   document.querySelector("[data-auth-panel]").textContent = error.message;
 });

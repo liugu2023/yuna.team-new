@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>管理后台 · Yuna 文档</title>
+    <title>管理后台 · Yuna 最新动态</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="topbar">
       <div class="shell">
-        <a class="brand" href="/">Yuna 文档</a>
+        <a class="brand" href="/">Yuna 最新动态</a>
         <nav class="nav">
           <a href="/api/auth/logout">退出登录</a>
         </nav>
@@ -22,49 +22,66 @@
             <h1>管理后台</h1>
             <p class="lede">编写、保存和发布 Markdown 文章。</p>
           </div>
-          <a class="button secondary" href="/api/auth/login">使用 Authentik 登录</a>
+          <a class="button secondary" href="/">返回首页</a>
         </section>
 
         <section class="auth-panel" data-auth-panel>
           正在检查登录状态...
         </section>
 
-        <section class="editor" data-editor hidden>
-          <div class="grid">
+        <div class="admin-layout" data-editor hidden>
+          <section class="editor">
+            <div class="grid">
+              <label>
+                标题
+                <input data-title placeholder="文章标题" />
+              </label>
+              <label>
+                状态
+                <select data-status>
+                  <option value="draft">草稿</option>
+                  <option value="published">已发布</option>
+                </select>
+              </label>
+            </div>
             <label>
-              标题
-              <input data-title placeholder="文章标题" />
+              链接标识
+              <input data-slug placeholder="hello-world" />
             </label>
             <label>
-              状态
-              <select data-status>
-                <option value="draft">草稿</option>
-                <option value="published">已发布</option>
-              </select>
+              摘要
+              <input data-excerpt placeholder="文章简短摘要" />
             </label>
-          </div>
-          <label>
-            链接标识
-            <input data-slug placeholder="hello-world" />
-          </label>
-          <label>
-            摘要
-            <input data-excerpt placeholder="文章简短摘要" />
-          </label>
-          <label>
-            Markdown 内容
-            <textarea data-markdown placeholder="# Hello"></textarea>
-          </label>
-          <div class="actions">
-            <button data-save>保存</button>
+            <label>
+              Markdown 内容
+              <textarea data-markdown placeholder="# Hello"></textarea>
+            </label>
+            <div class="actions">
+              <button data-save>保存</button>
+            <button class="secondary" data-publish>发布</button>
+            <button class="secondary" data-draft>转为草稿</button>
+            <button class="secondary" data-seed>生成测试文章</button>
             <button class="secondary" data-new>新建</button>
             <button class="danger" data-delete hidden>删除</button>
-          </div>
-          <p data-message class="meta"></p>
-        </section>
+            </div>
+            <p data-message class="meta"></p>
+          </section>
+          <aside class="preview">
+            <p class="meta">实时预览</p>
+            <div class="preview-body article-body" data-preview></div>
+          </aside>
+        </div>
 
         <section>
           <h2>文章列表</h2>
+          <div class="filters">
+            <input data-search placeholder="搜索标题、摘要或链接标识" />
+            <select data-filter-status>
+              <option value="all">全部状态</option>
+              <option value="published">已发布</option>
+              <option value="draft">草稿</option>
+            </select>
+          </div>
           <div class="post-list" data-post-list></div>
         </section>
       </div>
