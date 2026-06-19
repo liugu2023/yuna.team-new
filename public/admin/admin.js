@@ -50,6 +50,8 @@ async function bootAdmin() {
   });
   await refreshPosts();
   updatePreview();
+  updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl);
+  updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl);
 
   const slug = new URLSearchParams(location.search).get("slug");
   if (slug) await loadPost(slug);
@@ -248,7 +250,7 @@ async function loadJsonRecord(key, messageEl) {
   }
 }
 
-function addMember() {
+async function saveMemberEntry() {
   const item = {
     term: fields.memberTerm.value.trim(),
     department: fields.memberDepartment.value,
@@ -278,9 +280,10 @@ function addMember() {
   fields.memberDesc.value = "";
   fields.memberContactUrl.value = "";
   renderFixedList(state.members, fields.memberList, "members");
+  await saveMembers();
 }
 
-function addFame() {
+async function saveFameEntry() {
   const item = {
     term: "",
     department: "",
@@ -311,6 +314,7 @@ function addFame() {
   fields.fameDesc.value = "";
   fields.fameContactUrl.value = "";
   renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
+  await saveFame();
 }
 
 async function saveMembers() {
@@ -353,12 +357,20 @@ function renderFixedList(items, listEl, type) {
           <p>${window.blog.escapeHtml(item.title || "")}</p>
           <p>${window.blog.escapeHtml(item.desc || "")}</p>
           <div class="actions">
+            <button class="secondary" data-edit-fixed="${type}:${index}">编辑</button>
             <button class="danger" data-remove-fixed="${type}:${index}">删除</button>
           </div>
         </article>
       `,
     )
     .join("");
+
+  listEl.querySelectorAll("[data-edit-fixed]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const [targetType, rawIndex] = button.dataset.editFixed.split(":");
+      editFixedItem(targetType, Number(rawIndex));
+    });
+  });
 
   listEl.querySelectorAll("[data-remove-fixed]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -370,10 +382,58 @@ function renderFixedList(items, listEl, type) {
   });
 }
 
+function editFixedItem(type, index) {
+  const target = type === "members" ? state.members : state.fameItems;
+  const [item] = target.splice(index, 1);
+  if (!item) return;
+
+  if (type === "members") {
+    fields.memberTerm.value = item.term || "";
+    fields.memberDepartment.value = item.department || "主席团";
+    fields.memberRole.value = item.role || item.title || "成员";
+    fields.memberName.value = item.name || "";
+    fields.memberAvatar.value = item.avatar || "";
+    fields.memberDesc.value = item.desc || "";
+    const link = Array.isArray(item.links) ? item.links[0] : null;
+    fields.memberContactLabel.value = link?.label || "GitHub";
+    fields.memberContactUrl.value = displayContactValue(fields.memberContactLabel.value, link?.url || "");
+    updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl);
+    renderFixedList(state.members, fields.memberList, "members");
+    fields.memberMessage.textContent = "正在编辑成员，修改后点击保存成员。";
+    return;
+  }
+
+  fields.fameName.value = item.name || "";
+  fields.fameTitle.value = item.title || "";
+  fields.fameAvatar.value = item.avatar || "";
+  fields.fameDesc.value = item.desc || "";
+  const link = Array.isArray(item.links) ? item.links[0] : null;
+  fields.fameContactLabel.value = link?.label || "GitHub";
+  fields.fameContactUrl.value = displayContactValue(fields.fameContactLabel.value, link?.url || "");
+  updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl);
+  renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
+  fields.fameMessage.textContent = "正在编辑名人堂条目，修改后点击保存条目。";
+}
+
 function normalizeContactUrl(label, value) {
   if (label === "Email" && !value.startsWith("mailto:")) return `mailto:${value}`;
   if (label === "QQ" && /^\d+$/.test(value)) return `https://qm.qq.com/q/${value}`;
   return value;
+}
+
+function displayContactValue(label, value) {
+  if (label === "Email") return value.replace(/^mailto:/, "");
+  return value;
+}
+
+function updateContactPlaceholder(select, input) {
+  const placeholders = {
+    GitHub: "https://github.com/yuna2017",
+    Email: "name@example.com",
+    QQ: "123456789",
+    个人主页: "https://example.com",
+  };
+  input.placeholder = placeholders[select.value] || "";
 }
 
 async function deletePost() {
@@ -428,11 +488,11 @@ document.querySelector("[data-upload-post-image]").addEventListener("click", upl
 fields.memberImageFile.addEventListener("change", uploadMemberAvatar);
 fields.fameImageFile.addEventListener("change", uploadFameAvatar);
 document.querySelector("[data-load-members]").addEventListener("click", loadMembers);
-document.querySelector("[data-add-member]").addEventListener("click", addMember);
-document.querySelector("[data-save-members]").addEventListener("click", saveMembers);
+document.querySelector("[data-save-member-entry]").addEventListener("click", saveMemberEntry);
 document.querySelector("[data-load-fame]").addEventListener("click", loadFame);
-document.querySelector("[data-add-fame]").addEventListener("click", addFame);
-document.querySelector("[data-save-fame]").addEventListener("click", saveFame);
+document.querySelector("[data-save-fame-entry]").addEventListener("click", saveFameEntry);
+fields.memberContactLabel.addEventListener("change", () => updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl));
+fields.fameContactLabel.addEventListener("change", () => updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl));
 document.querySelector("[data-new]").addEventListener("click", resetEditor);
 fields.delete.addEventListener("click", deletePost);
 fields.search.addEventListener("input", renderAdminPostList);
