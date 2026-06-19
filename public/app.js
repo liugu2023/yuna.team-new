@@ -6,8 +6,8 @@ async function fetchJson(url, options) {
 }
 
 function formatDate(value) {
-  if (!value) return "Unpublished";
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(value));
+  if (!value) return "未发布";
+  return new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" }).format(new Date(value));
 }
 
 function escapeHtml(value) {
@@ -83,7 +83,7 @@ async function renderPostList({ admin = false } = {}) {
   try {
     const data = await fetchJson(`/api/posts${admin ? "?drafts=1" : ""}`);
     if (!data.posts.length) {
-      list.innerHTML = '<p class="empty">No posts yet.</p>';
+      list.innerHTML = '<p class="empty">暂无文章。</p>';
       return;
     }
 
@@ -91,7 +91,7 @@ async function renderPostList({ admin = false } = {}) {
       .map(
         (post) => `
           <article class="post-card">
-            <p class="meta">${post.status} · ${formatDate(post.published_at || post.updated_at)}</p>
+            <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${formatDate(post.published_at || post.updated_at)}</p>
             <h2><a href="${admin ? `/admin/?slug=${post.slug}` : `/post.html?slug=${post.slug}`}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
           </article>
@@ -109,13 +109,13 @@ async function renderPost() {
 
   const slug = new URLSearchParams(location.search).get("slug");
   if (!slug) {
-    article.innerHTML = '<p class="error">Missing post slug.</p>';
+    article.innerHTML = '<p class="error">缺少文章链接标识。</p>';
     return;
   }
 
   try {
     const data = await fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
-    document.title = `${data.post.title} · Markdown Blog`;
+    document.title = `${data.post.title} · Yuna 文档`;
     article.innerHTML = `
       <p class="meta">${formatDate(data.post.published_at || data.post.updated_at)}</p>
       <h1>${escapeHtml(data.post.title)}</h1>

@@ -58,6 +58,20 @@ export function isAllowedAdmin(env: Env, email: string): boolean {
   return allowlist.length === 0 || allowlist.includes(email.toLowerCase());
 }
 
+export function isAllowedAdminIdentity(env: Env, identities: string[]): boolean {
+  const allowlist = (env.ADMIN_EMAIL_ALLOWLIST ?? "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (allowlist.length === 0) return true;
+
+  return identities
+    .map((identity) => identity.trim().toLowerCase())
+    .filter(Boolean)
+    .some((identity) => allowlist.includes(identity));
+}
+
 async function currentSessionId(env: Env, request: Request): Promise<string | null> {
   return verifySignedValue(getCookie(request, SESSION_COOKIE), env.SESSION_SECRET);
 }

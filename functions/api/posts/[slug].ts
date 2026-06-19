@@ -17,10 +17,10 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, re
     .bind(slug)
     .first<PostRecord>();
 
-  if (!post || (post.status !== "published" && !canSeeDrafts)) return notFound("Post not found");
+  if (!post || (post.status !== "published" && !canSeeDrafts)) return notFound("文章不存在");
 
   const object = await env.BLOG_BUCKET.get(post.r2_key);
-  if (!object) return notFound("Post markdown not found");
+  if (!object) return notFound("文章 Markdown 内容不存在");
 
   return json({ post, markdown: await object.text() });
 };
@@ -28,17 +28,17 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, re
 export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
   const session = await getSession(env, request);
   if (!session || !isAllowedAdmin(env, session.user_email)) {
-    return json({ error: "Admin authentication required" }, { status: 401 });
+    return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
   const slug = String(params.slug);
   const post = await env.BLOG_DB.prepare("SELECT * FROM posts WHERE slug = ?")
     .bind(slug)
     .first<PostRecord>();
-  if (!post) return notFound("Post not found");
+  if (!post) return notFound("文章不存在");
 
   const payload = await readJson<UpdatePostPayload>(request);
-  if (!payload) return badRequest("Invalid JSON body");
+  if (!payload) return badRequest("请求内容不是有效的 JSON");
 
   const now = new Date().toISOString();
   const nextStatus = payload.status ?? post.status;
@@ -77,14 +77,14 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
 export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
   const session = await getSession(env, request);
   if (!session || !isAllowedAdmin(env, session.user_email)) {
-    return json({ error: "Admin authentication required" }, { status: 401 });
+    return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
   const slug = String(params.slug);
   const post = await env.BLOG_DB.prepare("SELECT * FROM posts WHERE slug = ?")
     .bind(slug)
     .first<PostRecord>();
-  if (!post) return notFound("Post not found");
+  if (!post) return notFound("文章不存在");
 
   await env.BLOG_BUCKET.delete(post.r2_key);
   await env.BLOG_DB.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();

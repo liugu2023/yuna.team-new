@@ -1,17 +1,17 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Admin · Markdown Blog</title>
+    <title>管理后台 · Yuna 文档</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="topbar">
       <div class="shell">
-        <a class="brand" href="/">Markdown Blog</a>
+        <a class="brand" href="/">Yuna 文档</a>
         <nav class="nav">
-          <a href="/api/auth/logout">Logout</a>
+          <a href="/api/auth/logout">退出登录</a>
         </nav>
       </div>
     </header>
@@ -19,52 +19,52 @@
       <div class="shell">
         <section class="toolbar">
           <div>
-            <h1>Admin</h1>
-            <p class="lede">Write and publish Markdown posts.</p>
+            <h1>管理后台</h1>
+            <p class="lede">编写、保存和发布 Markdown 文章。</p>
           </div>
-          <a class="button secondary" href="/api/auth/login">Login with Authentik</a>
+          <a class="button secondary" href="/api/auth/login">使用 Authentik 登录</a>
         </section>
 
         <section class="auth-panel" data-auth-panel>
-          Checking session...
+          正在检查登录状态...
         </section>
 
         <section class="editor" data-editor hidden>
           <div class="grid">
             <label>
-              Title
-              <input data-title placeholder="Post title" />
+              标题
+              <input data-title placeholder="文章标题" />
             </label>
             <label>
-              Status
+              状态
               <select data-status>
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
+                <option value="draft">草稿</option>
+                <option value="published">已发布</option>
               </select>
             </label>
           </div>
           <label>
-            Slug
+            链接标识
             <input data-slug placeholder="hello-world" />
           </label>
           <label>
-            Excerpt
-            <input data-excerpt placeholder="Short summary" />
+            摘要
+            <input data-excerpt placeholder="文章简短摘要" />
           </label>
           <label>
-            Markdown
+            Markdown 内容
             <textarea data-markdown placeholder="# Hello"></textarea>
           </label>
           <div class="actions">
-            <button data-save>Save</button>
-            <button class="secondary" data-new>New</button>
-            <button class="danger" data-delete hidden>Delete</button>
+            <button data-save>保存</button>
+            <button class="secondary" data-new>新建</button>
+            <button class="danger" data-delete hidden>删除</button>
           </div>
           <p data-message class="meta"></p>
         </section>
 
         <section>
-          <h2>Posts</h2>
+          <h2>文章列表</h2>
           <div class="post-list" data-post-list></div>
         </section>
       </div>

@@ -15,7 +15,7 @@ async function bootAdmin() {
   const me = await window.blog.fetchJson("/api/auth/me");
 
   if (!me.admin) {
-    authPanel.innerHTML = '<a class="button" href="/api/auth/login">Login with Authentik</a>';
+    authPanel.innerHTML = '<a class="button" href="/api/auth/login">使用 Authentik 登录</a>';
     return;
   }
 
@@ -37,7 +37,7 @@ async function loadPost(slug) {
   fields.status.value = data.post.status;
   fields.markdown.value = data.markdown;
   fields.delete.hidden = false;
-  fields.message.textContent = `Editing ${slug}`;
+  fields.message.textContent = `正在编辑 ${slug}`;
 }
 
 async function savePost() {
@@ -63,7 +63,7 @@ async function savePost() {
     state.editingSlug = data.post.slug;
     fields.slug.disabled = true;
     fields.delete.hidden = false;
-    fields.message.textContent = "Saved.";
+    fields.message.textContent = "已保存。";
     await window.blog.renderPostList({ admin: true });
     history.replaceState(null, "", `/admin/?slug=${data.post.slug}`);
   } catch (error) {
@@ -73,7 +73,7 @@ async function savePost() {
 
 async function deletePost() {
   if (!state.editingSlug) return;
-  if (!confirm(`Delete ${state.editingSlug}?`)) return;
+  if (!confirm(`确定删除 ${state.editingSlug} 吗？`)) return;
 
   await window.blog.fetchJson(`/api/posts/${encodeURIComponent(state.editingSlug)}`, {
     method: "DELETE",

@@ -1,6 +1,6 @@
 import { getCookie, serializeCookie, verifySignedValue } from "../_shared/cookies";
 import { exchangeCode, getUserInfo } from "../_shared/oidc";
-import { createSession, isAllowedAdmin } from "../_shared/session";
+import { createSession, isAllowedAdminIdentity } from "../_shared/session";
 import type { Env } from "../_shared/types";
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
@@ -15,14 +15,22 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
   const token = await exchangeCode(env, code);
   const userInfo = await getUserInfo(env, token.access_token);
-  const email = userInfo.email;
+  const identity = userInfo.email ?? userInfo.preferred_username;
 
-  if (!email || !isAllowedAdmin(env, email)) {
-    return new Response("User is not allowed to administer this blog", { status: 403 });
+  if (!identity) {
+    return new Response("登录成功，但 Authentik 没有返回邮箱或用户名，无法创建后台会话。", {
+      status: 403,
+    });
+  }
+
+  if (!isAllowedAdminIdentity(env, [userInfo.email ?? "", userInfo.preferred_username ?? ""])) {
+    return new Response("当前账号没有博客后台管理权限，请检查 ADMIN_EMAIL_ALLOWLIST。", {
+      status: 403,
+    });
   }
 
   const sessionCookie = await createSession(env, {
-    email,
+    email: identity,
     name: userInfo.name ?? userInfo.preferred_username ?? "",
   });
 

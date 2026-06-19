@@ -28,16 +28,16 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const session = await getSession(env, request);
   if (!session || !isAllowedAdmin(env, session.user_email)) {
-    return json({ error: "Admin authentication required" }, { status: 401 });
+    return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
   const payload = await readJson<CreatePostPayload>(request);
   if (!payload?.title || !payload.slug || payload.markdown === undefined) {
-    return badRequest("title, slug, and markdown are required");
+    return badRequest("标题、链接标识和 Markdown 内容不能为空");
   }
 
   const slug = normalizeSlug(payload.slug);
-  if (!slug) return badRequest("slug is invalid");
+  if (!slug) return badRequest("链接标识无效");
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
