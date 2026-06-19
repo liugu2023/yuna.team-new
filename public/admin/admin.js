@@ -172,7 +172,7 @@ async function uploadPostImage() {
   try {
     const data = await uploadImage(file, `posts/${state.editingSlug || "drafts"}`);
     insertAtCursor(fields.markdown, `\n![${file.name}](${data.url})\n`);
-    fields.message.textContent = `已插入图片：${data.url}`;
+    fields.message.textContent = `图片已上传：${data.url}`;
     updatePreview();
   } catch (error) {
     fields.message.textContent = error.message;
@@ -189,7 +189,7 @@ async function uploadStructuredImage() {
   try {
     const data = await uploadImage(file, fields.structuredKey.value === "members" ? "avatars" : "hall-of-fame");
     fields.structuredAvatar.value = data.url;
-    fields.structuredMessage.textContent = `已填入图片：${data.url}`;
+    fields.structuredMessage.textContent = `图片已上传：${data.url}`;
   } catch (error) {
     fields.structuredMessage.textContent = error.message;
   }
