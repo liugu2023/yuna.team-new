@@ -278,26 +278,12 @@ function renderStructuredRecord(record) {
     return renderMembersRecord(record, items);
   }
 
-  const groups = new Map();
-  for (const item of items) {
-    const group = item.term || item.group || "未分组";
-    if (!groups.has(group)) groups.set(group, []);
-    groups.get(group).push(item);
-  }
-
   return `
     <div class="article-body">
       <h1>${escapeHtml(record.title)}</h1>
-      ${Array.from(groups.entries())
-        .map(
-          ([group, groupItems]) => `
-            <h2>${escapeHtml(group)}</h2>
-            <div class="profile-grid">
-              ${groupItems.map(renderProfileCard).join("")}
-            </div>
-          `,
-        )
-        .join("")}
+      <div class="profile-grid">
+        ${items.map(renderProfileCard).join("")}
+      </div>
     </div>
   `;
 }

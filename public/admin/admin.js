@@ -1,4 +1,4 @@
-const state = { editingSlug: null, posts: [], structuredItems: [] };
+const state = { editingSlug: null, posts: [], members: [], fameItems: [] };
 const fields = {
   title: document.querySelector("[data-title]"),
   slug: document.querySelector("[data-slug]"),
@@ -11,19 +11,26 @@ const fields = {
   search: document.querySelector("[data-search]"),
   filterStatus: document.querySelector("[data-filter-status]"),
   postImageFile: document.querySelector("[data-post-image-file]"),
-  structuredImageFile: document.querySelector("[data-structured-image-file]"),
-  structuredKey: document.querySelector("[data-structured-key]"),
-  structuredTerm: document.querySelector("[data-structured-term]"),
-  structuredDepartment: document.querySelector("[data-structured-department]"),
-  structuredRole: document.querySelector("[data-structured-role]"),
-  structuredName: document.querySelector("[data-structured-name]"),
-  structuredTitle: document.querySelector("[data-structured-title]"),
-  structuredAvatar: document.querySelector("[data-structured-avatar]"),
-  structuredDesc: document.querySelector("[data-structured-desc]"),
-  structuredLinkLabel: document.querySelector("[data-structured-link-label]"),
-  structuredLinkUrl: document.querySelector("[data-structured-link-url]"),
-  structuredMessage: document.querySelector("[data-structured-message]"),
-  structuredList: document.querySelector("[data-structured-list]"),
+  memberTerm: document.querySelector("[data-member-term]"),
+  memberDepartment: document.querySelector("[data-member-department]"),
+  memberRole: document.querySelector("[data-member-role]"),
+  memberName: document.querySelector("[data-member-name]"),
+  memberImageFile: document.querySelector("[data-member-image-file]"),
+  memberAvatar: document.querySelector("[data-member-avatar]"),
+  memberDesc: document.querySelector("[data-member-desc]"),
+  memberContactLabel: document.querySelector("[data-member-contact-label]"),
+  memberContactUrl: document.querySelector("[data-member-contact-url]"),
+  memberMessage: document.querySelector("[data-member-message]"),
+  memberList: document.querySelector("[data-member-list]"),
+  fameName: document.querySelector("[data-fame-name]"),
+  fameTitle: document.querySelector("[data-fame-title]"),
+  fameImageFile: document.querySelector("[data-fame-image-file]"),
+  fameAvatar: document.querySelector("[data-fame-avatar]"),
+  fameDesc: document.querySelector("[data-fame-desc]"),
+  fameContactLabel: document.querySelector("[data-fame-contact-label]"),
+  fameContactUrl: document.querySelector("[data-fame-contact-url]"),
+  fameMessage: document.querySelector("[data-fame-message]"),
+  fameList: document.querySelector("[data-fame-list]"),
 };
 
 async function bootAdmin() {
@@ -43,7 +50,6 @@ async function bootAdmin() {
   });
   await refreshPosts();
   updatePreview();
-  updateStructuredMode();
 
   const slug = new URLSearchParams(location.search).get("slug");
   if (slug) await loadPost(slug);
@@ -179,19 +185,35 @@ async function uploadPostImage() {
   }
 }
 
-async function uploadStructuredImage() {
-  const file = fields.structuredImageFile.files[0];
+async function uploadMemberAvatar() {
+  const file = fields.memberImageFile.files[0];
   if (!file) {
-    fields.structuredMessage.textContent = "请选择头像或图片。";
+    fields.memberMessage.textContent = "请选择头像。";
     return;
   }
 
   try {
-    const data = await uploadImage(file, fields.structuredKey.value === "members" ? "avatars" : "hall-of-fame");
-    fields.structuredAvatar.value = data.url;
-    fields.structuredMessage.textContent = "头像已上传。";
+    const data = await uploadImage(file, "avatars");
+    fields.memberAvatar.value = data.url;
+    fields.memberMessage.textContent = "头像已上传。";
   } catch (error) {
-    fields.structuredMessage.textContent = error.message;
+    fields.memberMessage.textContent = error.message;
+  }
+}
+
+async function uploadFameAvatar() {
+  const file = fields.fameImageFile.files[0];
+  if (!file) {
+    fields.fameMessage.textContent = "请选择头像。";
+    return;
+  }
+
+  try {
+    const data = await uploadImage(file, "hall-of-fame");
+    fields.fameAvatar.value = data.url;
+    fields.fameMessage.textContent = "头像已上传。";
+  } catch (error) {
+    fields.fameMessage.textContent = error.message;
   }
 }
 
@@ -205,112 +227,153 @@ async function uploadImage(file, folder) {
   });
 }
 
-async function loadStructuredRecord() {
-  const key = fields.structuredKey.value;
-  try {
-    const data = await window.blog.fetchJson(`/api/site/${key}`);
-    state.structuredItems = JSON.parse(data.record.content || "[]");
-    fields.structuredMessage.textContent = `已读取 ${data.record.title}`;
-  } catch (error) {
-    state.structuredItems = [];
-    fields.structuredMessage.textContent = error.message;
-  }
-  renderStructuredList();
+async function loadMembers() {
+  state.members = await loadJsonRecord("members", fields.memberMessage);
+  renderFixedList(state.members, fields.memberList, "members");
 }
 
-function addStructuredItem() {
-  const isMembers = fields.structuredKey.value === "members";
+async function loadFame() {
+  state.fameItems = await loadJsonRecord("hall-of-fame", fields.fameMessage);
+  renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
+}
+
+async function loadJsonRecord(key, messageEl) {
+  try {
+    const data = await window.blog.fetchJson(`/api/site/${key}`);
+    messageEl.textContent = `已读取 ${data.record.title}`;
+    return JSON.parse(data.record.content || "[]");
+  } catch (error) {
+    messageEl.textContent = error.message;
+    return [];
+  }
+}
+
+function addMember() {
   const item = {
-    term: fields.structuredTerm.value.trim(),
-    department: isMembers ? fields.structuredDepartment.value : "",
-    role: isMembers ? fields.structuredRole.value : "",
-    name: fields.structuredName.value.trim(),
-    title: isMembers ? fields.structuredRole.value : fields.structuredTitle.value.trim(),
-    avatar: fields.structuredAvatar.value.trim(),
-    desc: fields.structuredDesc.value.trim(),
+    term: fields.memberTerm.value.trim(),
+    department: fields.memberDepartment.value,
+    role: fields.memberRole.value,
+    name: fields.memberName.value.trim(),
+    title: fields.memberRole.value,
+    avatar: fields.memberAvatar.value.trim(),
+    desc: fields.memberDesc.value.trim(),
     links: [],
   };
 
-  if (fields.structuredLinkLabel.value.trim() && fields.structuredLinkUrl.value.trim()) {
+  if (fields.memberContactUrl.value.trim()) {
     item.links.push({
-      label: fields.structuredLinkLabel.value.trim(),
-      url: fields.structuredLinkUrl.value.trim(),
+      label: fields.memberContactLabel.value,
+      url: normalizeContactUrl(fields.memberContactLabel.value, fields.memberContactUrl.value.trim()),
     });
   }
 
   if (!item.name) {
-    fields.structuredMessage.textContent = "姓名 / 标题不能为空。";
+    fields.memberMessage.textContent = "姓名不能为空。";
     return;
   }
 
-  state.structuredItems.push(item);
-  fields.structuredName.value = "";
-  fields.structuredTitle.value = "";
-  fields.structuredAvatar.value = "";
-  fields.structuredDesc.value = "";
-  fields.structuredLinkLabel.value = "";
-  fields.structuredLinkUrl.value = "";
-  renderStructuredList();
+  state.members.push(item);
+  fields.memberName.value = "";
+  fields.memberAvatar.value = "";
+  fields.memberDesc.value = "";
+  fields.memberContactUrl.value = "";
+  renderFixedList(state.members, fields.memberList, "members");
 }
 
-async function saveStructuredRecord() {
-  const key = fields.structuredKey.value;
+function addFame() {
+  const item = {
+    term: "",
+    department: "",
+    role: "",
+    name: fields.fameName.value.trim(),
+    title: fields.fameTitle.value.trim(),
+    avatar: fields.fameAvatar.value.trim(),
+    desc: fields.fameDesc.value.trim(),
+    links: [],
+  };
+
+  if (fields.fameContactUrl.value.trim()) {
+    item.links.push({
+      label: fields.fameContactLabel.value,
+      url: normalizeContactUrl(fields.fameContactLabel.value, fields.fameContactUrl.value.trim()),
+    });
+  }
+
+  if (!item.name) {
+    fields.fameMessage.textContent = "名称不能为空。";
+    return;
+  }
+
+  state.fameItems.push(item);
+  fields.fameName.value = "";
+  fields.fameTitle.value = "";
+  fields.fameAvatar.value = "";
+  fields.fameDesc.value = "";
+  fields.fameContactUrl.value = "";
+  renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
+}
+
+async function saveMembers() {
+  await saveFixedRecord("members", "协会成员", state.members, fields.memberMessage);
+}
+
+async function saveFame() {
+  await saveFixedRecord("hall-of-fame", "网协名人堂", state.fameItems, fields.fameMessage);
+}
+
+async function saveFixedRecord(key, title, items, messageEl) {
   try {
     await window.blog.fetchJson(`/api/admin/site/${key}`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        title: key === "members" ? "协会成员" : "网协名人堂",
+        title,
         kind: "json",
-        content: JSON.stringify(state.structuredItems),
+        content: JSON.stringify(items),
       }),
     });
-    fields.structuredMessage.textContent = "已保存栏目，并写入增量备份。";
+    messageEl.textContent = "已保存，并写入增量备份。";
   } catch (error) {
-    fields.structuredMessage.textContent = error.message;
+    messageEl.textContent = error.message;
   }
 }
 
-function renderStructuredList() {
-  if (!state.structuredItems.length) {
-    fields.structuredList.innerHTML = '<p class="empty">当前栏目暂无条目。</p>';
+function renderFixedList(items, listEl, type) {
+  if (!items.length) {
+    listEl.innerHTML = '<p class="empty">当前暂无条目。</p>';
     return;
   }
 
-  fields.structuredList.innerHTML = state.structuredItems
+  listEl.innerHTML = items
     .map(
       (item, index) => `
         <article class="post-card">
-          <p class="meta">${window.blog.escapeHtml(item.term || "未填写届数")} · ${window.blog.escapeHtml(item.department || "名人堂")}</p>
+          <p class="meta">${type === "members" ? `${window.blog.escapeHtml(item.term || "未填写届数")} · ${window.blog.escapeHtml(item.department || "")}` : "名人堂"}</p>
           <h2>${window.blog.escapeHtml(item.name)}</h2>
           <p>${window.blog.escapeHtml(item.title || "")}</p>
           <p>${window.blog.escapeHtml(item.desc || "")}</p>
           <div class="actions">
-            <button class="danger" data-remove-structured="${index}">删除</button>
+            <button class="danger" data-remove-fixed="${type}:${index}">删除</button>
           </div>
         </article>
       `,
     )
     .join("");
 
-  fields.structuredList.querySelectorAll("[data-remove-structured]").forEach((button) => {
+  listEl.querySelectorAll("[data-remove-fixed]").forEach((button) => {
     button.addEventListener("click", () => {
-      state.structuredItems.splice(Number(button.dataset.removeStructured), 1);
-      renderStructuredList();
+      const [targetType, rawIndex] = button.dataset.removeFixed.split(":");
+      const target = targetType === "members" ? state.members : state.fameItems;
+      target.splice(Number(rawIndex), 1);
+      renderFixedList(target, targetType === "members" ? fields.memberList : fields.fameList, targetType);
     });
   });
 }
 
-function updateStructuredMode() {
-  const isMembers = fields.structuredKey.value === "members";
-  document.querySelectorAll("[data-members-only]").forEach((node) => {
-    node.hidden = !isMembers;
-  });
-  document.querySelectorAll("[data-fame-only]").forEach((node) => {
-    node.hidden = isMembers;
-  });
-  fields.structuredTerm.placeholder = isMembers ? "第九届" : "第六届 / 2024";
-  fields.structuredName.placeholder = isMembers ? "成员姓名" : "名人堂条目标题";
+function normalizeContactUrl(label, value) {
+  if (label === "Email" && !value.startsWith("mailto:")) return `mailto:${value}`;
+  if (label === "QQ" && /^\d+$/.test(value)) return `https://qm.qq.com/q/${value}`;
+  return value;
 }
 
 async function deletePost() {
@@ -362,14 +425,14 @@ document.querySelector("[data-publish]").addEventListener("click", () => saveWit
 document.querySelector("[data-draft]").addEventListener("click", () => saveWithStatus("draft"));
 document.querySelector("[data-seed]").addEventListener("click", seedPosts);
 document.querySelector("[data-upload-post-image]").addEventListener("click", uploadPostImage);
-fields.structuredImageFile.addEventListener("change", uploadStructuredImage);
-document.querySelector("[data-load-structured]").addEventListener("click", loadStructuredRecord);
-document.querySelector("[data-add-structured]").addEventListener("click", addStructuredItem);
-document.querySelector("[data-save-structured]").addEventListener("click", saveStructuredRecord);
-fields.structuredKey.addEventListener("change", () => {
-  updateStructuredMode();
-  loadStructuredRecord();
-});
+fields.memberImageFile.addEventListener("change", uploadMemberAvatar);
+fields.fameImageFile.addEventListener("change", uploadFameAvatar);
+document.querySelector("[data-load-members]").addEventListener("click", loadMembers);
+document.querySelector("[data-add-member]").addEventListener("click", addMember);
+document.querySelector("[data-save-members]").addEventListener("click", saveMembers);
+document.querySelector("[data-load-fame]").addEventListener("click", loadFame);
+document.querySelector("[data-add-fame]").addEventListener("click", addFame);
+document.querySelector("[data-save-fame]").addEventListener("click", saveFame);
 document.querySelector("[data-new]").addEventListener("click", resetEditor);
 fields.delete.addEventListener("click", deletePost);
 fields.search.addEventListener("input", renderAdminPostList);

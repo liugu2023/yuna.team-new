@@ -81,24 +81,15 @@
         </div>
 
         <section class="editor admin-tooling" data-admin-tools hidden>
-          <h2>固定栏目</h2>
+          <h2>协会成员</h2>
           <div class="grid">
-            <label>
-              栏目
-              <select data-structured-key>
-                <option value="members">协会成员</option>
-                <option value="hall-of-fame">名人堂</option>
-              </select>
-            </label>
             <label>
               届数
-              <input data-structured-term placeholder="第九届" />
+              <input data-member-term placeholder="第九届" />
             </label>
-          </div>
-          <div class="grid">
-            <label data-members-only>
+            <label>
               部门
-              <select data-structured-department>
+              <select data-member-department>
                 <option value="主席团">主席团</option>
                 <option value="开发部">开发部</option>
                 <option value="网络安全部">网络安全部</option>
@@ -107,54 +98,101 @@
                 <option value="秘书处">秘书处</option>
               </select>
             </label>
-            <label data-members-only>
+          </div>
+          <div class="grid">
+            <label>
               职级
-              <select data-structured-role>
+              <select data-member-role>
                 <option value="主席">主席</option>
                 <option value="副主席">副主席</option>
                 <option value="部长">部长</option>
                 <option value="成员">成员</option>
               </select>
             </label>
-          </div>
-          <div class="grid">
             <label>
-              姓名 / 标题
-              <input data-structured-name placeholder="成员姓名或名人堂条目标题" />
-            </label>
-            <label data-fame-only hidden>
-              名人堂头衔
-              <input data-structured-title placeholder="第六届主席 / 竞赛获奖成员" />
+              姓名
+              <input data-member-name placeholder="成员姓名" />
             </label>
           </div>
           <div class="inline-uploader">
             <label>
               头像
-              <input data-structured-image-file type="file" accept="image/*" />
+              <input data-member-image-file type="file" accept="image/*" />
             </label>
-            <input data-structured-avatar type="hidden" />
+            <input data-member-avatar type="hidden" />
           </div>
           <label>
             简介
-            <textarea data-structured-desc placeholder="支持简单文字，链接请填在下面的链接字段"></textarea>
+            <textarea data-member-desc placeholder="成员简介"></textarea>
           </label>
           <div class="grid">
             <label>
-              链接标题
-              <input data-structured-link-label placeholder="GitHub" />
+              联系方式类型
+              <select data-member-contact-label>
+                <option value="GitHub">GitHub</option>
+                <option value="Email">Email</option>
+                <option value="QQ">QQ</option>
+                <option value="个人主页">个人主页</option>
+              </select>
             </label>
             <label>
-              链接地址
-              <input data-structured-link-url placeholder="https://github.com/yuna2017" />
+              联系方式
+              <input data-member-contact-url placeholder="https://github.com/yuna2017" />
             </label>
           </div>
           <div class="actions">
-            <button data-load-structured>读取栏目</button>
-            <button data-add-structured>添加条目</button>
-            <button data-save-structured>保存栏目</button>
+            <button data-load-members>读取成员</button>
+            <button data-add-member>添加成员</button>
+            <button data-save-members>保存成员</button>
           </div>
-          <p data-structured-message class="meta"></p>
-          <div class="post-list" data-structured-list></div>
+          <p data-member-message class="meta"></p>
+          <div class="post-list" data-member-list></div>
+        </section>
+
+        <section class="editor admin-tooling" data-admin-tools hidden>
+          <h2>名人堂</h2>
+          <div class="grid">
+            <label>
+              名称
+              <input data-fame-name placeholder="姓名或展示名称" />
+            </label>
+            <label>
+              职位
+              <input data-fame-title placeholder="第六届主席 / 竞赛获奖成员" />
+            </label>
+          </div>
+          <div class="inline-uploader">
+            <label>
+              头像
+              <input data-fame-image-file type="file" accept="image/*" />
+            </label>
+            <input data-fame-avatar type="hidden" />
+          </div>
+          <label>
+            履历
+            <textarea data-fame-desc placeholder="保研、竞赛、工作去向等履历"></textarea>
+          </label>
+          <div class="grid">
+            <label>
+              联系方式类型
+              <select data-fame-contact-label>
+                <option value="GitHub">GitHub</option>
+                <option value="Email">Email</option>
+                <option value="个人主页">个人主页</option>
+              </select>
+            </label>
+            <label>
+              联系方式
+              <input data-fame-contact-url placeholder="https://github.com/yuna2017" />
+            </label>
+          </div>
+          <div class="actions">
+            <button data-load-fame>读取名人堂</button>
+            <button data-add-fame>添加条目</button>
+            <button data-save-fame>保存名人堂</button>
+          </div>
+          <p data-fame-message class="meta"></p>
+          <div class="post-list" data-fame-list></div>
         </section>
 
         <section>
