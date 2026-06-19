@@ -34,20 +34,6 @@ const fields = {
 };
 
 async function bootAdmin() {
-  const authPanel = document.querySelector("[data-auth-panel]");
-  const editor = document.querySelector("[data-editor]");
-  const me = await window.blog.fetchJson("/api/auth/me");
-
-  if (!me.admin) {
-    authPanel.innerHTML = '<p>请先从首页登录，然后再进入管理后台。</p><a class="button" href="/">返回首页</a>';
-    return;
-  }
-
-  authPanel.hidden = true;
-  editor.hidden = false;
-  document.querySelectorAll("[data-admin-tools]").forEach((section) => {
-    section.hidden = false;
-  });
   await refreshPosts();
   updatePreview();
   updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl);
@@ -501,5 +487,5 @@ fields.title.addEventListener("input", updatePreview);
 fields.excerpt.addEventListener("input", updatePreview);
 fields.markdown.addEventListener("input", updatePreview);
 bootAdmin().catch((error) => {
-  document.querySelector("[data-auth-panel]").textContent = error.message;
+  fields.message.textContent = error.message;
 });
