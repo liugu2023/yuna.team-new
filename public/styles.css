@@ -33,7 +33,7 @@ a:hover {
 }
 
 .shell {
-  width: min(920px, calc(100% - 32px));
+  width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
 }
 
@@ -55,9 +55,22 @@ a:hover {
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   font-weight: 800;
   color: var(--text);
   letter-spacing: 0;
+}
+
+.brand img {
+  width: 30px;
+  height: 30px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(0, 122, 204, 0.12);
 }
 
 .nav {
@@ -76,8 +89,109 @@ a:hover {
   padding: 48px 0 72px;
 }
 
+.blog-shell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 760px) 240px;
+  gap: 24px;
+  width: min(1320px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 34px 0 72px;
+  align-items: start;
+}
+
+.feed {
+  min-width: 0;
+}
+
 .hero {
-  padding: 56px 0 42px;
+  position: relative;
+  overflow: hidden;
+  padding: 34px 32px 38px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(0, 172, 239, 0.26), transparent 260px),
+    var(--panel);
+  box-shadow: 0 18px 40px rgba(16, 42, 67, 0.06);
+}
+
+.float-panel {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 40px rgba(16, 42, 67, 0.07);
+  backdrop-filter: blur(12px);
+}
+
+.panel-logo {
+  width: 72px;
+  height: 72px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 26px rgba(0, 122, 204, 0.16);
+}
+
+.panel-kicker {
+  margin: 0;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.float-panel h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.side-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.side-link::after {
+  content: "→";
+  color: var(--accent);
+}
+
+.side-link:hover {
+  border-color: #cfe6f7;
+  color: var(--accent-dark);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.side-link.primary {
+  background: linear-gradient(120deg, #0061d6, #00acef);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(0, 122, 204, 0.22);
+}
+
+.side-link.primary::after {
+  color: #fff;
+}
+
+.side-auth {
+  display: grid;
+  gap: 10px;
 }
 
 .eyebrow {
@@ -100,7 +214,7 @@ h3 {
 }
 
 h1 {
-  font-size: clamp(34px, 6vw, 58px);
+  font-size: clamp(38px, 6vw, 64px);
   max-width: 760px;
 }
 
@@ -126,18 +240,18 @@ h1 span {
 
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin: 18px 0 34px;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 18px 0 28px;
 }
 
 .feature-card {
   display: block;
-  min-height: 190px;
-  padding: 18px;
+  min-height: 150px;
+  padding: 22px;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 16px;
   color: var(--text);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -164,6 +278,7 @@ h1 span {
   gap: 16px;
   border-top: 1px solid var(--line);
   padding-top: 22px;
+  margin-top: 10px;
 }
 
 .section-head p {
@@ -176,11 +291,11 @@ h1 span {
 .auth-panel {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 14px;
 }
 
 .post-card {
-  padding: 20px;
+  padding: 22px;
 }
 
 .post-card h2 {
@@ -355,5 +470,39 @@ textarea {
   .actions {
     width: 100%;
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 1180px) {
+  .blog-shell {
+    grid-template-columns: minmax(0, 1fr);
+    width: min(920px, calc(100% - 32px));
+  }
+
+  .float-panel {
+    position: static;
+  }
+
+  .float-left,
+  .float-right {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+  }
+
+  .float-panel h2,
+  .panel-kicker,
+  .panel-logo {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .float-left,
+  .float-right {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding: 26px 22px 30px;
   }
 }

@@ -9,7 +9,7 @@
   <body>
     <header class="topbar">
       <div class="shell">
-        <a class="brand" href="/">YUNA</a>
+        <a class="brand" href="/"><img src="/logo.svg" alt="YUNA" />YUNA</a>
         <nav class="nav">
           <a href="/about-us/">关于我们</a>
           <a href="/lessons/">授课链接</a>
@@ -18,24 +18,40 @@
         </nav>
       </div>
     </header>
-    <main class="page">
-      <div class="shell">
+    <main class="blog-shell">
+      <aside class="float-panel float-left" aria-label="协会入口">
+        <img class="panel-logo" src="/logo.svg" alt="YUNA" />
+        <p class="panel-kicker">YUNA</p>
+        <h2>燕山大学大学生网络信息协会</h2>
+        <a class="side-link primary" href="/about-us/">协会概况</a>
+        <a class="side-link" href="/about-us/members/current-members.html">协会成员</a>
+        <a class="side-link" href="/about-us/hall-of-fame.html">名人堂</a>
+      </aside>
+
+      <section class="feed">
         <section class="hero">
-          <p class="eyebrow">YUNA · Yanshan University Student Net Information Association</p>
-          <h1>燕山大学<br /><span>大学生网络信息协会</span></h1>
-          <p class="lede">这里发布协会新闻、活动记录、课程通知与成员动态。</p>
-        </section>
-        <section class="section-head">
-          <h2>最新动态</h2>
-          <p>来自协会的近期更新。</p>
+          <p class="eyebrow">YUNA · News & Updates</p>
+          <h1>最新动态</h1>
+          <p class="lede">发布协会新闻、活动记录、课程通知与成员动态。</p>
         </section>
         <section class="feature-grid" data-feature-grid></section>
         <section class="section-head">
-          <h2>全部动态</h2>
+          <h2>动态流</h2>
           <p>按发布时间倒序排列。</p>
         </section>
         <section class="post-list" data-post-list></section>
-      </div>
+      </section>
+
+      <aside class="float-panel float-right" aria-label="快捷入口">
+        <p class="panel-kicker">Quick Links</p>
+        <h2>常用入口</h2>
+        <a class="side-link primary" href="/join-us/how-to.html">加入我们</a>
+        <a class="side-link" href="/lessons/">授课链接</a>
+        <a class="side-link" href="/about-us/dept/dev.html">开发部</a>
+        <a class="side-link" href="/about-us/dept/cybersec.html">网络安全部</a>
+        <a class="side-link" href="/about-us/dept/maint.html">运维部</a>
+        <span class="side-auth" data-user-nav data-side-nav><a class="side-link" href="/api/auth/login">成员登录</a></span>
+      </aside>
     </main>
     <script src="/app.js"></script>
     <script>

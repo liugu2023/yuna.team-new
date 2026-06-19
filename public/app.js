@@ -120,17 +120,29 @@ async function renderPostList({ admin = false } = {}) {
 }
 
 async function renderUserNav() {
-  const nav = document.querySelector("[data-user-nav]");
-  if (!nav) return;
+  const navs = document.querySelectorAll("[data-user-nav]");
+  if (!navs.length) return;
 
   try {
     const me = await fetchJson("/api/auth/me");
-    nav.innerHTML = me.admin
+    const html = me.admin
       ? '<a href="/admin/">管理后台</a><a href="/api/auth/logout">退出登录</a>'
       : '<a href="/api/auth/login">成员登录</a>';
+    navs.forEach((nav) => {
+      nav.innerHTML = nav.hasAttribute("data-side-nav")
+        ? decorateSideNav(html)
+        : html;
+    });
   } catch {
-    nav.innerHTML = '<a href="/api/auth/login">成员登录</a>';
+    navs.forEach((nav) => {
+      const html = '<a href="/api/auth/login">成员登录</a>';
+      nav.innerHTML = nav.hasAttribute("data-side-nav") ? decorateSideNav(html) : html;
+    });
   }
+}
+
+function decorateSideNav(html) {
+  return html.replaceAll("<a ", '<a class="side-link" ');
 }
 
 async function renderPost() {
