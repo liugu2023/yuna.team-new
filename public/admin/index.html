@@ -73,6 +73,77 @@
           </aside>
         </div>
 
+        <section class="editor admin-tooling" data-admin-tools hidden>
+          <h2>资源上传</h2>
+          <div class="grid">
+            <label>
+              资源路径
+              <input data-media-path placeholder="uploads/example.png" />
+            </label>
+            <label>
+              图片文件
+              <input data-media-file type="file" accept="image/*" />
+            </label>
+          </div>
+          <div class="actions">
+            <button data-upload-media>上传到资源库</button>
+            <button class="secondary" data-insert-media disabled>插入到当前 Markdown</button>
+          </div>
+          <p data-media-message class="meta"></p>
+        </section>
+
+        <section class="editor admin-tooling" data-admin-tools hidden>
+          <h2>固定栏目</h2>
+          <div class="grid">
+            <label>
+              栏目
+              <select data-structured-key>
+                <option value="members">协会成员</option>
+                <option value="hall-of-fame">名人堂</option>
+              </select>
+            </label>
+            <label>
+              分组
+              <input data-structured-group placeholder="开发部 / 主席团 / 第六届" />
+            </label>
+          </div>
+          <div class="grid">
+            <label>
+              姓名 / 标题
+              <input data-structured-name placeholder="成员姓名或名人堂条目标题" />
+            </label>
+            <label>
+              头衔
+              <input data-structured-title placeholder="开发部部长 / 第六届主席" />
+            </label>
+          </div>
+          <label>
+            头像或图片 URL
+            <input data-structured-avatar placeholder="/media/avatars/example.png" />
+          </label>
+          <label>
+            简介
+            <textarea data-structured-desc placeholder="支持简单文字，链接请填在下面的链接字段"></textarea>
+          </label>
+          <div class="grid">
+            <label>
+              链接标题
+              <input data-structured-link-label placeholder="GitHub" />
+            </label>
+            <label>
+              链接地址
+              <input data-structured-link-url placeholder="https://github.com/yuna2017" />
+            </label>
+          </div>
+          <div class="actions">
+            <button data-load-structured>读取栏目</button>
+            <button data-add-structured>添加条目</button>
+            <button data-save-structured>保存栏目</button>
+          </div>
+          <p data-structured-message class="meta"></p>
+          <div class="post-list" data-structured-list></div>
+        </section>
+
         <section>
           <h2>文章列表</h2>
           <div class="filters">

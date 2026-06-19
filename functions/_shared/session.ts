@@ -53,6 +53,19 @@ export function isAllowedAdmin(env: Env, email: string): boolean {
   return Boolean(email);
 }
 
+export async function getAdminIdentity(env: Env, request: Request): Promise<string | null> {
+  const session = await getSession(env, request);
+  if (session && isAllowedAdmin(env, session.user_email)) return session.user_email;
+
+  const authorization = request.headers.get("authorization") || "";
+  const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+  if (env.MIGRATION_TOKEN && token && token === env.MIGRATION_TOKEN) {
+    return "migration";
+  }
+
+  return null;
+}
+
 async function currentSessionId(env: Env, request: Request): Promise<string | null> {
   return verifySignedValue(getCookie(request, SESSION_COOKIE), env.SESSION_SECRET);
 }

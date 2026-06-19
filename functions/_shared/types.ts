@@ -8,6 +8,7 @@ export interface Env {
   AUTHENTIK_CLIENT_SECRET: string;
   AUTHENTIK_REDIRECT_PATH: string;
   SESSION_SECRET: string;
+  MIGRATION_TOKEN?: string;
   ADMIN_IDENTITY_ALLOWLIST?: string;
 }
 
@@ -29,4 +30,13 @@ export interface UserSession {
   user_email: string;
   user_name: string;
   expires_at: number;
+}
+
+export interface SiteRecord {
+  key: string;
+  title: string;
+  kind: "markdown" | "json";
+  content: string;
+  updated_by: string;
+  updated_at: string;
 }

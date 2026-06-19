@@ -1,4 +1,4 @@
-const state = { editingSlug: null, posts: [] };
+const state = { editingSlug: null, posts: [], structuredItems: [] };
 const fields = {
   title: document.querySelector("[data-title]"),
   slug: document.querySelector("[data-slug]"),
@@ -10,7 +10,22 @@ const fields = {
   preview: document.querySelector("[data-preview]"),
   search: document.querySelector("[data-search]"),
   filterStatus: document.querySelector("[data-filter-status]"),
+  mediaPath: document.querySelector("[data-media-path]"),
+  mediaFile: document.querySelector("[data-media-file]"),
+  mediaMessage: document.querySelector("[data-media-message]"),
+  insertMedia: document.querySelector("[data-insert-media]"),
+  structuredKey: document.querySelector("[data-structured-key]"),
+  structuredGroup: document.querySelector("[data-structured-group]"),
+  structuredName: document.querySelector("[data-structured-name]"),
+  structuredTitle: document.querySelector("[data-structured-title]"),
+  structuredAvatar: document.querySelector("[data-structured-avatar]"),
+  structuredDesc: document.querySelector("[data-structured-desc]"),
+  structuredLinkLabel: document.querySelector("[data-structured-link-label]"),
+  structuredLinkUrl: document.querySelector("[data-structured-link-url]"),
+  structuredMessage: document.querySelector("[data-structured-message]"),
+  structuredList: document.querySelector("[data-structured-list]"),
 };
+let lastMediaMarkdown = "";
 
 async function bootAdmin() {
   const authPanel = document.querySelector("[data-auth-panel]");
@@ -24,6 +39,9 @@ async function bootAdmin() {
 
   authPanel.hidden = true;
   editor.hidden = false;
+  document.querySelectorAll("[data-admin-tools]").forEach((section) => {
+    section.hidden = false;
+  });
   await refreshPosts();
   updatePreview();
 
@@ -144,6 +162,131 @@ async function seedPosts() {
   await refreshPosts();
 }
 
+async function uploadMedia() {
+  const file = fields.mediaFile.files[0];
+  if (!file) {
+    fields.mediaMessage.textContent = "请选择图片文件。";
+    return;
+  }
+
+  const path = (fields.mediaPath.value.trim() || `uploads/${Date.now()}-${file.name}`)
+    .replace(/^\/+/, "")
+    .replace(/\s+/g, "-");
+
+  try {
+    const data = await window.blog.fetchJson(`/api/admin/media/${encodeURI(path)}`, {
+      method: "PUT",
+      headers: { "content-type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    lastMediaMarkdown = `![${file.name}](${data.url})`;
+    fields.mediaMessage.textContent = `已上传：${lastMediaMarkdown}`;
+    fields.structuredAvatar.value = data.url;
+    fields.insertMedia.disabled = false;
+  } catch (error) {
+    fields.mediaMessage.textContent = error.message;
+  }
+}
+
+function insertMediaMarkdown() {
+  if (!lastMediaMarkdown) return;
+  insertAtCursor(fields.markdown, `\n${lastMediaMarkdown}\n`);
+  updatePreview();
+}
+
+async function loadStructuredRecord() {
+  const key = fields.structuredKey.value;
+  try {
+    const data = await window.blog.fetchJson(`/api/site/${key}`);
+    state.structuredItems = JSON.parse(data.record.content || "[]");
+    fields.structuredMessage.textContent = `已读取 ${data.record.title}`;
+  } catch (error) {
+    state.structuredItems = [];
+    fields.structuredMessage.textContent = error.message;
+  }
+  renderStructuredList();
+}
+
+function addStructuredItem() {
+  const item = {
+    group: fields.structuredGroup.value.trim(),
+    name: fields.structuredName.value.trim(),
+    title: fields.structuredTitle.value.trim(),
+    avatar: fields.structuredAvatar.value.trim(),
+    desc: fields.structuredDesc.value.trim(),
+    links: [],
+  };
+
+  if (fields.structuredLinkLabel.value.trim() && fields.structuredLinkUrl.value.trim()) {
+    item.links.push({
+      label: fields.structuredLinkLabel.value.trim(),
+      url: fields.structuredLinkUrl.value.trim(),
+    });
+  }
+
+  if (!item.name) {
+    fields.structuredMessage.textContent = "姓名 / 标题不能为空。";
+    return;
+  }
+
+  state.structuredItems.push(item);
+  fields.structuredName.value = "";
+  fields.structuredTitle.value = "";
+  fields.structuredAvatar.value = "";
+  fields.structuredDesc.value = "";
+  fields.structuredLinkLabel.value = "";
+  fields.structuredLinkUrl.value = "";
+  renderStructuredList();
+}
+
+async function saveStructuredRecord() {
+  const key = fields.structuredKey.value;
+  try {
+    await window.blog.fetchJson(`/api/admin/site/${key}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: key === "members" ? "协会成员" : "网协名人堂",
+        kind: "json",
+        content: JSON.stringify(state.structuredItems),
+      }),
+    });
+    fields.structuredMessage.textContent = "已保存栏目，并写入增量备份。";
+  } catch (error) {
+    fields.structuredMessage.textContent = error.message;
+  }
+}
+
+function renderStructuredList() {
+  if (!state.structuredItems.length) {
+    fields.structuredList.innerHTML = '<p class="empty">当前栏目暂无条目。</p>';
+    return;
+  }
+
+  fields.structuredList.innerHTML = state.structuredItems
+    .map(
+      (item, index) => `
+        <article class="post-card">
+          <p class="meta">${window.blog.escapeHtml(item.group || "未分组")}</p>
+          <h2>${window.blog.escapeHtml(item.name)}</h2>
+          <p>${window.blog.escapeHtml(item.title || "")}</p>
+          <p>${window.blog.escapeHtml(item.desc || "")}</p>
+          <div class="actions">
+            <button class="danger" data-remove-structured="${index}">删除</button>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+
+  fields.structuredList.querySelectorAll("[data-remove-structured]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.structuredItems.splice(Number(button.dataset.removeStructured), 1);
+      renderStructuredList();
+    });
+  });
+}
+
 async function deletePost() {
   if (!state.editingSlug) return;
   if (!confirm(`确定删除 ${state.editingSlug} 吗？`)) return;
@@ -179,10 +322,25 @@ function updatePreview() {
   `;
 }
 
+function insertAtCursor(textarea, text) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  textarea.value = `${textarea.value.slice(0, start)}${text}${textarea.value.slice(end)}`;
+  textarea.selectionStart = start + text.length;
+  textarea.selectionEnd = start + text.length;
+  textarea.focus();
+}
+
 document.querySelector("[data-save]").addEventListener("click", savePost);
 document.querySelector("[data-publish]").addEventListener("click", () => saveWithStatus("published"));
 document.querySelector("[data-draft]").addEventListener("click", () => saveWithStatus("draft"));
 document.querySelector("[data-seed]").addEventListener("click", seedPosts);
+document.querySelector("[data-upload-media]").addEventListener("click", uploadMedia);
+document.querySelector("[data-insert-media]").addEventListener("click", insertMediaMarkdown);
+document.querySelector("[data-load-structured]").addEventListener("click", loadStructuredRecord);
+document.querySelector("[data-add-structured]").addEventListener("click", addStructuredItem);
+document.querySelector("[data-save-structured]").addEventListener("click", saveStructuredRecord);
+fields.structuredKey.addEventListener("change", loadStructuredRecord);
 document.querySelector("[data-new]").addEventListener("click", resetEditor);
 fields.delete.addEventListener("click", deletePost);
 fields.search.addEventListener("input", renderAdminPostList);

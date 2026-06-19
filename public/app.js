@@ -103,10 +103,32 @@ function stripFrontmatter(markdown) {
 
 function inlineMarkdown(html) {
   return html
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, src) => {
+      const safeSrc = normalizeAssetUrl(src);
+      return `<img src="${safeSrc}" alt="${alt}" loading="lazy">`;
+    })
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.*?)\*/g, "<em>$1</em>")
     .replace(/`([^`]+)`/g, "<code>$1</code>")
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" rel="noreferrer">$1</a>');
+    .replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      (_match, label, href) => {
+        const safeHref = href.startsWith("http") || href.startsWith("/") || href.startsWith("mailto:")
+          ? href
+          : `/page.html?p=${href.replace(/^\.\//, "").replace(/\.html$/, "").replace(/\.md$/, "")}`;
+        const rel = safeHref.startsWith("http") ? ' rel="noreferrer"' : "";
+        const target = safeHref.startsWith("http") ? ' target="_blank"' : "";
+        return `<a href="${safeHref}"${target}${rel}>${label}</a>`;
+      },
+    );
+}
+
+function normalizeAssetUrl(value) {
+  if (value.startsWith("http") || value.startsWith("/media/") || value.startsWith("/logo")) {
+    return value;
+  }
+  if (value.startsWith("/avatars/")) return value.replace("/avatars/", "/media/avatars/");
+  return value;
 }
 
 async function renderPostList({ admin = false } = {}) {
@@ -205,7 +227,14 @@ async function renderStaticPage() {
   const container = document.querySelector("[data-static-page]");
   if (!container) return;
 
-  const page = new URLSearchParams(location.search).get("p") || "about-us/index";
+  const params = new URLSearchParams(location.search);
+  const recordKey = params.get("record");
+  if (recordKey) {
+    await renderSiteRecord(container, recordKey);
+    return;
+  }
+
+  const page = params.get("p") || "about-us/index";
   if (!/^[a-z0-9/_-]+$/i.test(page)) {
     container.innerHTML = '<p class="error">页面路径无效。</p>';
     return;
@@ -221,6 +250,73 @@ async function renderStaticPage() {
   } catch (error) {
     container.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
   }
+}
+
+async function renderSiteRecord(container, key) {
+  if (!/^[a-z0-9_-]+$/i.test(key)) {
+    container.innerHTML = '<p class="error">内容标识无效。</p>';
+    return;
+  }
+
+  try {
+    const data = await fetchJson(`/api/site/${key}`);
+    document.title = `${data.record.title} · 燕山大学大学生网络信息协会`;
+    container.innerHTML =
+      data.record.kind === "json"
+        ? renderStructuredRecord(data.record)
+        : `<div class="article-body">${markdownToHtml(data.record.content)}</div>`;
+  } catch (error) {
+    container.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function renderStructuredRecord(record) {
+  const items = JSON.parse(record.content || "[]");
+  if (!items.length) return '<p class="empty">暂无内容。</p>';
+
+  const groups = new Map();
+  for (const item of items) {
+    const group = item.group || "未分组";
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group).push(item);
+  }
+
+  return `
+    <div class="article-body">
+      <h1>${escapeHtml(record.title)}</h1>
+      ${Array.from(groups.entries())
+        .map(
+          ([group, groupItems]) => `
+            <h2>${escapeHtml(group)}</h2>
+            <div class="profile-grid">
+              ${groupItems.map(renderProfileCard).join("")}
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderProfileCard(item) {
+  const links = Array.isArray(item.links) ? item.links : [];
+  return `
+    <article class="profile-card">
+      ${item.avatar ? `<img src="${normalizeAssetUrl(escapeHtml(item.avatar))}" alt="${escapeHtml(item.name)}" loading="lazy">` : ""}
+      <div>
+        <h3>${escapeHtml(item.name || "")}</h3>
+        ${item.title ? `<p class="meta">${escapeHtml(item.title)}</p>` : ""}
+        ${item.desc ? `<p>${escapeHtml(item.desc)}</p>` : ""}
+        ${
+          links.length
+            ? `<p>${links
+                .map((link) => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noreferrer">${escapeHtml(link.label || link.url)}</a>`)
+                .join(" · ")}</p>`
+            : ""
+        }
+      </div>
+    </article>
+  `;
 }
 
 function firstHeading(markdown) {

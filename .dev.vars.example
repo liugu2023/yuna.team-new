@@ -1,2 +1,3 @@
 AUTHENTIK_CLIENT_SECRET=replace-with-client-secret
 SESSION_SECRET=replace-with-at-least-32-random-bytes
+MIGRATION_TOKEN=replace-with-random-import-token

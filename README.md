@@ -91,6 +91,7 @@ Set production secrets:
 ```bash
 npx wrangler pages secret put AUTHENTIK_CLIENT_SECRET
 npx wrangler pages secret put SESSION_SECRET
+npx wrangler pages secret put MIGRATION_TOKEN
 ```
 
 Use a long random value for `SESSION_SECRET`.
@@ -124,6 +125,29 @@ Admin:
 - `PUT /api/posts/:slug` updates metadata and Markdown.
 - `DELETE /api/posts/:slug` deletes D1 metadata and the R2 Markdown object.
 - `POST /api/admin/seed` creates sample posts for testing.
+- `PUT /api/admin/media/:path` uploads an image or binary asset to R2.
+- `PUT /api/admin/site/:key` updates long-lived site content and writes an incremental D1 backup row.
+
+## Long-Lived Content
+
+Members and hall-of-fame content are not stored in this repository. They live in D1 as structured JSON records; every update writes the previous version to `site_record_backups`.
+
+Normal blog/news posts still use the Markdown editor. Members and hall-of-fame use fixed admin forms so maintainers can add cards without editing raw JSON.
+
+Images are uploaded to R2 and served from `/media/...`. The admin page has an upload panel that returns Markdown such as:
+
+```md
+![avatar](/media/avatars/example.png)
+```
+
+To migrate existing avatar images from the old repository to R2:
+
+```bash
+$env:SITE_BASE_URL="https://yuna.liugu.cc"
+$env:MIGRATION_TOKEN="same-value-as-pages-secret"
+$env:SOURCE_ROOT='D:\System\Desktop\yuna\yuna.team\docs'
+npm run media:migrate
+```
 
 Auth:
 
