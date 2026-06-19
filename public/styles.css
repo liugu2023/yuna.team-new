@@ -545,6 +545,10 @@ textarea {
   background: #f8fbfe;
 }
 
+.inline-uploader:has(input[type="hidden"]:last-child) {
+  grid-template-columns: 1fr;
+}
+
 .inline-uploader button {
   min-height: 44px;
 }

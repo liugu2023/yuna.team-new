@@ -362,7 +362,7 @@ document.querySelector("[data-publish]").addEventListener("click", () => saveWit
 document.querySelector("[data-draft]").addEventListener("click", () => saveWithStatus("draft"));
 document.querySelector("[data-seed]").addEventListener("click", seedPosts);
 document.querySelector("[data-upload-post-image]").addEventListener("click", uploadPostImage);
-document.querySelector("[data-upload-structured-image]").addEventListener("click", uploadStructuredImage);
+fields.structuredImageFile.addEventListener("change", uploadStructuredImage);
 document.querySelector("[data-load-structured]").addEventListener("click", loadStructuredRecord);
 document.querySelector("[data-add-structured]").addEventListener("click", addStructuredItem);
 document.querySelector("[data-save-structured]").addEventListener("click", saveStructuredRecord);
