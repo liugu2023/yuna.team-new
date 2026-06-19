@@ -1,6 +1,6 @@
-# Yuna 最新动态
+# YUNA 最新动态
 
-一个基于 Cloudflare Pages + Pages Functions 的类博客动态系统：
+燕山大学大学生网络信息协会的动态发布系统，基于 Cloudflare Pages + Pages Functions：
 
 - Cloudflare Pages for static UI
 - Pages Functions for API routes
@@ -108,7 +108,7 @@ http://localhost:8788
 http://localhost:8788/admin/
 ```
 
-首页导航会先显示登录入口。通过 Authentik 登录后，首页才会显示管理后台入口。后台可以创建、更新、发布、转草稿、删除 Markdown 文章，并支持实时预览、搜索和状态筛选。
+首页导航会先显示成员登录入口。通过 Authentik 登录后，首页才会显示管理后台入口。后台可以创建、更新、发布、转草稿、删除 Markdown 动态，并支持实时预览、搜索和状态筛选。
 
 ## API
 

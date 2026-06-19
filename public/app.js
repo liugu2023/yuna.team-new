@@ -127,9 +127,9 @@ async function renderUserNav() {
     const me = await fetchJson("/api/auth/me");
     nav.innerHTML = me.admin
       ? '<a href="/admin/">管理后台</a><a href="/api/auth/logout">退出登录</a>'
-      : '<a href="/api/auth/login">登录</a>';
+      : '<a href="/api/auth/login">成员登录</a>';
   } catch {
-    nav.innerHTML = '<a href="/api/auth/login">登录</a>';
+    nav.innerHTML = '<a href="/api/auth/login">成员登录</a>';
   }
 }
 
@@ -145,7 +145,7 @@ async function renderPost() {
 
   try {
     const data = await fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
-    document.title = `${data.post.title} · Yuna 最新动态`;
+    document.title = `${data.post.title} · 燕山大学大学生网络信息协会`;
     article.innerHTML = `
       <p class="meta">${formatDate(data.post.published_at || data.post.updated_at)}</p>
       <h1>${escapeHtml(data.post.title)}</h1>

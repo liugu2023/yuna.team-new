@@ -1,12 +1,12 @@
 :root {
   color-scheme: light;
-  --bg: #f7f5ef;
+  --bg: #f6f9fc;
   --panel: #ffffff;
-  --text: #22211f;
-  --muted: #6b6760;
-  --line: #ded9cf;
-  --accent: #0f766e;
-  --accent-dark: #115e59;
+  --text: #1b2430;
+  --muted: #5b6b7c;
+  --line: #e7edf3;
+  --accent: #007acc;
+  --accent-dark: #005f9f;
   --danger: #b42318;
 }
 
@@ -39,7 +39,7 @@ a:hover {
 
 .topbar {
   border-bottom: 1px solid var(--line);
-  background: rgba(247, 245, 239, 0.92);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
@@ -57,6 +57,7 @@ a:hover {
 .brand {
   font-weight: 800;
   color: var(--text);
+  letter-spacing: 0;
 }
 
 .nav {
@@ -76,7 +77,19 @@ a:hover {
 }
 
 .hero {
-  padding: 28px 0 36px;
+  padding: 56px 0 42px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  margin: 0 0 18px;
+  padding: 6px 12px;
+  border: 1px solid #d3ebf9;
+  border-radius: 999px;
+  background: #e8f4fc;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 h1,
@@ -89,6 +102,13 @@ h3 {
 h1 {
   font-size: clamp(34px, 6vw, 58px);
   max-width: 760px;
+}
+
+h1 span {
+  background: linear-gradient(120deg, #0044cc, #00acef);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .lede {
@@ -119,6 +139,13 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--text);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px rgba(16, 42, 67, 0.08);
+  text-decoration: none;
 }
 
 .feature-card h2 {

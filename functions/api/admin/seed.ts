@@ -4,36 +4,36 @@ import type { Env, PostRecord } from "../../_shared/types";
 
 const samplePosts = [
   {
-    slug: "yuna-blog-online",
-    title: "Yuna 博客系统上线",
-    excerpt: "新的博客系统已经迁移到 Cloudflare Pages、D1 和 R2。",
-    markdown: `# Yuna 博客系统上线
+    slug: "yuna-news-system-online",
+    title: "YUNA 最新动态系统上线",
+    excerpt: "协会官网新增动态发布系统，用于记录活动、课程和通知。",
+    markdown: `# YUNA 最新动态系统上线
 
 这是第一篇测试动态。当前系统使用 **Cloudflare Pages** 提供静态页面，使用 D1 保存文章元数据，并把 Markdown 正文存储在 R2。
 
-后续可以继续加入标签、图片上传、评论和 RSS。`,
+后续可以继续加入标签、图片上传、RSS 和活动归档，让协会新闻和课程通知更容易维护。`,
   },
   {
-    slug: "authentik-admin-login",
-    title: "后台登录接入 Authentik",
-    excerpt: "管理后台现在通过 Authentik OIDC 登录，权限交给 Authentik 应用侧控制。",
-    markdown: `# 后台登录接入 Authentik
+    slug: "authentik-member-login",
+    title: "成员登录接入 Authentik",
+    excerpt: "动态管理后台通过 Authentik OIDC 登录，访问权限由协会统一账号系统控制。",
+    markdown: `# 成员登录接入 Authentik
 
-后台登录流程已经接入 Authentik。
+动态管理后台已经接入 Authentik。
 
-- 登录入口在首页导航
+- 首页默认显示成员登录入口
 - 登录成功后显示管理后台入口
 - 回调地址固定为 \`https://yuna.liugu.cc/auth/callback\`
 
 本地系统只校验 OIDC 登录是否成功，具体谁能进入应用由 Authentik 侧配置。`,
   },
   {
-    slug: "markdown-r2-storage",
-    title: "文章正文改用 Markdown 存储",
-    excerpt: "文章正文以 Markdown 文件形式写入 R2，便于迁移、备份和后续扩展。",
-    markdown: `# 文章正文改用 Markdown 存储
+    slug: "markdown-news-workflow",
+    title: "动态内容采用 Markdown 编写",
+    excerpt: "协会动态以 Markdown 文件形式写入 R2，方便成员协作和长期归档。",
+    markdown: `# 动态内容采用 Markdown 编写
 
-文章内容不会直接塞进数据库，而是以 \`.md\` 文件写入 R2。
+动态正文不会直接塞进数据库，而是以 \`.md\` 文件写入 R2。
 
 D1 中只保存：
 
