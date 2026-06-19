@@ -189,7 +189,7 @@ async function uploadStructuredImage() {
   try {
     const data = await uploadImage(file, fields.structuredKey.value === "members" ? "avatars" : "hall-of-fame");
     fields.structuredAvatar.value = data.url;
-    fields.structuredMessage.textContent = `图片已上传：${data.url}`;
+    fields.structuredMessage.textContent = "头像已上传。";
   } catch (error) {
     fields.structuredMessage.textContent = error.message;
   }
