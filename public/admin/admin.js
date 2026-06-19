@@ -10,10 +10,8 @@ const fields = {
   preview: document.querySelector("[data-preview]"),
   search: document.querySelector("[data-search]"),
   filterStatus: document.querySelector("[data-filter-status]"),
-  mediaPath: document.querySelector("[data-media-path]"),
-  mediaFile: document.querySelector("[data-media-file]"),
-  mediaMessage: document.querySelector("[data-media-message]"),
-  insertMedia: document.querySelector("[data-insert-media]"),
+  postImageFile: document.querySelector("[data-post-image-file]"),
+  structuredImageFile: document.querySelector("[data-structured-image-file]"),
   structuredKey: document.querySelector("[data-structured-key]"),
   structuredTerm: document.querySelector("[data-structured-term]"),
   structuredDepartment: document.querySelector("[data-structured-department]"),
@@ -27,7 +25,6 @@ const fields = {
   structuredMessage: document.querySelector("[data-structured-message]"),
   structuredList: document.querySelector("[data-structured-list]"),
 };
-let lastMediaMarkdown = "";
 
 async function bootAdmin() {
   const authPanel = document.querySelector("[data-auth-panel]");
@@ -165,36 +162,47 @@ async function seedPosts() {
   await refreshPosts();
 }
 
-async function uploadMedia() {
-  const file = fields.mediaFile.files[0];
+async function uploadPostImage() {
+  const file = fields.postImageFile.files[0];
   if (!file) {
-    fields.mediaMessage.textContent = "请选择图片文件。";
+    fields.message.textContent = "请选择文章图片。";
     return;
   }
 
-  const path = (fields.mediaPath.value.trim() || `uploads/${Date.now()}-${file.name}`)
-    .replace(/^\/+/, "")
-    .replace(/\s+/g, "-");
-
   try {
-    const data = await window.blog.fetchJson(`/api/admin/media/${encodeURI(path)}`, {
-      method: "PUT",
-      headers: { "content-type": file.type || "application/octet-stream" },
-      body: file,
-    });
-    lastMediaMarkdown = `![${file.name}](${data.url})`;
-    fields.mediaMessage.textContent = `已上传：${lastMediaMarkdown}`;
-    fields.structuredAvatar.value = data.url;
-    fields.insertMedia.disabled = false;
+    const data = await uploadImage(file, `posts/${state.editingSlug || "drafts"}`);
+    insertAtCursor(fields.markdown, `\n![${file.name}](${data.url})\n`);
+    fields.message.textContent = `已插入图片：${data.url}`;
+    updatePreview();
   } catch (error) {
-    fields.mediaMessage.textContent = error.message;
+    fields.message.textContent = error.message;
   }
 }
 
-function insertMediaMarkdown() {
-  if (!lastMediaMarkdown) return;
-  insertAtCursor(fields.markdown, `\n${lastMediaMarkdown}\n`);
-  updatePreview();
+async function uploadStructuredImage() {
+  const file = fields.structuredImageFile.files[0];
+  if (!file) {
+    fields.structuredMessage.textContent = "请选择头像或图片。";
+    return;
+  }
+
+  try {
+    const data = await uploadImage(file, fields.structuredKey.value === "members" ? "avatars" : "hall-of-fame");
+    fields.structuredAvatar.value = data.url;
+    fields.structuredMessage.textContent = `已填入图片：${data.url}`;
+  } catch (error) {
+    fields.structuredMessage.textContent = error.message;
+  }
+}
+
+async function uploadImage(file, folder) {
+  const safeName = `${Date.now()}-${file.name}`.replace(/[^\w.\-\u4e00-\u9fa5]+/g, "-");
+  const path = `${folder}/${safeName}`.replace(/^\/+/, "");
+  return window.blog.fetchJson(`/api/admin/media/${encodeURI(path)}`, {
+    method: "PUT",
+    headers: { "content-type": file.type || "application/octet-stream" },
+    body: file,
+  });
 }
 
 async function loadStructuredRecord() {
@@ -353,8 +361,8 @@ document.querySelector("[data-save]").addEventListener("click", savePost);
 document.querySelector("[data-publish]").addEventListener("click", () => saveWithStatus("published"));
 document.querySelector("[data-draft]").addEventListener("click", () => saveWithStatus("draft"));
 document.querySelector("[data-seed]").addEventListener("click", seedPosts);
-document.querySelector("[data-upload-media]").addEventListener("click", uploadMedia);
-document.querySelector("[data-insert-media]").addEventListener("click", insertMediaMarkdown);
+document.querySelector("[data-upload-post-image]").addEventListener("click", uploadPostImage);
+document.querySelector("[data-upload-structured-image]").addEventListener("click", uploadStructuredImage);
 document.querySelector("[data-load-structured]").addEventListener("click", loadStructuredRecord);
 document.querySelector("[data-add-structured]").addEventListener("click", addStructuredItem);
 document.querySelector("[data-save-structured]").addEventListener("click", saveStructuredRecord);

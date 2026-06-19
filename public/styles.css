@@ -534,6 +534,21 @@ textarea {
   gap: 10px;
 }
 
+.inline-uploader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px dashed #cfe0ed;
+  border-radius: 12px;
+  background: #f8fbfe;
+}
+
+.inline-uploader button {
+  min-height: 44px;
+}
+
 .auth-panel {
   padding: 24px;
 }
@@ -550,7 +565,8 @@ textarea {
   .feature-grid,
   .admin-layout,
   .filters,
-  .profile-grid {
+  .profile-grid,
+  .inline-uploader {
     grid-template-columns: 1fr;
   }
 

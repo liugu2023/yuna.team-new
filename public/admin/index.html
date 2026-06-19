@@ -57,6 +57,13 @@
               Markdown 内容
               <textarea data-markdown placeholder="# Hello"></textarea>
             </label>
+            <div class="inline-uploader">
+              <label>
+                文章图片
+                <input data-post-image-file type="file" accept="image/*" />
+              </label>
+              <button class="secondary" data-upload-post-image>上传并插入图片</button>
+            </div>
             <div class="actions">
               <button data-save>保存</button>
             <button class="secondary" data-publish>发布</button>
@@ -72,25 +79,6 @@
             <div class="preview-body article-body" data-preview></div>
           </aside>
         </div>
-
-        <section class="editor admin-tooling" data-admin-tools hidden>
-          <h2>资源上传</h2>
-          <div class="grid">
-            <label>
-              资源路径
-              <input data-media-path placeholder="uploads/example.png" />
-            </label>
-            <label>
-              图片文件
-              <input data-media-file type="file" accept="image/*" />
-            </label>
-          </div>
-          <div class="actions">
-            <button data-upload-media>上传到资源库</button>
-            <button class="secondary" data-insert-media disabled>插入到当前 Markdown</button>
-          </div>
-          <p data-media-message class="meta"></p>
-        </section>
 
         <section class="editor admin-tooling" data-admin-tools hidden>
           <h2>固定栏目</h2>
@@ -150,6 +138,13 @@
             头像或图片 URL
             <input data-structured-avatar placeholder="/media/avatars/example.png" />
           </label>
+          <div class="inline-uploader">
+            <label>
+              头像或图片
+              <input data-structured-image-file type="file" accept="image/*" />
+            </label>
+            <button class="secondary" data-upload-structured-image>上传并填入图片 URL</button>
+          </div>
           <label>
             简介
             <textarea data-structured-desc placeholder="支持简单文字，链接请填在下面的链接字段"></textarea>
