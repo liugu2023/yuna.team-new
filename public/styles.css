@@ -302,6 +302,11 @@ h1 span {
   font-size: 24px;
 }
 
+.post-card.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.1);
+}
+
 .meta {
   color: var(--muted);
   font-size: 14px;
@@ -416,11 +421,53 @@ button.danger {
   padding: 18px;
 }
 
+.admin-section {
+  margin-bottom: 18px;
+}
+
+.admin-section-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.admin-section-head h2 {
+  margin-bottom: 4px;
+}
+
+.admin-post-list {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-top: 14px;
+}
+
+.admin-post-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 10px;
+}
+
+.admin-post-card.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.1);
+}
+
+.admin-post-card h2 {
+  margin-bottom: 0;
+  font-size: 18px;
+}
+
+.admin-post-card p {
+  margin: 0;
+}
+
 .admin-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
   gap: 18px;
   align-items: start;
+  margin-bottom: 18px;
 }
 
 .preview {
@@ -570,6 +617,7 @@ textarea {
   .admin-layout,
   .filters,
   .profile-grid,
+  .admin-post-list,
   .inline-uploader {
     grid-template-columns: 1fr;
   }

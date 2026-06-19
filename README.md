@@ -109,7 +109,7 @@ http://localhost:8788
 http://localhost:8788/admin/
 ```
 
-首页导航会先显示成员登录入口。通过 Authentik 登录后，首页才会显示管理后台入口。后台可以创建、更新、发布、转草稿、删除 Markdown 动态，并支持实时预览、搜索和状态筛选。
+首页导航会先显示成员登录入口。通过 Authentik 登录后，首页才会显示管理后台入口。后台可以创建、更新、删除 Markdown 动态，并支持状态设置、实时预览、搜索和筛选。
 
 ## API
 
@@ -124,7 +124,6 @@ Admin:
 - `POST /api/posts` creates a post.
 - `PUT /api/posts/:slug` updates metadata and Markdown.
 - `DELETE /api/posts/:slug` deletes D1 metadata and the R2 Markdown object.
-- `POST /api/admin/seed` creates sample posts for testing.
 - `PUT /api/admin/media/:path` uploads an image or binary asset to R2.
 - `PUT /api/admin/site/:key` updates long-lived site content and writes an incremental D1 backup row.
 
@@ -134,11 +133,7 @@ Members and hall-of-fame content are not stored in this repository. They live in
 
 Normal blog/news posts still use the Markdown editor. Members and hall-of-fame use fixed admin forms so maintainers can add cards without editing raw JSON.
 
-Images are uploaded to R2 and served from `/media/...`. The admin page has an upload panel that returns Markdown such as:
-
-```md
-![avatar](/media/avatars/example.png)
-```
+Images are uploaded to R2 and served from `/media/...`. Article images can be inserted from the Markdown editor, and member or hall-of-fame avatars upload from their own forms.
 
 To migrate existing avatar images from the old repository to R2:
 

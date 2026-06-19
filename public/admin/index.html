@@ -26,8 +26,32 @@
           <a class="button secondary" href="/">返回首页</a>
         </section>
 
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <div>
+              <h2>文章列表</h2>
+            </div>
+            <button class="secondary" data-new>新建文章</button>
+          </div>
+          <div class="filters">
+            <input data-search placeholder="搜索标题、摘要或链接标识" />
+            <select data-filter-status>
+              <option value="all">全部状态</option>
+              <option value="published">已发布</option>
+              <option value="draft">草稿</option>
+            </select>
+          </div>
+          <div class="post-list admin-post-list" data-post-list></div>
+        </section>
+
         <div class="admin-layout" data-editor>
           <section class="editor">
+            <div class="admin-section-head">
+              <div>
+                <h2 data-editor-heading>新建文章</h2>
+                <p class="meta" data-editor-state>未保存</p>
+              </div>
+            </div>
             <div class="grid">
               <label>
                 标题
@@ -61,12 +85,9 @@
               <button class="secondary" data-upload-post-image>上传图片</button>
             </div>
             <div class="actions">
-              <button data-save>保存</button>
-            <button class="secondary" data-publish>发布</button>
-            <button class="secondary" data-draft>转为草稿</button>
-            <button class="secondary" data-seed>生成测试文章</button>
-            <button class="secondary" data-new>新建</button>
-            <button class="danger" data-delete hidden>删除</button>
+              <button data-save>保存文章</button>
+              <a class="button secondary" data-view-post href="#" target="_blank" rel="noreferrer" hidden>查看文章</a>
+              <button class="danger" data-delete hidden>删除文章</button>
             </div>
             <p data-message class="meta"></p>
           </section>
@@ -137,7 +158,6 @@
             </label>
           </div>
           <div class="actions">
-            <button data-load-members>读取成员</button>
             <button data-save-member-entry>保存成员</button>
           </div>
           <p data-member-message class="meta"></p>
@@ -182,24 +202,10 @@
             </label>
           </div>
           <div class="actions">
-            <button data-load-fame>读取名人堂</button>
             <button data-save-fame-entry>保存条目</button>
           </div>
           <p data-fame-message class="meta"></p>
           <div class="post-list" data-fame-list></div>
-        </section>
-
-        <section>
-          <h2>文章列表</h2>
-          <div class="filters">
-            <input data-search placeholder="搜索标题、摘要或链接标识" />
-            <select data-filter-status>
-              <option value="all">全部状态</option>
-              <option value="published">已发布</option>
-              <option value="draft">草稿</option>
-            </select>
-          </div>
-          <div class="post-list" data-post-list></div>
         </section>
       </div>
     </main>

@@ -1,4 +1,11 @@
-const state = { editingSlug: null, posts: [], members: [], fameItems: [] };
+const state = {
+  editingSlug: null,
+  editingMemberIndex: null,
+  editingFameIndex: null,
+  posts: [],
+  members: [],
+  fameItems: [],
+};
 const fields = {
   title: document.querySelector("[data-title]"),
   slug: document.querySelector("[data-slug]"),
@@ -7,9 +14,12 @@ const fields = {
   markdown: document.querySelector("[data-markdown]"),
   message: document.querySelector("[data-message]"),
   delete: document.querySelector("[data-delete]"),
+  viewPost: document.querySelector("[data-view-post]"),
   preview: document.querySelector("[data-preview]"),
   search: document.querySelector("[data-search]"),
   filterStatus: document.querySelector("[data-filter-status]"),
+  editorHeading: document.querySelector("[data-editor-heading]"),
+  editorState: document.querySelector("[data-editor-state]"),
   postImageFile: document.querySelector("[data-post-image-file]"),
   memberTerm: document.querySelector("[data-member-term]"),
   memberDepartment: document.querySelector("[data-member-department]"),
@@ -34,7 +44,7 @@ const fields = {
 };
 
 async function bootAdmin() {
-  await refreshPosts();
+  await Promise.all([refreshPosts(), loadMembers(), loadFame()]);
   updatePreview();
   updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl);
   updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl);
@@ -67,23 +77,24 @@ function renderAdminPostList() {
   list.innerHTML = posts
     .map(
       (post) => `
-        <article class="post-card">
+        <article class="post-card admin-post-card${state.editingSlug === post.slug ? " is-active" : ""}">
           <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${window.blog.formatDate(post.published_at || post.updated_at)}</p>
-          <h2><a href="/admin/?slug=${post.slug}">${window.blog.escapeHtml(post.title)}</a></h2>
+          <h2>${window.blog.escapeHtml(post.title)}</h2>
           <p>${window.blog.escapeHtml(post.excerpt || "")}</p>
           <div class="actions">
-            <a class="button secondary" href="/post.html?slug=${post.slug}" target="_blank" rel="noreferrer">查看</a>
-            <button class="secondary" data-quick-status="${post.status === "published" ? "draft" : "published"}" data-slug="${post.slug}">
-              ${post.status === "published" ? "转草稿" : "发布"}
-            </button>
+            <button class="secondary" data-edit-post="${window.blog.escapeHtml(post.slug)}">编辑</button>
+            <a class="button secondary" href="/post.html?slug=${encodeURIComponent(post.slug)}" target="_blank" rel="noreferrer">查看</a>
           </div>
         </article>
       `,
     )
     .join("");
 
-  list.querySelectorAll("[data-quick-status]").forEach((button) => {
-    button.addEventListener("click", () => quickSetStatus(button.dataset.slug, button.dataset.quickStatus));
+  list.querySelectorAll("[data-edit-post]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await loadPost(button.dataset.editPost);
+      document.querySelector("[data-editor]").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   });
 }
 
@@ -97,8 +108,13 @@ async function loadPost(slug) {
   fields.status.value = data.post.status;
   fields.markdown.value = data.markdown;
   fields.delete.hidden = false;
-  fields.message.textContent = `正在编辑 ${slug}`;
+  fields.viewPost.href = `/post.html?slug=${encodeURIComponent(data.post.slug)}`;
+  fields.viewPost.hidden = false;
+  fields.editorHeading.textContent = "编辑文章";
+  fields.editorState.textContent = `正在编辑：${data.post.slug}`;
+  fields.message.textContent = "";
   updatePreview();
+  renderAdminPostList();
 }
 
 async function savePost() {
@@ -124,36 +140,16 @@ async function savePost() {
     state.editingSlug = data.post.slug;
     fields.slug.disabled = true;
     fields.delete.hidden = false;
+    fields.viewPost.href = `/post.html?slug=${encodeURIComponent(data.post.slug)}`;
+    fields.viewPost.hidden = false;
+    fields.editorHeading.textContent = "编辑文章";
+    fields.editorState.textContent = `正在编辑：${data.post.slug}`;
     fields.message.textContent = "已保存。";
     await refreshPosts();
     history.replaceState(null, "", `/admin/?slug=${data.post.slug}`);
   } catch (error) {
     fields.message.textContent = error.message;
   }
-}
-
-async function quickSetStatus(slug, status) {
-  const data = await window.blog.fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
-  await window.blog.fetchJson(`/api/posts/${encodeURIComponent(slug)}`, {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ status, markdown: data.markdown }),
-  });
-  await refreshPosts();
-  if (state.editingSlug === slug) {
-    fields.status.value = status;
-  }
-}
-
-async function saveWithStatus(status) {
-  fields.status.value = status;
-  await savePost();
-}
-
-async function seedPosts() {
-  const data = await window.blog.fetchJson("/api/admin/seed", { method: "POST" });
-  fields.message.textContent = `已生成 ${data.created.length} 篇测试文章，跳过 ${data.skipped.length} 篇已有文章。`;
-  await refreshPosts();
 }
 
 async function uploadPostImage() {
@@ -217,21 +213,23 @@ async function uploadImage(file, folder) {
 
 async function loadMembers() {
   state.members = await loadJsonRecord("members", fields.memberMessage);
+  state.editingMemberIndex = null;
   renderFixedList(state.members, fields.memberList, "members");
 }
 
 async function loadFame() {
   state.fameItems = await loadJsonRecord("hall-of-fame", fields.fameMessage);
+  state.editingFameIndex = null;
   renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
 }
 
 async function loadJsonRecord(key, messageEl) {
   try {
     const data = await window.blog.fetchJson(`/api/site/${key}`);
-    messageEl.textContent = `已读取 ${data.record.title}`;
+    messageEl.textContent = "";
     return JSON.parse(data.record.content || "[]");
   } catch (error) {
-    messageEl.textContent = error.message;
+    messageEl.textContent = error.message === "内容不存在" ? "暂无内容，保存后会自动创建。" : error.message;
     return [];
   }
 }
@@ -260,11 +258,13 @@ async function saveMemberEntry() {
     return;
   }
 
-  state.members.push(item);
-  fields.memberName.value = "";
-  fields.memberAvatar.value = "";
-  fields.memberDesc.value = "";
-  fields.memberContactUrl.value = "";
+  if (Number.isInteger(state.editingMemberIndex) && state.members[state.editingMemberIndex]) {
+    state.members[state.editingMemberIndex] = item;
+  } else {
+    state.members.push(item);
+  }
+
+  clearMemberForm();
   renderFixedList(state.members, fields.memberList, "members");
   await saveMembers();
 }
@@ -293,12 +293,13 @@ async function saveFameEntry() {
     return;
   }
 
-  state.fameItems.push(item);
-  fields.fameName.value = "";
-  fields.fameTitle.value = "";
-  fields.fameAvatar.value = "";
-  fields.fameDesc.value = "";
-  fields.fameContactUrl.value = "";
+  if (Number.isInteger(state.editingFameIndex) && state.fameItems[state.editingFameIndex]) {
+    state.fameItems[state.editingFameIndex] = item;
+  } else {
+    state.fameItems.push(item);
+  }
+
+  clearFameForm();
   renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
   await saveFame();
 }
@@ -337,43 +338,51 @@ function renderFixedList(items, listEl, type) {
   listEl.innerHTML = items
     .map(
       (item, index) => `
-        <article class="post-card">
+        <article class="post-card${isEditingFixedItem(type, index) ? " is-active" : ""}">
           <p class="meta">${type === "members" ? `${window.blog.escapeHtml(item.term || "未填写届数")} · ${window.blog.escapeHtml(item.department || "")}` : "名人堂"}</p>
           <h2>${window.blog.escapeHtml(item.name)}</h2>
           <p>${window.blog.escapeHtml(item.title || "")}</p>
           <p>${window.blog.escapeHtml(item.desc || "")}</p>
           <div class="actions">
-            <button class="secondary" data-edit-fixed="${type}:${index}">编辑</button>
-            <button class="danger" data-remove-fixed="${type}:${index}">删除</button>
+            <button type="button" class="secondary" data-edit-fixed="${type}:${index}">编辑</button>
+            <button type="button" class="danger" data-remove-fixed="${type}:${index}">删除</button>
           </div>
         </article>
       `,
     )
     .join("");
+}
 
-  listEl.querySelectorAll("[data-edit-fixed]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const [targetType, rawIndex] = button.dataset.editFixed.split(":");
-      editFixedItem(targetType, Number(rawIndex));
-    });
-  });
+function isEditingFixedItem(type, index) {
+  return type === "members" ? state.editingMemberIndex === index : state.editingFameIndex === index;
+}
 
-  listEl.querySelectorAll("[data-remove-fixed]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const [targetType, rawIndex] = button.dataset.removeFixed.split(":");
-      const target = targetType === "members" ? state.members : state.fameItems;
-      target.splice(Number(rawIndex), 1);
-      renderFixedList(target, targetType === "members" ? fields.memberList : fields.fameList, targetType);
-    });
-  });
+async function handleFixedListClick(event) {
+  if (!(event.target instanceof Element)) return;
+
+  const editButton = event.target.closest("[data-edit-fixed]");
+  if (editButton) {
+    event.preventDefault();
+    const [targetType, rawIndex] = editButton.dataset.editFixed.split(":");
+    editFixedItem(targetType, Number(rawIndex));
+    return;
+  }
+
+  const removeButton = event.target.closest("[data-remove-fixed]");
+  if (removeButton) {
+    event.preventDefault();
+    const [targetType, rawIndex] = removeButton.dataset.removeFixed.split(":");
+    await removeFixedItem(targetType, Number(rawIndex));
+  }
 }
 
 function editFixedItem(type, index) {
   const target = type === "members" ? state.members : state.fameItems;
-  const [item] = target.splice(index, 1);
+  const item = target[index];
   if (!item) return;
 
   if (type === "members") {
+    state.editingMemberIndex = index;
     fields.memberTerm.value = item.term || "";
     fields.memberDepartment.value = item.department || "主席团";
     fields.memberRole.value = item.role || item.title || "成员";
@@ -385,10 +394,11 @@ function editFixedItem(type, index) {
     fields.memberContactUrl.value = displayContactValue(fields.memberContactLabel.value, link?.url || "");
     updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl);
     renderFixedList(state.members, fields.memberList, "members");
-    fields.memberMessage.textContent = "正在编辑成员，修改后点击保存成员。";
+    fields.memberMessage.textContent = "正在编辑成员。";
     return;
   }
 
+  state.editingFameIndex = index;
   fields.fameName.value = item.name || "";
   fields.fameTitle.value = item.title || "";
   fields.fameAvatar.value = item.avatar || "";
@@ -398,7 +408,51 @@ function editFixedItem(type, index) {
   fields.fameContactUrl.value = displayContactValue(fields.fameContactLabel.value, link?.url || "");
   updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl);
   renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
-  fields.fameMessage.textContent = "正在编辑名人堂条目，修改后点击保存条目。";
+  fields.fameMessage.textContent = "正在编辑名人堂条目。";
+}
+
+async function removeFixedItem(type, index) {
+  const isMembers = type === "members";
+  const target = isMembers ? state.members : state.fameItems;
+  if (!target[index]) return;
+
+  target.splice(index, 1);
+
+  if (isMembers) {
+    if (state.editingMemberIndex === index) clearMemberForm();
+    if (Number.isInteger(state.editingMemberIndex) && state.editingMemberIndex > index) {
+      state.editingMemberIndex -= 1;
+    }
+    renderFixedList(state.members, fields.memberList, "members");
+    await saveMembers();
+    return;
+  }
+
+  if (state.editingFameIndex === index) clearFameForm();
+  if (Number.isInteger(state.editingFameIndex) && state.editingFameIndex > index) {
+    state.editingFameIndex -= 1;
+  }
+  renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
+  await saveFame();
+}
+
+function clearMemberForm() {
+  state.editingMemberIndex = null;
+  fields.memberName.value = "";
+  fields.memberAvatar.value = "";
+  fields.memberImageFile.value = "";
+  fields.memberDesc.value = "";
+  fields.memberContactUrl.value = "";
+}
+
+function clearFameForm() {
+  state.editingFameIndex = null;
+  fields.fameName.value = "";
+  fields.fameTitle.value = "";
+  fields.fameAvatar.value = "";
+  fields.fameImageFile.value = "";
+  fields.fameDesc.value = "";
+  fields.fameContactUrl.value = "";
 }
 
 function normalizeContactUrl(label, value) {
@@ -442,8 +496,13 @@ function resetEditor() {
   fields.status.value = "draft";
   fields.markdown.value = "";
   fields.delete.hidden = true;
+  fields.viewPost.hidden = true;
+  fields.viewPost.href = "#";
+  fields.editorHeading.textContent = "新建文章";
+  fields.editorState.textContent = "未保存";
   fields.message.textContent = "";
   updatePreview();
+  renderAdminPostList();
   history.replaceState(null, "", "/admin/");
 }
 
@@ -467,16 +526,13 @@ function insertAtCursor(textarea, text) {
 }
 
 document.querySelector("[data-save]").addEventListener("click", savePost);
-document.querySelector("[data-publish]").addEventListener("click", () => saveWithStatus("published"));
-document.querySelector("[data-draft]").addEventListener("click", () => saveWithStatus("draft"));
-document.querySelector("[data-seed]").addEventListener("click", seedPosts);
 document.querySelector("[data-upload-post-image]").addEventListener("click", uploadPostImage);
 fields.memberImageFile.addEventListener("change", uploadMemberAvatar);
 fields.fameImageFile.addEventListener("change", uploadFameAvatar);
-document.querySelector("[data-load-members]").addEventListener("click", loadMembers);
 document.querySelector("[data-save-member-entry]").addEventListener("click", saveMemberEntry);
-document.querySelector("[data-load-fame]").addEventListener("click", loadFame);
 document.querySelector("[data-save-fame-entry]").addEventListener("click", saveFameEntry);
+fields.memberList.addEventListener("click", handleFixedListClick);
+fields.fameList.addEventListener("click", handleFixedListClick);
 fields.memberContactLabel.addEventListener("change", () => updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl));
 fields.fameContactLabel.addEventListener("change", () => updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl));
 document.querySelector("[data-new]").addEventListener("click", resetEditor);
