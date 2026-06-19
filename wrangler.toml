@@ -1,0 +1,20 @@
+name = "cloudflare-markdown-blog"
+compatibility_date = "2026-06-19"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "BLOG_DB"
+database_name = "cloudflare_markdown_blog"
+database_id = "1e3e11b2-7954-4585-8cc6-23889af2447a"
+
+[[r2_buckets]]
+binding = "BLOG_BUCKET"
+bucket_name = "cloudflare-markdown-blog"
+
+[vars]
+SITE_NAME = "Markdown Blog"
+PUBLIC_BASE_URL = "https://yuna.liugu.cc"
+AUTHENTIK_ISSUER = "https://sso.yuna.welain.com/application/o/yuna-docs/"
+AUTHENTIK_CLIENT_ID = "replace-with-client-id"
+AUTHENTIK_REDIRECT_PATH = "/auth/callback"
+ADMIN_EMAIL_ALLOWLIST = ""

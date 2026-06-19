@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin · Markdown Blog</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="shell">
+        <a class="brand" href="/">Markdown Blog</a>
+        <nav class="nav">
+          <a href="/api/auth/logout">Logout</a>
+        </nav>
+      </div>
+    </header>
+    <main class="page">
+      <div class="shell">
+        <section class="toolbar">
+          <div>
+            <h1>Admin</h1>
+            <p class="lede">Write and publish Markdown posts.</p>
+          </div>
+          <a class="button secondary" href="/api/auth/login">Login with Authentik</a>
+        </section>
+
+        <section class="auth-panel" data-auth-panel>
+          Checking session...
+        </section>
+
+        <section class="editor" data-editor hidden>
+          <div class="grid">
+            <label>
+              Title
+              <input data-title placeholder="Post title" />
+            </label>
+            <label>
+              Status
+              <select data-status>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            Slug
+            <input data-slug placeholder="hello-world" />
+          </label>
+          <label>
+            Excerpt
+            <input data-excerpt placeholder="Short summary" />
+          </label>
+          <label>
+            Markdown
+            <textarea data-markdown placeholder="# Hello"></textarea>
+          </label>
+          <div class="actions">
+            <button data-save>Save</button>
+            <button class="secondary" data-new>New</button>
+            <button class="danger" data-delete hidden>Delete</button>
+          </div>
+          <p data-message class="meta"></p>
+        </section>
+
+        <section>
+          <h2>Posts</h2>
+          <div class="post-list" data-post-list></div>
+        </section>
+      </div>
+    </main>
+    <script src="/app.js"></script>
+    <script src="/admin/admin.js"></script>
+  </body>
+</html>

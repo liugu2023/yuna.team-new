@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markdown Blog</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="shell">
+        <a class="brand" href="/">Markdown Blog</a>
+        <nav class="nav">
+          <a href="/admin/">Admin</a>
+        </nav>
+      </div>
+    </header>
+    <main class="page">
+      <div class="shell">
+        <section class="hero">
+          <h1>Articles stored as Markdown on Cloudflare R2.</h1>
+          <p class="lede">Metadata lives in D1, public pages are served by Pages, and editing is protected by Authentik OIDC.</p>
+        </section>
+        <section class="post-list" data-post-list></section>
+      </div>
+    </main>
+    <script src="/app.js"></script>
+    <script>
+      window.blog.renderPostList();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Post · Markdown Blog</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="shell">
+        <a class="brand" href="/">Markdown Blog</a>
+        <nav class="nav">
+          <a href="/admin/">Admin</a>
+        </nav>
+      </div>
+    </header>
+    <main class="page">
+      <div class="shell">
+        <article class="article" data-article>
+          <p class="empty">Loading...</p>
+        </article>
+      </div>
+    </main>
+    <script src="/app.js"></script>
+    <script>
+      window.blog.renderPost();
+    </script>
+  </body>
+</html>
