@@ -4,46 +4,41 @@ import type { Env, PostRecord } from "../../_shared/types";
 
 const samplePosts = [
   {
-    slug: "yuna-news-system-online",
-    title: "YUNA 最新动态系统上线",
-    excerpt: "协会官网新增动态发布系统，用于记录活动、课程和通知。",
-    markdown: `# YUNA 最新动态系统上线
+    slug: "welcome-to-yuna-news",
+    title: "欢迎来到 YUNA 最新动态",
+    excerpt: "这里会记录协会新闻、活动回顾、课程通知和成员故事。",
+    markdown: `# 欢迎来到 YUNA 最新动态
 
-这是第一篇测试动态。当前系统使用 **Cloudflare Pages** 提供静态页面，使用 D1 保存文章元数据，并把 Markdown 正文存储在 R2。
+这里是燕山大学大学生网络信息协会的动态发布区。
 
-后续可以继续加入标签、图片上传、RSS 和活动归档，让协会新闻和课程通知更容易维护。`,
+我们会在这里记录：
+
+- 协会新闻
+- 活动回顾
+- 公开课通知
+- 成员故事
+
+动态正文使用 Markdown 编写，方便维护，也方便长期归档。`,
   },
   {
-    slug: "authentik-member-login",
-    title: "成员登录接入 Authentik",
-    excerpt: "动态管理后台通过 Authentik OIDC 登录，访问权限由协会统一账号系统控制。",
-    markdown: `# 成员登录接入 Authentik
+    slug: "first-open-course-notice",
+    title: "近期公开课安排示例",
+    excerpt: "这是一篇测试动态，用于展示课程通知类内容的写法。",
+    markdown: `# 近期公开课安排示例
 
-动态管理后台已经接入 Authentik。
+这是一篇用于测试的课程通知动态。
 
-- 首页默认显示成员登录入口
-- 登录成功后显示管理后台入口
-- 回调地址固定为 \`https://yuna.liugu.cc/auth/callback\`
+## 时间
 
-本地系统只校验 OIDC 登录是否成功，具体谁能进入应用由 Authentik 侧配置。`,
-  },
-  {
-    slug: "markdown-news-workflow",
-    title: "动态内容采用 Markdown 编写",
-    excerpt: "协会动态以 Markdown 文件形式写入 R2，方便成员协作和长期归档。",
-    markdown: `# 动态内容采用 Markdown 编写
+周六晚 19:30
 
-动态正文不会直接塞进数据库，而是以 \`.md\` 文件写入 R2。
+## 内容
 
-D1 中只保存：
+- Web 开发入门
+- 网络安全学习路线
+- Linux 与服务器基础
 
-- 标题
-- 链接标识
-- 摘要
-- 发布状态
-- R2 对象路径
-
-这样后续要做导出、版本管理或者图片资源关联都会更简单。`,
+欢迎对技术感兴趣的同学参加。`,
   },
 ];
 

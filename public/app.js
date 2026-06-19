@@ -18,15 +18,22 @@ function escapeHtml(value) {
 }
 
 function markdownToHtml(markdown) {
-  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const lines = stripFrontmatter(markdown).replace(/\r\n/g, "\n").split("\n");
   const html = [];
   let inCode = false;
   let paragraph = [];
+  let inList = false;
 
   function flushParagraph() {
     if (paragraph.length === 0) return;
     html.push(`<p>${inlineMarkdown(escapeHtml(paragraph.join(" ")))}</p>`);
     paragraph = [];
+  }
+
+  function closeList() {
+    if (!inList) return;
+    html.push("</ul>");
+    inList = false;
   }
 
   for (const line of lines) {
@@ -49,23 +56,49 @@ function markdownToHtml(markdown) {
 
     if (!line.trim()) {
       flushParagraph();
+      closeList();
+      continue;
+    }
+
+    if (line.trim() === "---") {
+      flushParagraph();
+      closeList();
+      html.push("<hr>");
       continue;
     }
 
     const heading = line.match(/^(#{1,3})\s+(.*)$/);
     if (heading) {
       flushParagraph();
+      closeList();
       const level = heading[1].length;
       html.push(`<h${level}>${inlineMarkdown(escapeHtml(heading[2]))}</h${level}>`);
       continue;
     }
 
+    const listItem = line.match(/^\s*-\s+(.*)$/);
+    if (listItem) {
+      flushParagraph();
+      if (!inList) {
+        html.push("<ul>");
+        inList = true;
+      }
+      html.push(`<li>${inlineMarkdown(escapeHtml(listItem[1]))}</li>`);
+      continue;
+    }
+
+    closeList();
     paragraph.push(line.trim());
   }
 
   flushParagraph();
+  closeList();
   if (inCode) html.push("</code></pre>");
   return html.join("\n");
+}
+
+function stripFrontmatter(markdown) {
+  return markdown.replace(/^---\n[\s\S]*?\n---\n?/, "");
 }
 
 function inlineMarkdown(html) {
@@ -168,6 +201,33 @@ async function renderPost() {
   }
 }
 
+async function renderStaticPage() {
+  const container = document.querySelector("[data-static-page]");
+  if (!container) return;
+
+  const page = new URLSearchParams(location.search).get("p") || "about-us/index";
+  if (!/^[a-z0-9/_-]+$/i.test(page)) {
+    container.innerHTML = '<p class="error">页面路径无效。</p>';
+    return;
+  }
+
+  try {
+    const response = await fetch(`/content/${page}.md`);
+    if (!response.ok) throw new Error("页面不存在");
+    const markdown = await response.text();
+    const title = firstHeading(markdown) || "页面";
+    document.title = `${title} · 燕山大学大学生网络信息协会`;
+    container.innerHTML = `<div class="article-body">${markdownToHtml(markdown)}</div>`;
+  } catch (error) {
+    container.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function firstHeading(markdown) {
+  const match = stripFrontmatter(markdown).match(/^#\s+(.+)$/m);
+  return match ? match[1].trim() : "";
+}
+
 window.blog = {
   fetchJson,
   formatDate,
@@ -176,4 +236,5 @@ window.blog = {
   renderPostList,
   renderPost,
   renderUserNav,
+  renderStaticPage,
 };
