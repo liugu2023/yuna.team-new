@@ -186,11 +186,28 @@
             <div class="placeholder-actions" aria-label="页面设置占位入口">
               <button type="button" class="secondary" disabled>顶部首页跳转链接</button>
               <button type="button" class="secondary" disabled>相关服务跳转链接</button>
-              <button type="button" class="secondary" disabled>固定页面图片</button>
               <button type="button" class="secondary" disabled>联系我们页面</button>
               <a class="button" href="/api/admin/export?download=1" data-export-db>导出数据库</a>
             </div>
             <p class="meta" data-export-message></p>
+            <section class="admin-subsection">
+              <h3>主页图库</h3>
+              <div class="grid">
+                <label>
+                  图片标题
+                  <input data-gallery-title placeholder="活动合影 / 授课现场" />
+                </label>
+                <label>
+                  背景图片
+                  <input data-gallery-file type="file" accept="image/*" />
+                </label>
+              </div>
+              <div class="actions">
+                <button type="button" data-add-gallery-image>添加到图库</button>
+              </div>
+              <p class="meta" data-gallery-message></p>
+              <div class="gallery-admin-grid" data-gallery-list></div>
+            </section>
             <div class="inline-uploader">
               <label>
                 导入数据库

@@ -256,6 +256,25 @@ async function renderPostList({ admin = false } = {}) {
   }
 }
 
+async function renderHomeHero() {
+  const hero = document.querySelector("[data-home-hero]");
+  if (!hero) return;
+
+  try {
+    const data = await fetchJson("/api/site/homepage-gallery");
+    const items = JSON.parse(data.record.content || "[]");
+    if (!Array.isArray(items) || !items.length) return;
+
+    const active = items.find((item) => item.active) || items[0];
+    if (!active?.url) return;
+
+    hero.style.setProperty("--hero-image", `url("${normalizeAssetUrl(active.url)}")`);
+    hero.classList.add("has-background");
+  } catch {
+    hero.classList.remove("has-background");
+  }
+}
+
 async function renderUserNav() {
   const navs = document.querySelectorAll("[data-user-nav]");
   if (!navs.length) return;
@@ -735,6 +754,7 @@ window.blog = {
   markdownToHtml,
   normalizeAssetUrl,
   renderPostList,
+  renderHomeHero,
   renderPost,
   renderUserNav,
   renderStaticPage,

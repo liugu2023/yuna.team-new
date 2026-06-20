@@ -5,6 +5,7 @@ const state = {
   posts: [],
   members: [],
   fameItems: [],
+  galleryItems: [],
 };
 const fields = {
   title: document.querySelector("[data-title]"),
@@ -40,6 +41,10 @@ const fields = {
   exportMessage: document.querySelector("[data-export-message]"),
   importFile: document.querySelector("[data-import-db-file]"),
   importMessage: document.querySelector("[data-import-message]"),
+  galleryTitle: document.querySelector("[data-gallery-title]"),
+  galleryFile: document.querySelector("[data-gallery-file]"),
+  galleryMessage: document.querySelector("[data-gallery-message]"),
+  galleryList: document.querySelector("[data-gallery-list]"),
 };
 
 const editorModal = document.querySelector("[data-editor-modal]");
@@ -81,7 +86,7 @@ function closeEditor(force) {
 }
 
 async function bootAdmin() {
-  await Promise.all([refreshPosts(), loadMembers(), loadFame()]);
+  await Promise.all([refreshPosts(), loadMembers(), loadFame(), loadGallery()]);
   updatePreview();
   updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl);
   updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl);
@@ -270,6 +275,11 @@ async function loadFame() {
   renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
 }
 
+async function loadGallery() {
+  state.galleryItems = await loadJsonRecord("homepage-gallery", fields.galleryMessage);
+  renderGalleryList();
+}
+
 async function loadJsonRecord(key, messageEl) {
   try {
     const data = await window.blog.fetchJson(`/api/site/${key}`);
@@ -359,6 +369,10 @@ async function saveFame() {
   await saveFixedRecord("hall-of-fame", "网协名人堂", state.fameItems, fields.fameMessage);
 }
 
+async function saveGallery() {
+  await saveFixedRecord("homepage-gallery", "主页图库", state.galleryItems, fields.galleryMessage);
+}
+
 async function saveFixedRecord(key, title, items, messageEl) {
   try {
     await window.blog.fetchJson(`/api/admin/site/${key}`, {
@@ -410,6 +424,92 @@ function renderFixedList(items, listEl, type) {
       `;
     })
     .join("");
+}
+
+async function addGalleryImage() {
+  const file = fields.galleryFile.files?.[0];
+  if (!file) {
+    fields.galleryMessage.textContent = "请选择背景图片。";
+    return;
+  }
+  if (!file.type.startsWith("image/")) {
+    fields.galleryMessage.textContent = "只能上传图片文件。";
+    return;
+  }
+
+  try {
+    fields.galleryMessage.textContent = "图片上传中...";
+    const data = await uploadImage(file, "homepage");
+    const item = {
+      id: crypto.randomUUID(),
+      title: fields.galleryTitle.value.trim() || file.name,
+      url: data.url,
+      active: state.galleryItems.length === 0,
+      createdAt: new Date().toISOString(),
+    };
+    state.galleryItems.unshift(item);
+    fields.galleryTitle.value = "";
+    fields.galleryFile.value = "";
+    renderGalleryList();
+    await saveGallery();
+  } catch (error) {
+    fields.galleryMessage.textContent = error.message;
+  }
+}
+
+function renderGalleryList() {
+  if (!fields.galleryList) return;
+  if (!state.galleryItems.length) {
+    fields.galleryList.innerHTML = '<p class="empty">当前暂无主页背景图片。</p>';
+    return;
+  }
+
+  fields.galleryList.innerHTML = state.galleryItems
+    .map(
+      (item, index) => `
+        <article class="gallery-admin-card${item.active ? " is-active" : ""}">
+          <img src="${window.blog.escapeHtml(window.blog.normalizeAssetUrl(item.url))}" alt="${window.blog.escapeHtml(item.title || "主页背景")}" loading="lazy">
+          <div>
+            <h4>${window.blog.escapeHtml(item.title || "未命名图片")}</h4>
+            <p class="meta">${item.active ? "当前展示" : "未展示"}</p>
+            <div class="actions">
+              <button type="button" class="secondary" data-gallery-active="${index}" ${item.active ? "disabled" : ""}>设为展示</button>
+              <button type="button" class="danger" data-gallery-remove="${index}">删除</button>
+            </div>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+async function handleGalleryClick(event) {
+  if (!(event.target instanceof Element)) return;
+
+  const activeButton = event.target.closest("[data-gallery-active]");
+  if (activeButton) {
+    const index = Number(activeButton.dataset.galleryActive);
+    if (!state.galleryItems[index]) return;
+    state.galleryItems = state.galleryItems.map((item, itemIndex) => ({
+      ...item,
+      active: itemIndex === index,
+    }));
+    renderGalleryList();
+    await saveGallery();
+    return;
+  }
+
+  const removeButton = event.target.closest("[data-gallery-remove]");
+  if (removeButton) {
+    const index = Number(removeButton.dataset.galleryRemove);
+    if (!state.galleryItems[index]) return;
+    state.galleryItems.splice(index, 1);
+    if (state.galleryItems.length && !state.galleryItems.some((item) => item.active)) {
+      state.galleryItems[0].active = true;
+    }
+    renderGalleryList();
+    await saveGallery();
+  }
 }
 
 function isEditingFixedItem(type, index) {
@@ -562,7 +662,7 @@ async function importDatabase() {
     fields.importMessage.textContent =
       `导入完成：文章 ${data.counts.posts}，页面 ${data.counts.siteRecords}，备份 ${data.counts.siteRecordBackups}。`;
     fields.importFile.value = "";
-    await Promise.all([refreshPosts(), loadMembers(), loadFame()]);
+    await Promise.all([refreshPosts(), loadMembers(), loadFame(), loadGallery()]);
   } catch (error) {
     fields.importMessage.textContent = error.message;
   }
@@ -665,8 +765,10 @@ bind("[data-save-member-entry]", "click", saveMemberEntry);
 bind("[data-save-fame-entry]", "click", saveFameEntry);
 bind("[data-export-db]", "click", exportDatabase);
 bind("[data-import-db]", "click", importDatabase);
+bind("[data-add-gallery-image]", "click", addGalleryImage);
 bindElement(fields.memberList, "click", handleFixedListClick, "data-member-list");
 bindElement(fields.fameList, "click", handleFixedListClick, "data-fame-list");
+bindElement(fields.galleryList, "click", handleGalleryClick, "data-gallery-list");
 bindElement(fields.memberContactLabel, "change", () => updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl), "data-member-contact-label");
 bindElement(fields.fameContactLabel, "change", () => updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl), "data-fame-contact-label");
 bind("[data-new]", "click", () => {

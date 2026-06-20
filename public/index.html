@@ -37,11 +37,10 @@
       </aside>
 
       <section class="feed">
-        <section class="hero">
-          <div>
-            <p class="eyebrow">YUNA Campus Blog</p>
-            <h1>最新动态</h1>
-            <p class="lede">课程通知、活动记录、技术分享与协会公告。</p>
+        <section class="hero home-hero" data-home-hero>
+          <div class="hero-title-block">
+            <p class="hero-en">Yanshan University Student Net Information Association</p>
+            <h1>燕山大学大学生网络信息协会</h1>
           </div>
         </section>
         <section class="feature-grid" data-feature-grid aria-label="最新动态精选"></section>
@@ -87,6 +86,7 @@
     </main>
     <script src="/app.js"></script>
     <script>
+      window.blog.renderHomeHero();
       window.blog.renderPostList();
       window.blog.renderUserNav();
     </script>
