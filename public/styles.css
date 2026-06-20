@@ -11,6 +11,7 @@
   --accent-green: #00acef;
   --danger: #b42318;
   --shadow: 0 18px 38px rgba(0, 46, 77, 0.08);
+  --footer-height: 72px;
 }
 
 * {
@@ -381,8 +382,10 @@ a:hover {
 }
 
 .site-footer {
+  height: var(--footer-height);
   border-top: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.82);
+  overflow: hidden;
 }
 
 .footer-inner {
@@ -390,9 +393,9 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
+  height: 100%;
   width: min(1320px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 22px 0;
   color: var(--muted);
   font-size: 14px;
 }
@@ -400,19 +403,26 @@ a:hover {
 .footer-inner > div {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 10px;
+  min-width: 0;
 }
 
 .footer-inner strong {
+  flex: 0 0 auto;
   color: var(--text);
   font-size: 15px;
 }
 
+.footer-inner span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .footer-nav {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 16px;
 }
 
