@@ -6,17 +6,58 @@ const token = requiredEnv("MIGRATION_TOKEN");
 const sourceRoot = process.env.SOURCE_ROOT || "../yuna.team/docs";
 
 await uploadAvatars();
+await uploadActivates();
 
 async function uploadAvatars() {
   const avatarDir = path.resolve(sourceRoot, "public/avatars");
-  const files = await readdir(avatarDir);
+  const files = await safeReaddir(avatarDir);
 
   for (const file of files) {
     const absolutePath = path.join(avatarDir, file);
     const body = await readFile(absolutePath);
-    await putBinary(`/api/admin/media/avatars/${encodeURIComponent(file)}`, body, contentType(file));
+    await putBinary(mediaRoute(["avatars", file]), body, contentType(file));
     console.log(`uploaded /media/avatars/${file}`);
   }
+}
+
+async function uploadActivates() {
+  const activatesDir = path.resolve(sourceRoot, "public/activates");
+  const files = await listFiles(activatesDir);
+
+  for (const file of files) {
+    const absolutePath = path.join(activatesDir, file);
+    const body = await readFile(absolutePath);
+    const mediaPath = ["activates", ...file.split(path.sep)];
+    await putBinary(mediaRoute(mediaPath), body, contentType(file));
+    console.log(`uploaded /media/${mediaPath.join("/")}`);
+  }
+}
+
+async function listFiles(root, prefix = "") {
+  const entries = await safeReaddir(path.join(root, prefix), { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const relative = path.join(prefix, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...await listFiles(root, relative));
+    } else if (entry.isFile()) {
+      files.push(relative);
+    }
+  }
+  return files;
+}
+
+async function safeReaddir(dir, options) {
+  try {
+    return await readdir(dir, options);
+  } catch (error) {
+    if (error && error.code === "ENOENT") return [];
+    throw error;
+  }
+}
+
+function mediaRoute(parts) {
+  return `/api/admin/media/${parts.map(encodeURIComponent).join("/")}`;
 }
 
 async function putBinary(route, body, type) {
@@ -38,6 +79,9 @@ function contentType(file) {
   if (ext === ".png") return "image/png";
   if (ext === ".webp") return "image/webp";
   if (ext === ".svg") return "image/svg+xml";
+  if (ext === ".md") return "text/markdown; charset=utf-8";
+  if (ext === ".pdf") return "application/pdf";
+  if (ext === ".zip") return "application/zip";
   return "application/octet-stream";
 }
 

@@ -48,5 +48,5 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
 };
 
 function isSafeMediaPath(path: string): boolean {
-  return Boolean(path) && !path.includes("..") && /^[\w./\-\u4e00-\u9fa5]+$/.test(path);
+  return Boolean(path) && !path.includes("..") && /^[\w./\-\u4e00-\u9fa5\uff00-\uffef]+$/.test(path);
 }

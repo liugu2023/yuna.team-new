@@ -182,7 +182,7 @@ function normalizeInternalHref(href) {
 
   const markdownAsset = href.split(/[?#]/, 1)[0].match(/^\/(.+)\.md$/i);
   if (markdownAsset) {
-    return `/page.html?asset=${encodeURIComponent(markdownAsset[1])}`;
+    return `/media/${markdownAsset[1]}.md`;
   }
 
   const legacyPage = href.match(/^\/(about-us|lessons|join-us)\/(.+)\.html$/);
@@ -282,10 +282,10 @@ async function renderUserNav() {
   try {
     const me = await currentUser();
     const html = me.admin
-      ? '<a href="/admin/">管理后台</a><a href="#" data-logout>退出登录</a>'
+      ? '<a class="nav-link nav-admin" href="/admin/">管理后台</a><a class="nav-link nav-logout" href="#" data-logout>退出登录</a>'
       : me.authenticated
-        ? '<a href="#" data-logout>退出登录</a>'
-      : '<a href="/api/auth/login">成员登录</a>';
+        ? '<a class="nav-link nav-logout" href="#" data-logout>退出登录</a>'
+      : '<a class="nav-link nav-login" href="/api/auth/login">成员登录</a>';
     navs.forEach((nav) => {
       nav.innerHTML = nav.hasAttribute("data-side-nav")
         ? decorateSideNav(html)
@@ -293,14 +293,14 @@ async function renderUserNav() {
     });
   } catch {
     navs.forEach((nav) => {
-      const html = '<a href="/api/auth/login">成员登录</a>';
+      const html = '<a class="nav-link nav-login" href="/api/auth/login">成员登录</a>';
       nav.innerHTML = nav.hasAttribute("data-side-nav") ? decorateSideNav(html) : html;
     });
   }
 }
 
 function decorateSideNav(html) {
-  return html.replaceAll("<a ", '<a class="side-link" ');
+  return html.replaceAll('class="nav-link ', 'class="side-link ');
 }
 
 async function renderPost() {
