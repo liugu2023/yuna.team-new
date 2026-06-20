@@ -76,6 +76,7 @@ a:hover {
   width: 30px;
   height: 30px;
   display: block;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.22));
 }
 
 .nav {
@@ -98,10 +99,6 @@ a:hover {
 
 .home-page .brand {
   color: #fff;
-}
-
-.home-page .brand img {
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.22));
 }
 
 .home-page .topbar .nav a {
