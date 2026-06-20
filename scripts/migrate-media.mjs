@@ -5,24 +5,15 @@ const baseUrl = requiredEnv("SITE_BASE_URL").replace(/\/+$/, "");
 const token = requiredEnv("MIGRATION_TOKEN");
 const sourceRoot = process.env.SOURCE_ROOT || "../yuna.team/docs";
 
-await uploadAvatars();
 await uploadActivates();
-
-async function uploadAvatars() {
-  const avatarDir = path.resolve(sourceRoot, "public/avatars");
-  const files = await safeReaddir(avatarDir);
-
-  for (const file of files) {
-    const absolutePath = path.join(avatarDir, file);
-    const body = await readFile(absolutePath);
-    await putBinary(mediaRoute(["avatars", file]), body, contentType(file));
-    console.log(`uploaded /media/avatars/${file}`);
-  }
-}
 
 async function uploadActivates() {
   const activatesDir = path.resolve(sourceRoot, "public/activates");
   const files = await listFiles(activatesDir);
+  if (!files.length) {
+    console.log(`no lesson materials found in ${activatesDir}`);
+    return;
+  }
 
   for (const file of files) {
     const absolutePath = path.join(activatesDir, file);

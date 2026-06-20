@@ -13,7 +13,7 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
 
   // [[path]] 是 catch-all，params.path 是分段数组，用 / 拼回完整路径。
   const segments = params.path as string | string[] | undefined;
-  const rawPath = Array.isArray(segments) ? segments.join("/") : String(segments || "");
+  const rawPath = normalizeMediaPath(Array.isArray(segments) ? segments.join("/") : String(segments || ""));
   if (!isSafeMediaPath(rawPath)) {
     return badRequest("媒体路径无效");
   }
@@ -49,4 +49,12 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
 
 function isSafeMediaPath(path: string): boolean {
   return Boolean(path) && !path.includes("..") && /^[\w./\-\u4e00-\u9fa5\uff00-\uffef]+$/.test(path);
+}
+
+function normalizeMediaPath(path: string): string {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
 }
