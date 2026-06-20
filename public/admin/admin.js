@@ -11,8 +11,6 @@ const fields = {
   excerpt: document.querySelector("[data-excerpt]"),
   markdown: document.querySelector("[data-markdown]"),
   message: document.querySelector("[data-message]"),
-  delete: document.querySelector("[data-delete]"),
-  viewPost: document.querySelector("[data-view-post]"),
   preview: document.querySelector("[data-preview]"),
   search: document.querySelector("[data-search]"),
   filterStatus: document.querySelector("[data-filter-status]"),
@@ -144,9 +142,6 @@ async function loadPost(slug) {
   fields.title.value = data.post.title;
   fields.excerpt.value = data.post.excerpt || "";
   fields.markdown.value = data.markdown;
-  fields.delete.hidden = false;
-  fields.viewPost.href = `/post.html?slug=${encodeURIComponent(data.post.slug)}`;
-  fields.viewPost.hidden = false;
   fields.editorHeading.textContent = "编辑文章";
   fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
   fields.message.textContent = "";
@@ -175,9 +170,6 @@ async function savePost(status) {
       body: JSON.stringify(payload),
     });
     state.editingSlug = data.post.slug;
-    fields.delete.hidden = false;
-    fields.viewPost.href = `/post.html?slug=${encodeURIComponent(data.post.slug)}`;
-    fields.viewPost.hidden = false;
     fields.editorHeading.textContent = "编辑文章";
     fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
     fields.message.textContent = data.post.status === "published" ? "已发布。" : "已保存为草稿。";
@@ -540,25 +532,11 @@ function updateContactPlaceholder(select, input) {
   input.placeholder = placeholders[select.value] || "";
 }
 
-async function deletePost() {
-  if (!state.editingSlug) return;
-  if (!confirm(`确定删除 ${state.editingSlug} 吗？`)) return;
-
-  await window.blog.fetchJson(`/api/posts/${encodeURIComponent(state.editingSlug)}`, {
-    method: "DELETE",
-  });
-  await refreshPosts();
-  closeEditor(true);
-}
-
 function resetEditor() {
   state.editingSlug = null;
   fields.title.value = "";
   fields.excerpt.value = "";
   fields.markdown.value = "";
-  fields.delete.hidden = true;
-  fields.viewPost.hidden = true;
-  fields.viewPost.href = "#";
   fields.editorHeading.textContent = "新建文章";
   fields.editorState.textContent = "未保存";
   fields.message.textContent = "";
@@ -640,7 +618,6 @@ document.querySelector("[data-new]").addEventListener("click", () => {
   resetEditor();
   openEditor();
 });
-fields.delete.addEventListener("click", deletePost);
 fields.search.addEventListener("input", renderAdminPostList);
 fields.filterStatus.addEventListener("change", renderAdminPostList);
 fields.title.addEventListener("input", updatePreview);
