@@ -10,7 +10,6 @@ const fields = {
   title: document.querySelector("[data-title]"),
   slug: document.querySelector("[data-slug]"),
   excerpt: document.querySelector("[data-excerpt]"),
-  status: document.querySelector("[data-status]"),
   markdown: document.querySelector("[data-markdown]"),
   message: document.querySelector("[data-message]"),
   delete: document.querySelector("[data-delete]"),
@@ -43,14 +42,57 @@ const fields = {
   fameList: document.querySelector("[data-fame-list]"),
 };
 
+const editorModal = document.querySelector("[data-editor-modal]");
+
+function statusLabel(status) {
+  return status === "published" ? "已发布" : "草稿";
+}
+
+function editorSnapshot() {
+  return JSON.stringify({
+    title: fields.title.value,
+    slug: fields.slug.value,
+    excerpt: fields.excerpt.value,
+    markdown: fields.markdown.value,
+  });
+}
+
+let editorBaseline = editorSnapshot();
+
+function markEditorClean() {
+  editorBaseline = editorSnapshot();
+}
+
+function isEditorDirty() {
+  return editorSnapshot() !== editorBaseline;
+}
+
+function openEditor() {
+  editorModal.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function closeEditor(force) {
+  if (!force && isEditorDirty() && !confirm("有未保存的修改，确定关闭并丢弃吗？")) {
+    return;
+  }
+  editorModal.hidden = true;
+  document.body.classList.remove("modal-open");
+  resetEditor();
+}
+
 async function bootAdmin() {
   await Promise.all([refreshPosts(), loadMembers(), loadFame()]);
   updatePreview();
   updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl);
   updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl);
+  markEditorClean();
 
   const slug = new URLSearchParams(location.search).get("slug");
-  if (slug) await loadPost(slug);
+  if (slug) {
+    await loadPost(slug);
+    openEditor();
+  }
 }
 
 async function refreshPosts() {
@@ -93,7 +135,7 @@ function renderAdminPostList() {
   list.querySelectorAll("[data-edit-post]").forEach((button) => {
     button.addEventListener("click", async () => {
       await loadPost(button.dataset.editPost);
-      document.querySelector("[data-editor]").scrollIntoView({ behavior: "smooth", block: "start" });
+      openEditor();
     });
   });
 }
@@ -105,24 +147,24 @@ async function loadPost(slug) {
   fields.slug.value = data.post.slug;
   fields.slug.disabled = true;
   fields.excerpt.value = data.post.excerpt || "";
-  fields.status.value = data.post.status;
   fields.markdown.value = data.markdown;
   fields.delete.hidden = false;
   fields.viewPost.href = `/post.html?slug=${encodeURIComponent(data.post.slug)}`;
   fields.viewPost.hidden = false;
   fields.editorHeading.textContent = "编辑文章";
-  fields.editorState.textContent = `正在编辑：${data.post.slug}`;
+  fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
   fields.message.textContent = "";
   updatePreview();
   renderAdminPostList();
+  markEditorClean();
 }
 
-async function savePost() {
+async function savePost(status) {
   const payload = {
     title: fields.title.value.trim(),
     slug: fields.slug.value.trim(),
     excerpt: fields.excerpt.value.trim(),
-    status: fields.status.value,
+    status,
     markdown: fields.markdown.value,
   };
 
@@ -143,8 +185,9 @@ async function savePost() {
     fields.viewPost.href = `/post.html?slug=${encodeURIComponent(data.post.slug)}`;
     fields.viewPost.hidden = false;
     fields.editorHeading.textContent = "编辑文章";
-    fields.editorState.textContent = `正在编辑：${data.post.slug}`;
-    fields.message.textContent = "已保存。";
+    fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
+    fields.message.textContent = data.post.status === "published" ? "已发布。" : "已保存为草稿。";
+    markEditorClean();
     await refreshPosts();
     history.replaceState(null, "", `/admin/?slug=${data.post.slug}`);
   } catch (error) {
@@ -483,8 +526,8 @@ async function deletePost() {
   await window.blog.fetchJson(`/api/posts/${encodeURIComponent(state.editingSlug)}`, {
     method: "DELETE",
   });
-  resetEditor();
   await refreshPosts();
+  closeEditor(true);
 }
 
 function resetEditor() {
@@ -493,7 +536,6 @@ function resetEditor() {
   fields.slug.value = "";
   fields.slug.disabled = false;
   fields.excerpt.value = "";
-  fields.status.value = "draft";
   fields.markdown.value = "";
   fields.delete.hidden = true;
   fields.viewPost.hidden = true;
@@ -503,6 +545,7 @@ function resetEditor() {
   fields.message.textContent = "";
   updatePreview();
   renderAdminPostList();
+  markEditorClean();
   history.replaceState(null, "", "/admin/");
 }
 
@@ -525,7 +568,21 @@ function insertAtCursor(textarea, text) {
   textarea.focus();
 }
 
-document.querySelector("[data-save]").addEventListener("click", savePost);
+document.querySelector("[data-publish]").addEventListener("click", () => savePost("published"));
+document.querySelector("[data-save-draft]").addEventListener("click", () => savePost("draft"));
+document.querySelector("[data-editor-close]").addEventListener("click", () => closeEditor());
+editorModal.addEventListener("click", (event) => {
+  if (event.target === editorModal) closeEditor();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !editorModal.hidden) closeEditor();
+});
+fields.markdown.addEventListener("keydown", (event) => {
+  if (event.key !== "Tab") return;
+  event.preventDefault();
+  insertAtCursor(fields.markdown, "  ");
+  updatePreview();
+});
 document.querySelector("[data-upload-post-image]").addEventListener("click", uploadPostImage);
 fields.memberImageFile.addEventListener("change", uploadMemberAvatar);
 fields.fameImageFile.addEventListener("change", uploadFameAvatar);
@@ -535,7 +592,10 @@ fields.memberList.addEventListener("click", handleFixedListClick);
 fields.fameList.addEventListener("click", handleFixedListClick);
 fields.memberContactLabel.addEventListener("change", () => updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl));
 fields.fameContactLabel.addEventListener("change", () => updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl));
-document.querySelector("[data-new]").addEventListener("click", resetEditor);
+document.querySelector("[data-new]").addEventListener("click", () => {
+  resetEditor();
+  openEditor();
+});
 fields.delete.addEventListener("click", deletePost);
 fields.search.addEventListener("input", renderAdminPostList);
 fields.filterStatus.addEventListener("change", renderAdminPostList);

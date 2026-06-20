@@ -600,6 +600,58 @@ h1 span {
   margin-bottom: 18px;
 }
 
+.admin-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.admin-tab {
+  display: grid;
+  gap: 4px;
+  min-height: auto;
+  padding: 16px 18px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 10px 24px rgba(31, 41, 51, 0.04);
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.admin-tab:hover {
+  border-color: #b9d9d6;
+  transform: translateY(-2px);
+}
+
+.admin-tab.is-active {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, #ffffff, #f4faf6);
+  box-shadow: 0 0 0 3px rgba(0, 122, 138, 0.12);
+}
+
+.admin-tab-title {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.admin-tab.is-active .admin-tab-title {
+  color: var(--accent-dark);
+}
+
+.admin-tab-desc {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* [hidden] 的优先级低于类选择器，显式保证隐藏面板不显示。 */
+.admin-panel[hidden] {
+  display: none;
+}
+
 .button,
 button {
   display: inline-flex;
@@ -693,6 +745,84 @@ button.danger {
 .preview-body {
   max-height: 520px;
   overflow: auto;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: start center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  background: rgba(15, 31, 35, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+/* [hidden] 优先级低于类选择器，显式保证关闭时不显示。 */
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal {
+  width: min(1100px, 100%);
+  margin: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.modal-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 18px 0;
+}
+
+.modal-head h2 {
+  margin-bottom: 4px;
+}
+
+.modal-body {
+  padding: 16px 18px 18px;
+}
+
+.modal-body .admin-layout {
+  margin-bottom: 0;
+}
+
+.modal .editor {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.modal .editor textarea[data-markdown] {
+  min-height: 440px;
+}
+
+.icon-button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.icon-button:hover {
+  border-color: #b9d9d6;
+  color: var(--accent-dark);
+}
+
+body.modal-open {
+  overflow: hidden;
 }
 
 .filters {
@@ -828,6 +958,7 @@ textarea {
 
   .feature-grid,
   .campus-quick-grid,
+  .admin-tabs,
   .admin-layout,
   .filters,
   .profile-grid,

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>动态管理 · 燕山大学大学生网络信息协会</title>
+    <title>管理后台 · 燕山大学大学生网络信息协会</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -20,196 +20,234 @@
       <div class="shell">
         <section class="toolbar">
           <div>
-            <h1>动态管理</h1>
-            <p class="lede">发布协会新闻、活动记录、课程通知和成员动态。</p>
+            <h1>管理后台</h1>
+            <p class="lede">发布动态、维护协会成员名册与名人堂。</p>
           </div>
           <a class="button secondary" href="/">返回首页</a>
         </section>
 
-        <section class="admin-section">
-          <div class="admin-section-head">
-            <div>
-              <h2>文章列表</h2>
-            </div>
-            <button class="secondary" data-new>新建文章</button>
-          </div>
-          <div class="filters">
-            <input data-search placeholder="搜索标题、摘要或链接标识" />
-            <select data-filter-status>
-              <option value="all">全部状态</option>
-              <option value="published">已发布</option>
-              <option value="draft">草稿</option>
-            </select>
-          </div>
-          <div class="post-list admin-post-list" data-post-list></div>
-        </section>
+        <nav class="admin-tabs" aria-label="管理功能">
+          <button type="button" class="admin-tab is-active" data-tab="posts" aria-pressed="true">
+            <span class="admin-tab-title">文章管理</span>
+            <span class="admin-tab-desc">发布与编辑新闻、活动、课程通知</span>
+          </button>
+          <button type="button" class="admin-tab" data-tab="members" aria-pressed="false">
+            <span class="admin-tab-title">协会成员</span>
+            <span class="admin-tab-desc">按届数与部门维护成员名册</span>
+          </button>
+          <button type="button" class="admin-tab" data-tab="fame" aria-pressed="false">
+            <span class="admin-tab-title">名人堂</span>
+            <span class="admin-tab-desc">维护优秀成员履历与去向</span>
+          </button>
+        </nav>
 
-        <div class="admin-layout" data-editor>
-          <section class="editor">
+        <div class="admin-panel" data-panel="posts">
+          <section class="admin-section">
             <div class="admin-section-head">
               <div>
-                <h2 data-editor-heading>新建文章</h2>
-                <p class="meta" data-editor-state>未保存</p>
+                <h2>文章列表</h2>
               </div>
+              <button class="secondary" data-new>新建文章</button>
+            </div>
+            <div class="filters">
+              <input data-search placeholder="搜索标题、摘要或链接标识" />
+              <select data-filter-status>
+                <option value="all">全部状态</option>
+                <option value="published">已发布</option>
+                <option value="draft">草稿</option>
+              </select>
+            </div>
+            <div class="post-list admin-post-list" data-post-list></div>
+          </section>
+        </div>
+
+        <div class="admin-panel" data-panel="members" hidden>
+          <section class="editor admin-tooling">
+            <h2>协会成员</h2>
+            <div class="grid">
+              <label>
+                届数
+                <input data-member-term placeholder="第九届" />
+              </label>
+              <label>
+                部门
+                <select data-member-department>
+                  <option value="主席团">主席团</option>
+                  <option value="开发部">开发部</option>
+                  <option value="网络安全部">网络安全部</option>
+                  <option value="运维部">运维部</option>
+                  <option value="组宣部">组宣部</option>
+                  <option value="秘书处">秘书处</option>
+                </select>
+              </label>
             </div>
             <div class="grid">
+              <label>
+                职级
+                <select data-member-role>
+                  <option value="主席">主席</option>
+                  <option value="副主席">副主席</option>
+                  <option value="部长">部长</option>
+                  <option value="成员">成员</option>
+                </select>
+              </label>
+              <label>
+                姓名
+                <input data-member-name placeholder="成员姓名" />
+              </label>
+            </div>
+            <div class="inline-uploader">
+              <label>
+                头像
+                <input data-member-image-file type="file" accept="image/*" />
+              </label>
+              <input data-member-avatar type="hidden" />
+            </div>
+            <label>
+              简介
+              <textarea data-member-desc placeholder="成员简介"></textarea>
+            </label>
+            <div class="grid">
+              <label>
+                联系方式类型
+                <select data-member-contact-label>
+                  <option value="GitHub">GitHub</option>
+                  <option value="Email">Email</option>
+                  <option value="QQ">QQ</option>
+                  <option value="个人主页">个人主页</option>
+                </select>
+              </label>
+              <label>
+                联系方式
+                <input data-member-contact-url placeholder="https://github.com/yuna2017" />
+              </label>
+            </div>
+            <div class="actions">
+              <button data-save-member-entry>保存成员</button>
+            </div>
+            <p data-member-message class="meta"></p>
+            <div class="post-list" data-member-list></div>
+          </section>
+        </div>
+
+        <div class="admin-panel" data-panel="fame" hidden>
+          <section class="editor admin-tooling">
+            <h2>名人堂</h2>
+            <div class="grid">
+              <label>
+                名称
+                <input data-fame-name placeholder="姓名或展示名称" />
+              </label>
+              <label>
+                职位
+                <input data-fame-title placeholder="第六届主席 / 竞赛获奖成员" />
+              </label>
+            </div>
+            <div class="inline-uploader">
+              <label>
+                头像
+                <input data-fame-image-file type="file" accept="image/*" />
+              </label>
+              <input data-fame-avatar type="hidden" />
+            </div>
+            <label>
+              履历
+              <textarea data-fame-desc placeholder="保研、竞赛、工作去向等履历"></textarea>
+            </label>
+            <div class="grid">
+              <label>
+                联系方式类型
+                <select data-fame-contact-label>
+                  <option value="GitHub">GitHub</option>
+                  <option value="Email">Email</option>
+                  <option value="个人主页">个人主页</option>
+                </select>
+              </label>
+              <label>
+                联系方式
+                <input data-fame-contact-url placeholder="https://github.com/yuna2017" />
+              </label>
+            </div>
+            <div class="actions">
+              <button data-save-fame-entry>保存条目</button>
+            </div>
+            <p data-fame-message class="meta"></p>
+            <div class="post-list" data-fame-list></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <div class="modal-overlay" data-editor-modal hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-label="文章编辑器">
+        <div class="modal-head">
+          <div>
+            <h2 data-editor-heading>新建文章</h2>
+            <p class="meta" data-editor-state>未保存</p>
+          </div>
+          <button type="button" class="icon-button" data-editor-close aria-label="关闭编辑器">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="admin-layout" data-editor>
+            <section class="editor">
               <label>
                 标题
                 <input data-title placeholder="文章标题" />
               </label>
               <label>
-                状态
-                <select data-status>
-                  <option value="draft">草稿</option>
-                  <option value="published">已发布</option>
-                </select>
+                链接标识
+                <input data-slug placeholder="hello-world" />
               </label>
-            </div>
-            <label>
-              链接标识
-              <input data-slug placeholder="hello-world" />
-            </label>
-            <label>
-              摘要
-              <input data-excerpt placeholder="文章简短摘要" />
-            </label>
-            <label>
-              Markdown 内容
-              <textarea data-markdown placeholder="# Hello"></textarea>
-            </label>
-            <div class="inline-uploader">
               <label>
-                文章图片
-                <input data-post-image-file type="file" accept="image/*" />
+                摘要
+                <input data-excerpt placeholder="文章简短摘要" />
               </label>
-              <button class="secondary" data-upload-post-image>上传图片</button>
-            </div>
-            <div class="actions">
-              <button data-save>保存文章</button>
-              <a class="button secondary" data-view-post href="#" target="_blank" rel="noreferrer" hidden>查看文章</a>
-              <button class="danger" data-delete hidden>删除文章</button>
-            </div>
-            <p data-message class="meta"></p>
-          </section>
-          <aside class="preview">
-            <p class="meta">实时预览</p>
-            <div class="preview-body article-body" data-preview></div>
-          </aside>
+              <label>
+                Markdown 内容
+                <textarea data-markdown placeholder="# Hello"></textarea>
+              </label>
+              <div class="inline-uploader">
+                <label>
+                  文章图片
+                  <input data-post-image-file type="file" accept="image/*" />
+                </label>
+                <button class="secondary" data-upload-post-image>上传图片</button>
+              </div>
+              <div class="actions">
+                <button data-publish>发布文章</button>
+                <button class="secondary" data-save-draft>保存为草稿</button>
+                <a class="button secondary" data-view-post href="#" target="_blank" rel="noreferrer" hidden>查看文章</a>
+                <button class="danger" data-delete hidden>删除文章</button>
+              </div>
+              <p data-message class="meta"></p>
+            </section>
+            <aside class="preview">
+              <p class="meta">实时预览</p>
+              <div class="preview-body article-body" data-preview></div>
+            </aside>
+          </div>
         </div>
-
-        <section class="editor admin-tooling">
-          <h2>协会成员</h2>
-          <div class="grid">
-            <label>
-              届数
-              <input data-member-term placeholder="第九届" />
-            </label>
-            <label>
-              部门
-              <select data-member-department>
-                <option value="主席团">主席团</option>
-                <option value="开发部">开发部</option>
-                <option value="网络安全部">网络安全部</option>
-                <option value="运维部">运维部</option>
-                <option value="组宣部">组宣部</option>
-                <option value="秘书处">秘书处</option>
-              </select>
-            </label>
-          </div>
-          <div class="grid">
-            <label>
-              职级
-              <select data-member-role>
-                <option value="主席">主席</option>
-                <option value="副主席">副主席</option>
-                <option value="部长">部长</option>
-                <option value="成员">成员</option>
-              </select>
-            </label>
-            <label>
-              姓名
-              <input data-member-name placeholder="成员姓名" />
-            </label>
-          </div>
-          <div class="inline-uploader">
-            <label>
-              头像
-              <input data-member-image-file type="file" accept="image/*" />
-            </label>
-            <input data-member-avatar type="hidden" />
-          </div>
-          <label>
-            简介
-            <textarea data-member-desc placeholder="成员简介"></textarea>
-          </label>
-          <div class="grid">
-            <label>
-              联系方式类型
-              <select data-member-contact-label>
-                <option value="GitHub">GitHub</option>
-                <option value="Email">Email</option>
-                <option value="QQ">QQ</option>
-                <option value="个人主页">个人主页</option>
-              </select>
-            </label>
-            <label>
-              联系方式
-              <input data-member-contact-url placeholder="https://github.com/yuna2017" />
-            </label>
-          </div>
-          <div class="actions">
-            <button data-save-member-entry>保存成员</button>
-          </div>
-          <p data-member-message class="meta"></p>
-          <div class="post-list" data-member-list></div>
-        </section>
-
-        <section class="editor admin-tooling">
-          <h2>名人堂</h2>
-          <div class="grid">
-            <label>
-              名称
-              <input data-fame-name placeholder="姓名或展示名称" />
-            </label>
-            <label>
-              职位
-              <input data-fame-title placeholder="第六届主席 / 竞赛获奖成员" />
-            </label>
-          </div>
-          <div class="inline-uploader">
-            <label>
-              头像
-              <input data-fame-image-file type="file" accept="image/*" />
-            </label>
-            <input data-fame-avatar type="hidden" />
-          </div>
-          <label>
-            履历
-            <textarea data-fame-desc placeholder="保研、竞赛、工作去向等履历"></textarea>
-          </label>
-          <div class="grid">
-            <label>
-              联系方式类型
-              <select data-fame-contact-label>
-                <option value="GitHub">GitHub</option>
-                <option value="Email">Email</option>
-                <option value="个人主页">个人主页</option>
-              </select>
-            </label>
-            <label>
-              联系方式
-              <input data-fame-contact-url placeholder="https://github.com/yuna2017" />
-            </label>
-          </div>
-          <div class="actions">
-            <button data-save-fame-entry>保存条目</button>
-          </div>
-          <p data-fame-message class="meta"></p>
-          <div class="post-list" data-fame-list></div>
-        </section>
       </div>
-    </main>
+    </div>
+
     <script src="/app.js"></script>
     <script src="/admin/admin.js"></script>
+    <script>
+      (function () {
+        const tabs = Array.from(document.querySelectorAll("[data-tab]"));
+        const panels = Array.from(document.querySelectorAll("[data-panel]"));
+        function activate(name) {
+          tabs.forEach((tab) => {
+            const active = tab.dataset.tab === name;
+            tab.classList.toggle("is-active", active);
+            tab.setAttribute("aria-pressed", active ? "true" : "false");
+          });
+          panels.forEach((panel) => {
+            panel.hidden = panel.dataset.panel !== name;
+          });
+        }
+        tabs.forEach((tab) => tab.addEventListener("click", () => activate(tab.dataset.tab)));
+      })();
+    </script>
   </body>
 </html>
