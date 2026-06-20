@@ -4,8 +4,8 @@ import type { Env } from "../_shared/types";
 export const onRequestGet: PagesFunction<Env, "path"> = async ({ env, params }) => {
   // [[path]] 是 catch-all，params.path 是分段数组，用 / 拼回完整路径。
   const segments = params.path as string | string[] | undefined;
-  const rawPath = Array.isArray(segments) ? segments.join("/") : String(segments || "");
-  if (!rawPath || rawPath.includes("..")) {
+  const rawPath = normalizeMediaPath(Array.isArray(segments) ? segments.join("/") : String(segments || ""));
+  if (!isSafeMediaPath(rawPath)) {
     return new Response("资源不存在", { status: 404 });
   }
 
@@ -29,3 +29,15 @@ export const onRequestGet: PagesFunction<Env, "path"> = async ({ env, params }) 
 
   return new Response(object.body, { headers });
 };
+
+function isSafeMediaPath(path: string): boolean {
+  return Boolean(path) && !path.includes("..") && /^[\w. /()\-\u4e00-\u9fa5\uff00-\uffef]+$/.test(path);
+}
+
+function normalizeMediaPath(path: string): string {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+}
