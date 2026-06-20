@@ -14,7 +14,7 @@ function git(args) {
 }
 
 function listMarkdownFiles() {
-  return git(["ls-tree", "-r", "--name-only", sourceRef, "--", "public/content", "public/activates"])
+  return git(["-c", "core.quotePath=false", "ls-tree", "-r", "--name-only", sourceRef, "--", "public/content", "public/activates"])
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((file) => file.endsWith(".md"));
@@ -65,6 +65,42 @@ for (const file of files) {
 
   imported += 1;
   console.log(`imported ${key}`);
+}
+
+const defaultPages = [
+  {
+    key: "services/index",
+    title: "相关服务",
+    content: "# 相关服务\n\n这里用于放置协会相关服务入口。\n\n- 校园常用服务入口\n- 协会内部工具入口\n- 授课、活动、报名相关链接\n",
+  },
+  {
+    key: "contact-us/index",
+    title: "联系我们",
+    content: "# 联系我们\n\n这里用于放置协会联系方式。\n\n- 招新咨询\n- 课程与活动咨询\n- 合作与反馈\n",
+  },
+];
+
+for (const page of defaultPages) {
+  const response = await fetch(pageApiPath(page.key), {
+    method: "PUT",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      title: page.title,
+      content: page.content,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    console.error(`${page.key}: ${data.error || `导入失败：${response.status}`}`);
+    process.exit(1);
+  }
+
+  imported += 1;
+  console.log(`imported ${page.key}`);
 }
 
 console.log(JSON.stringify({ imported, sourceRef }, null, 2));
