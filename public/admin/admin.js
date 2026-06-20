@@ -6,6 +6,7 @@ const state = {
   members: [],
   fameItems: [],
   galleryItems: [],
+  galleryPreviewUrl: "",
 };
 const fields = {
   title: document.querySelector("[data-title]"),
@@ -43,8 +44,13 @@ const fields = {
   importMessage: document.querySelector("[data-import-message]"),
   galleryTitle: document.querySelector("[data-gallery-title]"),
   galleryFile: document.querySelector("[data-gallery-file]"),
+  galleryScale: document.querySelector("[data-gallery-scale]"),
+  galleryScaleValue: document.querySelector("[data-gallery-scale-value]"),
+  galleryPreview: document.querySelector("[data-gallery-crop-preview]"),
+  galleryPreviewImage: document.querySelector("[data-gallery-crop-preview-image]"),
   galleryMessage: document.querySelector("[data-gallery-message]"),
   galleryList: document.querySelector("[data-gallery-list]"),
+  addGalleryButton: document.querySelector("[data-add-gallery-image]"),
 };
 
 const editorModal = document.querySelector("[data-editor-modal]");
@@ -438,23 +444,107 @@ async function addGalleryImage() {
   }
 
   try {
-    fields.galleryMessage.textContent = "图片上传中...";
-    const data = await uploadImage(file, "homepage");
+    fields.addGalleryButton.disabled = true;
+    fields.galleryMessage.textContent = "正在裁剪并上传图片...";
+    const croppedFile = await cropHomepageImage(file, Number(fields.galleryScale.value || 1));
+    const data = await uploadImage(croppedFile, "homepage");
     const item = {
       id: crypto.randomUUID(),
       title: fields.galleryTitle.value.trim() || file.name,
       url: data.url,
+      size: "1920x360",
+      scale: Number(fields.galleryScale.value || 1),
       active: state.galleryItems.length === 0,
       createdAt: new Date().toISOString(),
     };
     state.galleryItems.unshift(item);
     fields.galleryTitle.value = "";
     fields.galleryFile.value = "";
+    fields.galleryScale.value = "1";
+    updateGalleryCropPreview();
     renderGalleryList();
     await saveGallery();
+    fields.galleryMessage.textContent = "图片已添加到图库。";
   } catch (error) {
     fields.galleryMessage.textContent = error.message;
+  } finally {
+    fields.addGalleryButton.disabled = false;
   }
+}
+
+async function cropHomepageImage(file, scale) {
+  const targetWidth = 1920;
+  const targetHeight = 360;
+  const image = await loadImage(file);
+  const targetRatio = targetWidth / targetHeight;
+  const imageRatio = image.naturalWidth / image.naturalHeight;
+  const zoom = Math.max(1, Math.min(scale || 1, 2.5));
+
+  let sourceWidth;
+  let sourceHeight;
+  if (imageRatio > targetRatio) {
+    sourceHeight = image.naturalHeight;
+    sourceWidth = sourceHeight * targetRatio;
+  } else {
+    sourceWidth = image.naturalWidth;
+    sourceHeight = sourceWidth / targetRatio;
+  }
+
+  sourceWidth /= zoom;
+  sourceHeight /= zoom;
+
+  const sourceX = Math.max(0, (image.naturalWidth - sourceWidth) / 2);
+  const sourceY = Math.max(0, (image.naturalHeight - sourceHeight) / 2);
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("当前浏览器不支持图片裁剪。");
+  context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
+
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+  if (!blob) throw new Error("图片裁剪失败。");
+  return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}-homepage-1920x360.jpg`, {
+    type: "image/jpeg",
+  });
+}
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("图片读取失败。"));
+    };
+    image.src = url;
+  });
+}
+
+function updateGalleryCropPreview() {
+  const file = fields.galleryFile.files?.[0];
+  const scale = Number(fields.galleryScale.value || 1);
+  fields.galleryScaleValue.textContent = `${scale.toFixed(2)}x`;
+  fields.galleryPreviewImage.style.setProperty("--gallery-crop-scale", scale);
+
+  if (!file) {
+    if (state.galleryPreviewUrl) URL.revokeObjectURL(state.galleryPreviewUrl);
+    state.galleryPreviewUrl = "";
+    fields.galleryPreviewImage.hidden = true;
+    fields.galleryPreviewImage.removeAttribute("src");
+    fields.galleryPreview.querySelector("span").hidden = false;
+    return;
+  }
+
+  if (state.galleryPreviewUrl) URL.revokeObjectURL(state.galleryPreviewUrl);
+  state.galleryPreviewUrl = URL.createObjectURL(file);
+  fields.galleryPreviewImage.src = state.galleryPreviewUrl;
+  fields.galleryPreviewImage.hidden = false;
+  fields.galleryPreview.querySelector("span").hidden = true;
 }
 
 function renderGalleryList() {
@@ -766,6 +856,8 @@ bind("[data-save-fame-entry]", "click", saveFameEntry);
 bind("[data-export-db]", "click", exportDatabase);
 bind("[data-import-db]", "click", importDatabase);
 bind("[data-add-gallery-image]", "click", addGalleryImage);
+bindElement(fields.galleryFile, "change", updateGalleryCropPreview, "data-gallery-file");
+bindElement(fields.galleryScale, "input", updateGalleryCropPreview, "data-gallery-scale");
 bindElement(fields.memberList, "click", handleFixedListClick, "data-member-list");
 bindElement(fields.fameList, "click", handleFixedListClick, "data-fame-list");
 bindElement(fields.galleryList, "click", handleGalleryClick, "data-gallery-list");

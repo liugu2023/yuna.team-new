@@ -201,6 +201,15 @@
                   背景图片
                   <input data-gallery-file type="file" accept="image/*" />
                 </label>
+                <label>
+                  裁剪缩放
+                  <input data-gallery-scale type="range" min="1" max="2.5" step="0.05" value="1" />
+                  <span class="meta" data-gallery-scale-value>1.00x</span>
+                </label>
+              </div>
+              <div class="gallery-crop-preview" data-gallery-crop-preview>
+                <img data-gallery-crop-preview-image alt="主页背景裁剪预览" hidden />
+                <span>选择图片后预览横幅裁剪范围</span>
               </div>
               <div class="actions">
                 <button type="button" data-add-gallery-image>添加到图库</button>
