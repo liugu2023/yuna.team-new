@@ -804,6 +804,41 @@ button.danger {
   min-height: 440px;
 }
 
+textarea.is-dragover {
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 138, 0.16);
+}
+
+.fixed-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fixed-card-meta {
+  min-width: 0;
+}
+
+.fixed-card-meta p,
+.fixed-card-meta h2 {
+  margin: 0;
+}
+
+.fixed-avatar {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  background: #f8fbf8;
+}
+
+.fixed-avatar-empty {
+  display: inline-block;
+}
+
 .icon-button {
   flex: 0 0 auto;
   min-height: 36px;

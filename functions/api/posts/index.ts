@@ -32,20 +32,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   }
 
   const payload = await readJson<CreatePostPayload>(request);
-  if (!payload?.title || !payload.slug || payload.markdown === undefined) {
-    return badRequest("标题、链接标识和 Markdown 内容不能为空");
+  if (!payload?.title || payload.markdown === undefined) {
+    return badRequest("标题和 Markdown 内容不能为空");
   }
 
   const title = payload.title.trim();
   if (!title) return badRequest("标题不能为空");
 
-  const slug = normalizeSlug(payload.slug);
-  if (!slug) return badRequest("链接标识无效");
-
-  const existing = await env.BLOG_DB.prepare("SELECT slug FROM posts WHERE slug = ?")
-    .bind(slug)
-    .first<{ slug: string }>();
-  if (existing) return badRequest("链接标识已存在");
+  // 链接标识由后台自动分配：优先用传入值（兼容旧调用），否则从标题生成，并保证唯一。
+  const base = normalizeSlug(payload.slug || title) || "post";
+  const slug = await ensureUniqueSlug(env, base);
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -88,6 +84,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
 function isValidStatus(value: string): value is "draft" | "published" {
   return value === "draft" || value === "published";
+}
+
+async function ensureUniqueSlug(env: Env, base: string): Promise<string> {
+  let candidate = base;
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const existing = await env.BLOG_DB.prepare("SELECT slug FROM posts WHERE slug = ?")
+      .bind(candidate)
+      .first<{ slug: string }>();
+    if (!existing) return candidate;
+    candidate = `${base}-${crypto.randomUUID().slice(0, 4)}`;
+  }
+  return `${base}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
 function normalizeSlug(input: string): string {

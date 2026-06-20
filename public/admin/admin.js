@@ -8,7 +8,6 @@ const state = {
 };
 const fields = {
   title: document.querySelector("[data-title]"),
-  slug: document.querySelector("[data-slug]"),
   excerpt: document.querySelector("[data-excerpt]"),
   markdown: document.querySelector("[data-markdown]"),
   message: document.querySelector("[data-message]"),
@@ -51,7 +50,6 @@ function statusLabel(status) {
 function editorSnapshot() {
   return JSON.stringify({
     title: fields.title.value,
-    slug: fields.slug.value,
     excerpt: fields.excerpt.value,
     markdown: fields.markdown.value,
   });
@@ -144,8 +142,6 @@ async function loadPost(slug) {
   const data = await window.blog.fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
   state.editingSlug = slug;
   fields.title.value = data.post.title;
-  fields.slug.value = data.post.slug;
-  fields.slug.disabled = true;
   fields.excerpt.value = data.post.excerpt || "";
   fields.markdown.value = data.markdown;
   fields.delete.hidden = false;
@@ -162,7 +158,6 @@ async function loadPost(slug) {
 async function savePost(status) {
   const payload = {
     title: fields.title.value.trim(),
-    slug: fields.slug.value.trim(),
     excerpt: fields.excerpt.value.trim(),
     status,
     markdown: fields.markdown.value,
@@ -180,7 +175,6 @@ async function savePost(status) {
       body: JSON.stringify(payload),
     });
     state.editingSlug = data.post.slug;
-    fields.slug.disabled = true;
     fields.delete.hidden = false;
     fields.viewPost.href = `/post.html?slug=${encodeURIComponent(data.post.slug)}`;
     fields.viewPost.hidden = false;
@@ -195,14 +189,14 @@ async function savePost(status) {
   }
 }
 
-async function uploadPostImage() {
-  const file = fields.postImageFile.files[0];
-  if (!file) {
-    fields.message.textContent = "请选择文章图片。";
+async function insertImageFile(file) {
+  if (!file || !file.type.startsWith("image/")) {
+    fields.message.textContent = "只能插入图片文件。";
     return;
   }
 
   try {
+    fields.message.textContent = "图片上传中…";
     const data = await uploadImage(file, `posts/${state.editingSlug || "drafts"}`);
     insertAtCursor(fields.markdown, `\n![${file.name}](${data.url})\n`);
     fields.message.textContent = `图片已上传：${data.url}`;
@@ -210,6 +204,21 @@ async function uploadPostImage() {
   } catch (error) {
     fields.message.textContent = error.message;
   }
+}
+
+async function insertImageFiles(files) {
+  for (const file of files) {
+    await insertImageFile(file);
+  }
+}
+
+async function uploadPostImage() {
+  const file = fields.postImageFile.files[0];
+  if (!file) {
+    fields.message.textContent = "请选择文章图片。";
+    return;
+  }
+  await insertImageFile(file);
 }
 
 async function uploadMemberAvatar() {
@@ -379,20 +388,32 @@ function renderFixedList(items, listEl, type) {
   }
 
   listEl.innerHTML = items
-    .map(
-      (item, index) => `
-        <article class="post-card${isEditingFixedItem(type, index) ? " is-active" : ""}">
-          <p class="meta">${type === "members" ? `${window.blog.escapeHtml(item.term || "未填写届数")} · ${window.blog.escapeHtml(item.department || "")}` : "名人堂"}</p>
-          <h2>${window.blog.escapeHtml(item.name)}</h2>
-          <p>${window.blog.escapeHtml(item.title || "")}</p>
-          <p>${window.blog.escapeHtml(item.desc || "")}</p>
+    .map((item, index) => {
+      const meta =
+        type === "members"
+          ? `${window.blog.escapeHtml(item.term || "未填写届数")} · ${window.blog.escapeHtml(item.department || "")}`
+          : "名人堂";
+      const avatar = item.avatar
+        ? `<img class="fixed-avatar" src="${window.blog.escapeHtml(window.blog.normalizeAssetUrl(item.avatar))}" alt="${window.blog.escapeHtml(item.name || "")}" loading="lazy">`
+        : `<span class="fixed-avatar fixed-avatar-empty" aria-hidden="true"></span>`;
+      return `
+        <article class="post-card admin-fixed-card${isEditingFixedItem(type, index) ? " is-active" : ""}">
+          <div class="fixed-card-head">
+            ${avatar}
+            <div class="fixed-card-meta">
+              <p class="meta">${meta}</p>
+              <h2>${window.blog.escapeHtml(item.name)}</h2>
+              <p>${window.blog.escapeHtml(item.title || "")}</p>
+            </div>
+          </div>
+          ${item.desc ? `<p>${window.blog.escapeHtml(item.desc)}</p>` : ""}
           <div class="actions">
             <button type="button" class="secondary" data-edit-fixed="${type}:${index}">编辑</button>
             <button type="button" class="danger" data-remove-fixed="${type}:${index}">删除</button>
           </div>
         </article>
-      `,
-    )
+      `;
+    })
     .join("");
 }
 
@@ -533,8 +554,6 @@ async function deletePost() {
 function resetEditor() {
   state.editingSlug = null;
   fields.title.value = "";
-  fields.slug.value = "";
-  fields.slug.disabled = false;
   fields.excerpt.value = "";
   fields.markdown.value = "";
   fields.delete.hidden = true;
@@ -582,6 +601,31 @@ fields.markdown.addEventListener("keydown", (event) => {
   event.preventDefault();
   insertAtCursor(fields.markdown, "  ");
   updatePreview();
+});
+fields.markdown.addEventListener("paste", (event) => {
+  const files = Array.from(event.clipboardData?.files || []).filter((file) =>
+    file.type.startsWith("image/"),
+  );
+  if (!files.length) return;
+  event.preventDefault();
+  insertImageFiles(files);
+});
+fields.markdown.addEventListener("dragover", (event) => {
+  if (!Array.from(event.dataTransfer?.types || []).includes("Files")) return;
+  event.preventDefault();
+  fields.markdown.classList.add("is-dragover");
+});
+fields.markdown.addEventListener("dragleave", () => {
+  fields.markdown.classList.remove("is-dragover");
+});
+fields.markdown.addEventListener("drop", (event) => {
+  const files = Array.from(event.dataTransfer?.files || []).filter((file) =>
+    file.type.startsWith("image/"),
+  );
+  fields.markdown.classList.remove("is-dragover");
+  if (!files.length) return;
+  event.preventDefault();
+  insertImageFiles(files);
 });
 document.querySelector("[data-upload-post-image]").addEventListener("click", uploadPostImage);
 fields.memberImageFile.addEventListener("change", uploadMemberAvatar);

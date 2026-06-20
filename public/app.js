@@ -481,6 +481,7 @@ window.blog = {
   formatDate,
   escapeHtml,
   markdownToHtml,
+  normalizeAssetUrl,
   renderPostList,
   renderPost,
   renderUserNav,
