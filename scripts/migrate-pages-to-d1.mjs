@@ -28,7 +28,7 @@ function pageKey(path) {
   if (path.startsWith("public/content/")) {
     return path.replace(/^public\/content\//, "").replace(/\.md$/i, "");
   }
-  return `asset/${path.replace(/^public\//, "").replace(/\.md$/i, "")}`;
+  return `asset/${utf8Hex(path.replace(/^public\//, "").replace(/\.md$/i, ""))}`;
 }
 
 function firstHeading(markdown, fallback) {
@@ -38,6 +38,10 @@ function firstHeading(markdown, fallback) {
 
 function pageApiPath(key) {
   return `${baseUrl}/api/pages/${key.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+function utf8Hex(value) {
+  return Buffer.from(value, "utf8").toString("hex");
 }
 
 const files = listMarkdownFiles();

@@ -377,7 +377,7 @@ function resolveStaticMarkdownPage(params) {
     const decoded = decodeURIComponent(asset).replace(/\.md$/i, "").replace(/^\/+|\/+$/g, "");
     if (!isSafeMarkdownPath(decoded)) return null;
     return {
-      key: `asset/${decoded}`,
+      key: `asset/${utf8Hex(decoded)}`,
       defaultTitle: decoded.split("/").pop() || "资料页面",
     };
   }
@@ -715,6 +715,12 @@ function uploadFilename(name) {
 
 function pageApiPath(page) {
   return `/api/pages/${page.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+function utf8Hex(value) {
+  return Array.from(new TextEncoder().encode(value))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 // 登出通过 POST 提交，配合后端只接受 POST 的 /api/auth/logout，防 CSRF 强制登出。
