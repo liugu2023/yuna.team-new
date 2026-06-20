@@ -1,5 +1,5 @@
 {
-  "name": "cloudflare-markdown-blog",
+  "name": "yuna-team-blog",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,6 +9,7 @@
     "db:migrate:local": "wrangler d1 migrations apply BLOG_DB --local",
     "db:migrate": "wrangler d1 migrations apply BLOG_DB --remote",
     "media:migrate": "node scripts/migrate-media.mjs",
+    "content:check": "node scripts/check-content.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

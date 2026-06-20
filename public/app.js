@@ -1,7 +1,7 @@
 async function fetchJson(url, options) {
   const response = await fetch(url, options);
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || `Request failed: ${response.status}`);
+  if (!response.ok) throw new Error(data.error || `请求失败：${response.status}`);
   return data;
 }
 
@@ -22,18 +22,31 @@ function markdownToHtml(markdown) {
   const html = [];
   let inCode = false;
   let paragraph = [];
-  let inList = false;
+  let listTag = "";
+  let quote = [];
 
   function flushParagraph() {
     if (paragraph.length === 0) return;
-    html.push(`<p>${inlineMarkdown(escapeHtml(paragraph.join(" ")))}</p>`);
+    const content = paragraph
+      .map((line) => {
+        const hasBreak = /\s{2,}$/.test(line);
+        return `${inlineMarkdown(escapeHtml(line.trimEnd()))}${hasBreak ? "<br>" : ""}`;
+      })
+      .join(" ");
+    html.push(`<p>${content}</p>`);
     paragraph = [];
   }
 
   function closeList() {
-    if (!inList) return;
-    html.push("</ul>");
-    inList = false;
+    if (!listTag) return;
+    html.push(`</${listTag}>`);
+    listTag = "";
+  }
+
+  function flushQuote() {
+    if (quote.length === 0) return;
+    html.push(`<blockquote>${quote.map((line) => `<p>${line}</p>`).join("")}</blockquote>`);
+    quote = [];
   }
 
   for (const line of lines) {
@@ -43,6 +56,8 @@ function markdownToHtml(markdown) {
         inCode = false;
       } else {
         flushParagraph();
+        flushQuote();
+        closeList();
         html.push("<pre><code>");
         inCode = true;
       }
@@ -57,42 +72,66 @@ function markdownToHtml(markdown) {
     if (!line.trim()) {
       flushParagraph();
       closeList();
+      flushQuote();
       continue;
     }
 
     if (line.trim() === "---") {
       flushParagraph();
       closeList();
+      flushQuote();
       html.push("<hr>");
       continue;
     }
 
-    const heading = line.match(/^(#{1,3})\s+(.*)$/);
+    const quoteLine = line.match(/^>\s?(.*)$/);
+    if (quoteLine) {
+      flushParagraph();
+      closeList();
+      const content = quoteLine[1].trim();
+      const admonitions = {
+        "[!NOTE]": "提示",
+        "[!IMPORTANT]": "重要",
+        "[!WARNING]": "注意",
+      };
+      quote.push(admonitions[content] ? `<strong>${admonitions[content]}</strong>` : inlineMarkdown(escapeHtml(content)));
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,6})\s+(.*)$/);
     if (heading) {
       flushParagraph();
       closeList();
+      flushQuote();
       const level = heading[1].length;
       html.push(`<h${level}>${inlineMarkdown(escapeHtml(heading[2]))}</h${level}>`);
       continue;
     }
 
-    const listItem = line.match(/^\s*-\s+(.*)$/);
+    const unorderedItem = line.match(/^\s*-\s+(.*)$/);
+    const orderedItem = line.match(/^\s*\d+\.\s+(.*)$/);
+    const listItem = unorderedItem || orderedItem;
     if (listItem) {
       flushParagraph();
-      if (!inList) {
-        html.push("<ul>");
-        inList = true;
+      flushQuote();
+      const nextTag = unorderedItem ? "ul" : "ol";
+      if (listTag && listTag !== nextTag) closeList();
+      if (!listTag) {
+        html.push(`<${nextTag}>`);
+        listTag = nextTag;
       }
       html.push(`<li>${inlineMarkdown(escapeHtml(listItem[1]))}</li>`);
       continue;
     }
 
     closeList();
-    paragraph.push(line.trim());
+    flushQuote();
+    paragraph.push(line.trimStart());
   }
 
   flushParagraph();
   closeList();
+  flushQuote();
   if (inCode) html.push("</code></pre>");
   return html.join("\n");
 }
@@ -108,19 +147,33 @@ function inlineMarkdown(html) {
       return `<img src="${safeSrc}" alt="${alt}" loading="lazy">`;
     })
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/~~(.*?)~~/g, "<del>$1</del>")
     .replace(/\*(.*?)\*/g, "<em>$1</em>")
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(
       /\[([^\]]+)\]\(([^)]+)\)/g,
       (_match, label, href) => {
         const safeHref = href.startsWith("http") || href.startsWith("/") || href.startsWith("mailto:")
-          ? href
+          ? normalizeInternalHref(href)
           : `/page.html?p=${href.replace(/^\.\//, "").replace(/\.html$/, "").replace(/\.md$/, "")}`;
         const rel = safeHref.startsWith("http") ? ' rel="noreferrer"' : "";
         const target = safeHref.startsWith("http") ? ' target="_blank"' : "";
         return `<a href="${safeHref}"${target}${rel}>${label}</a>`;
       },
     );
+}
+
+function normalizeInternalHref(href) {
+  if (!href.startsWith("/") || href.startsWith("/page.html") || href.startsWith("/post.html") || href.startsWith("/media/")) {
+    return href;
+  }
+
+  const legacyPage = href.match(/^\/(about-us|lessons|join-us)\/(.+)\.html$/);
+  if (legacyPage) {
+    return `/page.html?p=${legacyPage[1]}/${legacyPage[2]}`;
+  }
+
+  return href;
 }
 
 function normalizeAssetUrl(value) {
@@ -139,17 +192,20 @@ async function renderPostList({ admin = false } = {}) {
   try {
     const data = await fetchJson(`/api/posts${admin ? "?drafts=1" : ""}`);
     if (!data.posts.length) {
+      if (featureGrid && !admin) {
+        featureGrid.innerHTML = renderCampusFallbackCards();
+      }
       list.innerHTML = '<p class="empty">暂无文章。</p>';
       return;
     }
 
     if (featureGrid && !admin) {
-      featureGrid.innerHTML = data.posts
-        .slice(0, 3)
+      const featuredPosts = data.posts.slice(0, 3);
+      featureGrid.innerHTML = featuredPosts
         .map(
-          (post) => `
-            <a class="feature-card" href="/post.html?slug=${post.slug}">
-              <p class="meta">${formatDate(post.published_at || post.updated_at)}</p>
+          (post, index) => `
+            <a class="feature-card${index === 0 ? " is-lead" : ""}" href="/post.html?slug=${encodeURIComponent(post.slug)}">
+              <p class="meta">${index === 0 ? "最新" : "动态"} · ${formatDate(post.published_at || post.updated_at)}</p>
               <h2>${escapeHtml(post.title)}</h2>
               <p>${escapeHtml(post.excerpt || "")}</p>
             </a>
@@ -161,17 +217,40 @@ async function renderPostList({ admin = false } = {}) {
     list.innerHTML = data.posts
       .map(
         (post) => `
-          <article class="post-card">
+          <article class="post-card feed-card">
             <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${formatDate(post.published_at || post.updated_at)}</p>
-            <h2><a href="${admin ? `/admin/?slug=${post.slug}` : `/post.html?slug=${post.slug}`}">${escapeHtml(post.title)}</a></h2>
+            <h2><a href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
           </article>
         `,
       )
       .join("");
   } catch (error) {
+    if (featureGrid && !admin) {
+      featureGrid.innerHTML = renderCampusFallbackCards();
+    }
     list.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
   }
+}
+
+function renderCampusFallbackCards() {
+  return `
+    <a class="feature-card is-lead" href="/page.html?p=about-us/index">
+      <p class="meta">协会介绍</p>
+      <h2>燕山大学大学生网络信息协会</h2>
+      <p>了解协会方向、部门职责和技术社群氛围。</p>
+    </a>
+    <a class="feature-card" href="/page.html?p=lessons/index">
+      <p class="meta">授课资料</p>
+      <h2>部门课程整理</h2>
+      <p>查看开发、网安、运维、组宣和秘书处课程资料。</p>
+    </a>
+    <a class="feature-card" href="/page.html?p=join-us/how-to">
+      <p class="meta">加入我们</p>
+      <h2>招新与面试安排</h2>
+      <p>查看报名流程、笔试说明和面试信息。</p>
+    </a>
+  `;
 }
 
 async function renderUserNav() {

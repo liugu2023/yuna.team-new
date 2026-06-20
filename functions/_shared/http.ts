@@ -9,14 +9,14 @@ export function badRequest(message: string): Response {
 }
 
 export function unauthorized(): Response {
-  return json({ error: "Authentication required" }, { status: 401 });
+  return json({ error: "需要登录" }, { status: 401 });
 }
 
 export function forbidden(): Response {
-  return json({ error: "Forbidden" }, { status: 403 });
+  return json({ error: "没有访问权限" }, { status: 403 });
 }
 
-export function notFound(message = "Not found"): Response {
+export function notFound(message = "内容不存在"): Response {
   return json({ error: message }, { status: 404 });
 }
 

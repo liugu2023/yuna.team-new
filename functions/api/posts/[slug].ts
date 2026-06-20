@@ -40,15 +40,24 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
   const payload = await readJson<UpdatePostPayload>(request);
   if (!payload) return badRequest("请求内容不是有效的 JSON");
 
+  if (payload.title !== undefined && !payload.title.trim()) {
+    return badRequest("标题不能为空");
+  }
+
+  if (payload.status !== undefined && !isValidStatus(payload.status)) {
+    return badRequest("文章状态无效");
+  }
+
   const now = new Date().toISOString();
   const nextStatus = payload.status ?? post.status;
+  const nextTitle = payload.title?.trim() ?? post.title;
   const publishedAt =
     post.published_at ?? (post.status !== "published" && nextStatus === "published" ? now : null);
 
   if (payload.markdown !== undefined) {
     await env.BLOG_BUCKET.put(post.r2_key, payload.markdown, {
       httpMetadata: { contentType: "text/markdown; charset=utf-8" },
-      customMetadata: { slug, title: payload.title ?? post.title },
+      customMetadata: { slug, title: nextTitle },
     });
   }
 
@@ -58,7 +67,7 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
      WHERE slug = ?`,
   )
     .bind(
-      payload.title ?? post.title,
+      nextTitle,
       payload.excerpt ?? post.excerpt,
       nextStatus,
       now,
@@ -73,6 +82,10 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   return json({ post: updated });
 };
+
+function isValidStatus(value: string): value is "draft" | "published" {
+  return value === "draft" || value === "published";
+}
 
 export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
   const session = await getSession(env, request);

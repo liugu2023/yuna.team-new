@@ -1,66 +1,68 @@
-# YUNA 最新动态
+# YUNA 社团动态博客
 
-燕山大学大学生网络信息协会的动态发布系统，基于 Cloudflare Pages + Pages Functions：
+燕山大学大学生网络信息协会的社团动态博客系统，基于 Cloudflare Pages + Pages Functions。它面向协会官网场景，而不是通用文档站：主页展示最新动态、部门入口、授课资料、招新信息，后台负责 Markdown 动态、协会成员和名人堂内容维护。
 
-- Cloudflare Pages for static UI
-- Pages Functions for API routes
-- D1 for post metadata and sessions
-- R2 for Markdown article bodies
-- Authentik OIDC for admin authentication
+- Cloudflare Pages 托管前台页面、内容页和后台界面。
+- Pages Functions 提供文章、鉴权、站点内容和媒体上传 API。
+- D1 保存文章元数据、登录会话、协会成员、名人堂和增量备份。
+- R2 保存 Markdown 文章正文和后台上传的图片资源。
+- Authentik OIDC 负责成员登录和后台访问控制。
 
-## Project Layout
+## 项目结构
 
 ```text
-public/                 Static blog and admin UI
-functions/api/          Cloudflare Pages Functions API routes
-functions/_shared/      Shared auth, session, HTTP, and OIDC helpers
-migrations/             D1 migrations
-wrangler.toml           Cloudflare bindings and public vars
+public/                 前台、内容页、后台和静态授课资料
+public/content/         协会介绍、部门介绍、授课链接、招新说明
+public/activates/       从旧站迁移来的授课资料下载文件
+functions/api/          Pages Functions API 路由
+functions/_shared/      鉴权、会话、HTTP、OIDC 等共享逻辑
+migrations/             D1 数据库迁移
+wrangler.toml           Cloudflare 绑定和公开变量
 ```
 
 文章存储方式：
 
-- D1 stores title, slug, excerpt, status, author, dates, and the R2 object key.
-- R2 stores the Markdown body at `posts/{slug}.md`.
+- D1 保存标题、链接标识、摘要、状态、作者、时间和 R2 object key。
+- R2 保存 Markdown 正文，路径为 `posts/{slug}.md`。
 
-## Cloudflare Setup
+## Cloudflare 初始化
 
-Install dependencies:
+安装依赖：
 
 ```bash
 npm install
 ```
 
-Create the D1 database and copy the returned database id into `wrangler.toml`:
+如需新建资源，创建 D1 数据库后把返回的 database id 写入 `wrangler.toml`：
 
 ```bash
 npx wrangler d1 create cloudflare_markdown_blog
 ```
 
-Create the R2 bucket:
+创建 R2 bucket：
 
 ```bash
 npx wrangler r2 bucket create cloudflare-markdown-blog
 ```
 
-Apply the D1 migration:
+应用 D1 迁移：
 
 ```bash
 npm run db:migrate:local
 npm run db:migrate
 ```
 
-## Authentik Setup
+当前 `wrangler.toml` 保留了已经配置过的 D1/R2 资源名，避免重新创建 Cloudflare 资源。
 
-Create an Authentik OAuth2/OpenID Provider and Application.
+## Authentik 配置
 
-Use these redirect URIs:
+在 Authentik 创建 OAuth2/OpenID Provider 和 Application，回调地址固定为：
 
 ```text
 https://yuna.liugu.cc/auth/callback
 ```
 
-Set the client id and issuer in `wrangler.toml`:
+`wrangler.toml` 中保留 issuer、client id 和回调路径：
 
 ```toml
 [vars]
@@ -71,22 +73,22 @@ AUTHENTIK_REDIRECT_PATH = "/auth/callback"
 ADMIN_IDENTITY_ALLOWLIST = ""
 ```
 
-`ADMIN_IDENTITY_ALLOWLIST` is reserved for a local allowlist if you want one later. The current framework trusts Authentik application access control: any user who can complete the Authentik OIDC flow and returns an email or username can enter the admin panel.
+`ADMIN_IDENTITY_ALLOWLIST` 预留给以后做本地白名单。当前系统信任 Authentik 侧的应用访问控制：能完成 OIDC 登录并返回 email 或 username 的用户可以进入后台。
 
-Add secrets locally in `.dev.vars`:
+本地 secret 放在 `.dev.vars`：
 
 ```bash
 cp .dev.vars.example .dev.vars
 ```
 
-Then edit:
+然后填写：
 
 ```text
 AUTHENTIK_CLIENT_SECRET=...
 SESSION_SECRET=...
 ```
 
-Set production secrets:
+生产环境 secret 通过 Wrangler 写入 Pages：
 
 ```bash
 npx wrangler pages secret put AUTHENTIK_CLIENT_SECRET
@@ -94,9 +96,9 @@ npx wrangler pages secret put SESSION_SECRET
 npx wrangler pages secret put MIGRATION_TOKEN
 ```
 
-Use a long random value for `SESSION_SECRET`.
+`SESSION_SECRET` 用来签名会话 Cookie，请使用足够长的随机字符串。
 
-## Local Development
+## 本地预览
 
 ```bash
 npm run dev
@@ -109,16 +111,24 @@ http://localhost:8788
 http://localhost:8788/admin/
 ```
 
-首页导航会先显示成员登录入口。通过 Authentik 登录后，首页才会显示管理后台入口。后台可以创建、更新、删除 Markdown 动态，并支持状态设置、实时预览、搜索和筛选。
+首页会显示协会入口、部门导航、授课资料、招新信息和最新动态。通过 Authentik 登录后，首页会显示管理后台入口。后台可以创建、更新、删除 Markdown 动态，并支持状态设置、实时预览、搜索和筛选。
+
+内容链接检查：
+
+```bash
+npm run content:check
+```
 
 ## API
 
-Public:
+公开接口：
 
 - `GET /api/posts` lists published posts.
 - `GET /api/posts/:slug` returns a published post and its Markdown body.
+- `GET /api/site/:key` returns structured long-lived content.
+- `GET /media/:path` serves uploaded R2 media.
 
-Admin:
+后台接口：
 
 - `GET /api/posts?drafts=1` lists all posts.
 - `POST /api/posts` creates a post.
@@ -127,15 +137,15 @@ Admin:
 - `PUT /api/admin/media/:path` uploads an image or binary asset to R2.
 - `PUT /api/admin/site/:key` updates long-lived site content and writes an incremental D1 backup row.
 
-## Long-Lived Content
+## 长期内容
 
-Members and hall-of-fame content are not stored in this repository. They live in D1 as structured JSON records; every update writes the previous version to `site_record_backups`.
+协会成员和名人堂不在仓库里明文维护，它们作为结构化 JSON 记录保存在 D1；每次更新会把旧版本写入 `site_record_backups`。
 
-Normal blog/news posts still use the Markdown editor. Members and hall-of-fame use fixed admin forms so maintainers can add cards without editing raw JSON.
+普通动态走 Markdown 编辑器。协会成员和名人堂使用固定表单，维护者不需要编辑原始 JSON。
 
-Images are uploaded to R2 and served from `/media/...`. Article images can be inserted from the Markdown editor, and member or hall-of-fame avatars upload from their own forms.
+图片上传到 R2 并通过 `/media/...` 访问。文章图片从 Markdown 编辑器插入，成员和名人堂头像从各自表单上传。
 
-To migrate existing avatar images from the old repository to R2:
+从旧仓库迁移头像图片到 R2：
 
 ```bash
 $env:SITE_BASE_URL="https://yuna.liugu.cc"
@@ -144,31 +154,30 @@ $env:SOURCE_ROOT='D:\System\Desktop\yuna\yuna.team\docs'
 npm run media:migrate
 ```
 
-Auth:
+鉴权接口：
 
 - `GET /api/auth/login`
 - `GET /auth/callback`
 - `GET /api/auth/logout`
 - `GET /api/auth/me`
 
-## Deploy
+## 部署
 
-For Pages Git integration, set:
+Cloudflare Pages Git 集成建议：
 
-- Build command: leave empty or `npm install`
+- Build command: 留空或 `npm install`
 - Build output directory: `public`
 - Functions directory: `functions`
 
-Make sure the D1 and R2 bindings in `wrangler.toml` are connected in the Pages project settings, or deploy with Wrangler:
+确认 Pages 项目设置中的 D1/R2 绑定与 `wrangler.toml` 一致，或者使用 Wrangler 部署：
 
 ```bash
 npm run deploy
 ```
 
-## Next Hardening Steps
+## 后续可加强项
 
 - Replace the tiny browser Markdown renderer with a full CommonMark renderer and sanitizer.
 - Add CSRF protection for admin mutation endpoints.
 - Add pagination and tags.
-- Add image uploads to R2 for post assets.
 - Move sessions to Authentik token introspection if you need centralized logout.

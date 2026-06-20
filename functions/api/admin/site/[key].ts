@@ -15,14 +15,25 @@ export const onRequestPut: PagesFunction<Env, "key"> = async ({ env, params, req
     return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
+  const key = String(params.key);
+  if (!/^[a-z0-9_-]+$/i.test(key)) {
+    return badRequest("内容标识无效");
+  }
+
   const payload = await readJson<SaveSiteRecordPayload>(request);
   if (!payload?.title || !payload.kind || payload.content === undefined) {
     return badRequest("标题、类型和内容不能为空");
   }
 
+  const title = payload.title.trim();
+  if (!title) return badRequest("标题不能为空");
+  if (payload.kind !== "markdown" && payload.kind !== "json") {
+    return badRequest("内容类型无效");
+  }
+
   const record = await upsertSiteRecord(env, admin, {
-    key: String(params.key),
-    title: payload.title,
+    key,
+    title,
     kind: payload.kind,
     content: payload.content,
   });

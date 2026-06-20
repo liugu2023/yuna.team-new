@@ -1,7 +1,7 @@
 import { getCookie, serializeCookie, signValue, verifySignedValue } from "./cookies";
 import type { Env, UserSession } from "./types";
 
-export const SESSION_COOKIE = "blog_session";
+export const SESSION_COOKIE = "yuna_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
 
 export async function createSession(

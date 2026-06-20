@@ -12,22 +12,22 @@ next: true
 
 - 时间：2025/12/14
 - 主题：Re练习
-- 录制视频：<a class="link-button" href="https://www.bilibili.com/video/BV1LGqgB1ESk/" target="_blank" rel="noopener noreferrer" aria-label="在B站观看录播">在B站观看</a>
+- 录制视频：[在B站观看](https://www.bilibili.com/video/BV1LGqgB1ESk/)
 - 授课资料：见视频评论区。
 
 ## 历次授课
 
 - 时间：2025/10/18
 - 主题：git/github的使用
-- 录播视频：<a class="link-button" href="https://www.bilibili.com/video/BV1FYsAzREZZ/" target="_blank" rel="noopener noreferrer" aria-label="在B站观看录播">在B站观看</a>
-- 授课资料：<a class="link-button" href="https://yuna2017.lanzout.com/ik3JV38rz44h" target="_blank" rel="noopener noreferrer">点击下载</a>
+- 录播视频：[在B站观看](https://www.bilibili.com/video/BV1FYsAzREZZ/)
+- 授课资料：[点击下载](https://yuna2017.lanzout.com/ik3JV38rz44h)
 
 ---
 
 - 时间：2025/10/25
 - 主题：隐写术-图片隐写和压缩包隐写
-- 录播视频：<a class="link-button" href="https://www.bilibili.com/video/BV1NNsfzHEkr/" target="_blank" rel="noopener noreferrer" aria-label="在B站观看录播">在B站观看</a>
-- 授课资料：<a class="link-button" href="https://download01.yuna.asia/第一次授课.zip" target="_blank" rel="noopener noreferrer">点击下载</a>
+- 录播视频：[在B站观看](https://www.bilibili.com/video/BV1NNsfzHEkr/)
+- 授课资料：[点击下载](https://download01.yuna.asia/第一次授课.zip)
 
 ---
 
@@ -40,19 +40,19 @@ next: true
 
 - 时间：2025/11/15
 - 主题：CTFweb内容的SQL与木马初探
-- 录制视频：<a class="link-button" href="https://www.bilibili.com/video/BV176CRBdEAa/" target="_blank" rel="noopener noreferrer" aria-label="在B站观看录播">在B站观看</a>
+- 录制视频：[在B站观看](https://www.bilibili.com/video/BV176CRBdEAa/)
 - 授课资料：无。
 
 ---
 
 - 时间：2025/11/22
 - 主题：逆向工程
-- 录制视频：<a class="link-button" href="https://www.bilibili.com/video/BV1qfUXBYEyh/" target="_blank" rel="noopener noreferrer" aria-label="在B站观看录播">在B站观看</a>
+- 录制视频：[在B站观看](https://www.bilibili.com/video/BV1qfUXBYEyh/)
 - 授课资料：无。
 
 ---
 
 - 时间：2025/12/6
 - 主题：MISC杂项
-- 录制视频：<a class="link-button" href="https://www.bilibili.com/video/BV1992RBoEJ8/" target="_blank" rel="noopener noreferrer" aria-label="在B站观看录播">在B站观看</a>
+- 录制视频：[在B站观看](https://www.bilibili.com/video/BV1992RBoEJ8/)
 - 授课资料：无。

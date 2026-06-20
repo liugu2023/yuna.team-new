@@ -5,7 +5,7 @@ next: false
 
 # 关于我们
 
-<img src="/logo-doubleline.svg" alt="YUNA Logo" style="padding: 40px 0;"/>
+![YUNA Logo](/logo-doubleline.svg)
 
 ---
 

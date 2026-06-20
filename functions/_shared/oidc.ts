@@ -22,7 +22,7 @@ interface OidcDiscovery {
 export async function getDiscovery(env: Env): Promise<OidcDiscovery> {
   const issuer = env.AUTHENTIK_ISSUER.replace(/\/+$/, "");
   const response = await fetch(`${issuer}/.well-known/openid-configuration`);
-  if (!response.ok) throw new Error("Unable to load Authentik OIDC discovery");
+  if (!response.ok) throw new Error("无法加载 Authentik OIDC 配置");
   return response.json<OidcDiscovery>();
 }
 
@@ -46,7 +46,7 @@ export async function exchangeCode(env: Env, code: string): Promise<TokenRespons
     body,
   });
 
-  if (!response.ok) throw new Error("Auth code exchange failed");
+  if (!response.ok) throw new Error("登录授权码交换失败");
   return response.json<TokenResponse>();
 }
 
@@ -56,6 +56,6 @@ export async function getUserInfo(env: Env, accessToken: string): Promise<UserIn
     headers: { authorization: `Bearer ${accessToken}` },
   });
 
-  if (!response.ok) throw new Error("Unable to load userinfo");
+  if (!response.ok) throw new Error("无法读取 Authentik 用户信息");
   return response.json<UserInfo>();
 }

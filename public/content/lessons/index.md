@@ -10,11 +10,11 @@ next: false
 
 ## 部门入口
 
-- [开发部](/lessons/dev.html)
-- [网络安全部](/lessons/cybersec.html)
-- [运维部](/lessons/maint.html)
-- [组宣部](/lessons/pr.html)
-- [秘书处](/lessons/office.html)
+- [开发部](/page.html?p=lessons/dev)
+- [网络安全部](/page.html?p=lessons/cybersec)
+- [运维部](/page.html?p=lessons/maint)
+- [组宣部](/page.html?p=lessons/pr)
+- [秘书处](/page.html?p=lessons/office)
 
 ## 维护说明
 

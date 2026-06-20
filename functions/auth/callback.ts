@@ -10,7 +10,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const storedState = await verifySignedValue(getCookie(request, "oidc_state"), env.SESSION_SECRET);
 
   if (!code || !state || !storedState || state !== storedState) {
-    return new Response("Invalid OIDC callback", { status: 400 });
+    return new Response("登录回调无效，请重新登录。", { status: 400 });
   }
 
   const token = await exchangeCode(env, code);

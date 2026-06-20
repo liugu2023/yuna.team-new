@@ -36,18 +36,28 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     return badRequest("标题、链接标识和 Markdown 内容不能为空");
   }
 
+  const title = payload.title.trim();
+  if (!title) return badRequest("标题不能为空");
+
   const slug = normalizeSlug(payload.slug);
   if (!slug) return badRequest("链接标识无效");
+
+  const existing = await env.BLOG_DB.prepare("SELECT slug FROM posts WHERE slug = ?")
+    .bind(slug)
+    .first<{ slug: string }>();
+  if (existing) return badRequest("链接标识已存在");
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const status = payload.status ?? "draft";
+  if (!isValidStatus(status)) return badRequest("文章状态无效");
+
   const publishedAt = status === "published" ? now : null;
   const r2Key = `posts/${slug}.md`;
 
   await env.BLOG_BUCKET.put(r2Key, payload.markdown, {
     httpMetadata: { contentType: "text/markdown; charset=utf-8" },
-    customMetadata: { slug, title: payload.title },
+    customMetadata: { slug, title },
   });
 
   await env.BLOG_DB.prepare(
@@ -58,7 +68,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     .bind(
       id,
       slug,
-      payload.title,
+      title,
       payload.excerpt ?? "",
       status,
       r2Key,
@@ -75,6 +85,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   return json({ post }, { status: 201 });
 };
+
+function isValidStatus(value: string): value is "draft" | "published" {
+  return value === "draft" || value === "published";
+}
 
 function normalizeSlug(input: string): string {
   return input
