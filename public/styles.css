@@ -1,16 +1,16 @@
 :root {
   color-scheme: light;
-  --bg: #f4f7f4;
+  --bg: #f3f8fc;
   --panel: #ffffff;
-  --text: #1f2933;
-  --muted: #65717d;
-  --line: #dde7df;
-  --accent: #007a8a;
-  --accent-dark: #075e68;
-  --accent-warm: #c97a12;
-  --accent-green: #2f855a;
+  --text: #102a43;
+  --muted: #627489;
+  --line: #d8e8f3;
+  --accent: #008acf;
+  --accent-dark: #002e4d;
+  --accent-warm: #f0a33a;
+  --accent-green: #00acef;
   --danger: #b42318;
-  --shadow: 0 18px 38px rgba(31, 41, 51, 0.08);
+  --shadow: 0 18px 38px rgba(0, 46, 77, 0.08);
 }
 
 * {
@@ -134,7 +134,7 @@ a:hover {
   padding: 34px 32px 38px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: linear-gradient(135deg, #ffffff 0%, #f7fbf8 62%, #eef6f0 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f6fbff 62%, #eaf6fd 100%);
   box-shadow: var(--shadow);
 }
 
@@ -156,7 +156,7 @@ a:hover {
 
 .home-hero.has-background {
   background-image:
-    linear-gradient(180deg, rgba(13, 35, 38, 0.38), rgba(13, 35, 38, 0.62)),
+    linear-gradient(180deg, rgba(0, 46, 77, 0.34), rgba(0, 46, 77, 0.62)),
     var(--hero-image);
 }
 
@@ -259,7 +259,7 @@ a:hover {
   padding: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fbf8;
+  background: #f8fbfe;
   color: var(--muted);
   font-size: 12px;
 }
@@ -302,7 +302,7 @@ a:hover {
 }
 
 .side-link:hover {
-  border-color: #b9d9d6;
+  border-color: #b9dcef;
   color: var(--accent-dark);
   text-decoration: none;
   transform: translateY(-1px);
@@ -312,7 +312,7 @@ a:hover {
   background: linear-gradient(120deg, var(--accent-dark), var(--accent));
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 10px 24px rgba(0, 122, 138, 0.18);
+  box-shadow: 0 10px 24px rgba(0, 138, 207, 0.18);
 }
 
 .side-link.primary::after {
@@ -348,7 +348,7 @@ a:hover {
 }
 
 .dept-card:hover {
-  border-color: #b9d9d6;
+  border-color: #b9dcef;
   text-decoration: none;
   transform: translateY(-1px);
 }
@@ -429,9 +429,9 @@ a:hover {
   display: inline-flex;
   margin: 0 0 18px;
   padding: 6px 12px;
-  border: 1px solid #cfe5dc;
+  border: 1px solid #cde8f8;
   border-radius: 999px;
-  background: #edf7f1;
+  background: #edf8ff;
   color: var(--accent);
   font-size: 13px;
   font-weight: 700;
@@ -450,7 +450,7 @@ h1 {
 }
 
 h1 span {
-  background: linear-gradient(120deg, var(--accent-dark), var(--accent-green));
+  background: linear-gradient(120deg, var(--accent-dark), var(--accent));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -489,15 +489,15 @@ h1 span {
 
 .feature-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 14px 34px rgba(16, 42, 67, 0.08);
+  box-shadow: 0 14px 34px rgba(0, 46, 77, 0.08);
   text-decoration: none;
 }
 
 .feature-card.is-lead {
   grid-row: span 2;
   min-height: 290px;
-  border-color: #bad9d1;
-  background: linear-gradient(180deg, #ffffff, #f4faf6);
+  border-color: #b9dcef;
+  background: linear-gradient(180deg, #ffffff, #f3faff);
 }
 
 .feature-card h2 {
@@ -560,7 +560,7 @@ h1 span {
 
 .post-card.is-active {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 138, 207, 0.12);
 }
 
 .meta {
@@ -584,7 +584,7 @@ h1 span {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: clamp(22px, 5vw, 42px);
-  box-shadow: 0 14px 32px rgba(31, 41, 51, 0.05);
+  box-shadow: 0 14px 32px rgba(0, 46, 77, 0.05);
 }
 
 .article-body {
@@ -593,7 +593,7 @@ h1 span {
 
 .article-body pre {
   overflow-x: auto;
-  background: #1f2933;
+  background: #0b2438;
   color: #f8fafc;
   padding: 16px;
   border-radius: 6px;
@@ -617,7 +617,7 @@ h1 span {
   font-weight: 700;
   color: var(--accent-dark);
   text-decoration: underline;
-  text-decoration-color: rgba(0, 122, 138, 0.25);
+  text-decoration-color: rgba(0, 138, 207, 0.25);
   text-underline-offset: 3px;
 }
 
@@ -631,7 +631,7 @@ h1 span {
   padding: 14px 16px;
   border-left: 4px solid var(--accent-green);
   border-radius: 8px;
-  background: #f3faf5;
+  background: #f1f9ff;
   color: var(--text);
 }
 
@@ -717,19 +717,19 @@ h1 span {
   border-radius: 12px;
   background: #fff;
   color: var(--text);
-  box-shadow: 0 10px 24px rgba(31, 41, 51, 0.04);
+  box-shadow: 0 10px 24px rgba(0, 46, 77, 0.04);
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .admin-tab:hover {
-  border-color: #b9d9d6;
+  border-color: #b9dcef;
   transform: translateY(-2px);
 }
 
 .admin-tab.is-active {
   border-color: var(--accent);
-  background: linear-gradient(180deg, #ffffff, #f4faf6);
-  box-shadow: 0 0 0 3px rgba(0, 122, 138, 0.12);
+  background: linear-gradient(180deg, #ffffff, #f3faff);
+  box-shadow: 0 0 0 3px rgba(0, 138, 207, 0.12);
 }
 
 .admin-tab-title {
@@ -783,7 +783,7 @@ button.danger {
 .button:disabled,
 button:disabled {
   border-color: var(--line);
-  background: #eef3f1;
+  background: #eef5fa;
   color: var(--muted);
   cursor: not-allowed;
 }
@@ -823,7 +823,7 @@ button:disabled {
 
 .admin-post-card.is-active {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 138, 207, 0.12);
 }
 
 .admin-post-card h2 {
@@ -919,7 +919,7 @@ button:disabled {
 textarea.is-dragover {
   border-color: var(--accent);
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(0, 122, 138, 0.16);
+  box-shadow: 0 0 0 3px rgba(0, 138, 207, 0.16);
 }
 
 .fixed-card-head {
@@ -944,7 +944,7 @@ textarea.is-dragover {
   border-radius: 10px;
   object-fit: cover;
   border: 1px solid var(--line);
-  background: #f8fbf8;
+  background: #f8fbfe;
 }
 
 .fixed-avatar-empty {
@@ -977,7 +977,7 @@ textarea.is-dragover {
   aspect-ratio: 16 / 3;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #f8fbf8;
+  background: #f8fbfe;
   color: var(--muted);
   font-size: 14px;
 }
@@ -1001,7 +1001,7 @@ textarea.is-dragover {
 
 .gallery-admin-card.is-active {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(0, 122, 138, 0.12);
+  box-shadow: 0 0 0 3px rgba(0, 138, 207, 0.12);
 }
 
 .gallery-admin-card img {
@@ -1009,7 +1009,7 @@ textarea.is-dragover {
   aspect-ratio: 16 / 3;
   object-fit: cover;
   border-radius: 8px;
-  background: #f8fbf8;
+  background: #f8fbfe;
 }
 
 .gallery-admin-card h4 {
@@ -1030,7 +1030,7 @@ textarea.is-dragover {
 }
 
 .icon-button:hover {
-  border-color: #b9d9d6;
+  border-color: #b9dcef;
   color: var(--accent-dark);
 }
 
@@ -1077,7 +1077,7 @@ textarea:focus,
 select:focus {
   border-color: var(--accent);
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(0, 122, 138, 0.12);
+  box-shadow: 0 0 0 3px rgba(0, 138, 207, 0.12);
 }
 
 select {
