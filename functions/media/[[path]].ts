@@ -2,7 +2,9 @@ import { isInlineImageType } from "../_shared/media";
 import type { Env } from "../_shared/types";
 
 export const onRequestGet: PagesFunction<Env, "path"> = async ({ env, params }) => {
-  const rawPath = String(params.path || "");
+  // [[path]] 是 catch-all，params.path 是分段数组，用 / 拼回完整路径。
+  const segments = params.path as string | string[] | undefined;
+  const rawPath = Array.isArray(segments) ? segments.join("/") : String(segments || "");
   if (!rawPath || rawPath.includes("..")) {
     return new Response("资源不存在", { status: 404 });
   }

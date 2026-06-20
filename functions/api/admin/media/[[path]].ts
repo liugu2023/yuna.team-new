@@ -11,7 +11,9 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
     return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
-  const rawPath = String(params.path || "");
+  // [[path]] 是 catch-all，params.path 是分段数组，用 / 拼回完整路径。
+  const segments = params.path as string | string[] | undefined;
+  const rawPath = Array.isArray(segments) ? segments.join("/") : String(segments || "");
   if (!isSafeMediaPath(rawPath)) {
     return badRequest("媒体路径无效");
   }
