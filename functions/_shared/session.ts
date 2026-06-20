@@ -6,15 +6,22 @@ const SESSION_TTL_SECONDS = 60 * 60 * 8;
 
 export async function createSession(
   env: Env,
-  user: { email: string; name?: string },
+  user: { email: string; name?: string; groups?: string[] },
 ): Promise<string> {
   const id = crypto.randomUUID();
-  const expiresAt = Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS;
+  const now = Math.floor(Date.now() / 1000);
+  const expiresAt = now + SESSION_TTL_SECONDS;
+
+  // 顺手清理过期会话，避免 sessions 表只增不减。
+  await env.BLOG_DB.prepare("DELETE FROM sessions WHERE expires_at <= ?").bind(now).run();
+
+  // 登录时把 Authentik 用户组快照进会话，供后续请求免去重复回源。
+  const groups = JSON.stringify(Array.isArray(user.groups) ? user.groups : []);
 
   await env.BLOG_DB.prepare(
-    "INSERT INTO sessions (id, user_email, user_name, expires_at) VALUES (?, ?, ?, ?)",
+    "INSERT INTO sessions (id, user_email, user_name, user_groups, expires_at) VALUES (?, ?, ?, ?, ?)",
   )
-    .bind(id, user.email, user.name ?? "", expiresAt)
+    .bind(id, user.email, user.name ?? "", groups, expiresAt)
     .run();
 
   return serializeCookie(SESSION_COOKIE, await signValue(id, env.SESSION_SECRET), {
@@ -36,7 +43,7 @@ export async function getSession(env: Env, request: Request): Promise<UserSessio
   if (!id) return null;
 
   const session = await env.BLOG_DB.prepare(
-    "SELECT id, user_email, user_name, expires_at FROM sessions WHERE id = ?",
+    "SELECT id, user_email, user_name, user_groups, expires_at FROM sessions WHERE id = ?",
   )
     .bind(id)
     .first<UserSession>();
@@ -49,13 +56,42 @@ export async function getSession(env: Env, request: Request): Promise<UserSessio
   return session;
 }
 
-export function isAllowedAdmin(env: Env, email: string): boolean {
-  return Boolean(email);
+export function isAllowedAdmin(env: Env, session: UserSession): boolean {
+  const email = session.user_email;
+  if (!email) return false;
+
+  // 1) 优先用 Authentik 用户组判定：配置了 ADMIN_GROUP 且会话用户组命中即放行。
+  //    增删管理员只需在 Authentik 改组成员，无需改代码或重新部署。
+  const adminGroup = (env.ADMIN_GROUP ?? "").trim();
+  if (adminGroup && parseGroups(session.user_groups).includes(adminGroup)) {
+    return true;
+  }
+
+  // 2) 兜底白名单：Authentik 还没配好时用 ADMIN_IDENTITY_ALLOWLIST（逗号分隔、大小写不敏感）。
+  const allowlist = (env.ADMIN_IDENTITY_ALLOWLIST ?? "")
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+  if (allowlist.length > 0) {
+    return allowlist.includes(email.toLowerCase());
+  }
+
+  // 3) 两者都没配：沿用既有行为，信任 Authentik 应用层授权，任何登录成员即管理员。
+  return adminGroup ? false : true;
+}
+
+function parseGroups(raw: string): string[] {
+  try {
+    const value = JSON.parse(raw || "[]");
+    return Array.isArray(value) ? value.map(String) : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function getAdminIdentity(env: Env, request: Request): Promise<string | null> {
   const session = await getSession(env, request);
-  if (session && isAllowedAdmin(env, session.user_email)) return session.user_email;
+  if (session && isAllowedAdmin(env, session)) return session.user_email;
 
   const authorization = request.headers.get("authorization") || "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";

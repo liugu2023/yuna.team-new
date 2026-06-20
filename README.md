@@ -70,10 +70,26 @@ PUBLIC_BASE_URL = "https://yuna.liugu.cc"
 AUTHENTIK_ISSUER = "https://sso.yuna.welain.com/application/o/yuna-docs/"
 AUTHENTIK_CLIENT_ID = "..."
 AUTHENTIK_REDIRECT_PATH = "/auth/callback"
+ADMIN_GROUP = ""
 ADMIN_IDENTITY_ALLOWLIST = ""
 ```
 
-`ADMIN_IDENTITY_ALLOWLIST` 预留给以后做本地白名单。当前系统信任 Authentik 侧的应用访问控制：能完成 OIDC 登录并返回 email 或 username 的用户可以进入后台。
+后台管理员判定优先走 **Authentik 用户组**，这样增删管理员只需在 Authentik 改组成员，无需改代码或重新部署：
+
+1. 在 Authentik 创建一个返回用户组的 **Scope Mapping**，scope 名为 `groups`，表达式例如：
+   ```python
+   return [group.name for group in request.user.ak_groups.all()]
+   ```
+   并把它加到该 Provider 的 Scopes 里。登录时本系统会申请 `openid email profile groups`。
+2. 在 `wrangler.toml` 设置 `ADMIN_GROUP` 为管理员组名（如 `yuna-admin`）。登录用户的 groups 命中该组即为管理员。
+
+判定顺序（`functions/_shared/session.ts` 的 `isAllowedAdmin`）：
+
+- 配置了 `ADMIN_GROUP` 且会话用户组命中 → 管理员。
+- 否则若配置了 `ADMIN_IDENTITY_ALLOWLIST`（逗号分隔的 email/username，大小写不敏感）→ 名单内即管理员。
+- 仅当 `ADMIN_GROUP` 留空时，`ADMIN_IDENTITY_ALLOWLIST` 才作为兜底生效；两者都留空则沿用旧行为：任何完成 OIDC 登录的用户都是管理员。
+
+注意：用户组在**登录时**快照进会话（`sessions.user_groups`），改组后需用户重新登录才生效（会话 TTL 8 小时）。
 
 本地 secret 放在 `.dev.vars`：
 
@@ -158,7 +174,7 @@ npm run media:migrate
 
 - `GET /api/auth/login`
 - `GET /auth/callback`
-- `GET /api/auth/logout`
+- `POST /api/auth/logout`
 - `GET /api/auth/me`
 
 ## 部署
@@ -175,9 +191,18 @@ Cloudflare Pages Git 集成建议：
 npm run deploy
 ```
 
+## 已加固
+
+- 媒体上传按扩展名/白名单归一 content-type，非图片强制下载，响应带 `X-Content-Type-Options: nosniff`，并按实际字节计量 10MB 上限，阻断存储型 XSS。
+- 成员/名人堂联系方式链接做协议白名单（http/https/mailto），阻断 `javascript:` 点击型 XSS。
+- 后台权限改为基于 Authentik 用户组（`ADMIN_GROUP`）判定，`ADMIN_IDENTITY_ALLOWLIST` 作为兜底，可区分普通成员与后台管理员。
+- 登出改为 `POST`，避免被 CSRF 强制登出；写接口由 SameSite=Lax 会话 cookie 保护。
+- 新建会话时清理过期会话；缓存 OIDC discovery。
+
 ## 后续可加强项
 
 - Replace the tiny browser Markdown renderer with a full CommonMark renderer and sanitizer.
-- Add CSRF protection for admin mutation endpoints.
+- 如需更强 CSRF 防护，可给写接口加双重提交 token（当前依赖 SameSite=Lax）。
 - Add pagination and tags.
+- 校验 OIDC id_token 签名 / 引入 PKCE 与 nonce。
 - Move sessions to Authentik token introspection if you need centralized logout.

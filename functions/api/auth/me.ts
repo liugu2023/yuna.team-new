@@ -6,7 +6,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const session = await getSession(env, request);
   return json({
     authenticated: Boolean(session),
-    admin: Boolean(session && isAllowedAdmin(env, session.user_email)),
+    admin: Boolean(session && isAllowedAdmin(env, session)),
     user: session
       ? {
           email: session.user_email,

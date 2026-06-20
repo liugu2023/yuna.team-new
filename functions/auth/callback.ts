@@ -26,6 +26,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const sessionCookie = await createSession(env, {
     email: identity,
     name: userInfo.name ?? userInfo.preferred_username ?? "",
+    groups: Array.isArray(userInfo.groups) ? userInfo.groups : [],
   });
 
   return new Response(null, {

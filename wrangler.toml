@@ -17,4 +17,6 @@ PUBLIC_BASE_URL = "https://yuna.liugu.cc"
 AUTHENTIK_ISSUER = "https://sso.yuna.welain.com/application/o/yuna-docs/"
 AUTHENTIK_CLIENT_ID = "esxw1ynBDm6B6r5dzIdCtBfJ3ifkKVk7WbIRD7Py"
 AUTHENTIK_REDIRECT_PATH = "/auth/callback"
+# 后台管理员对应的 Authentik 用户组名；留空则回退到 ADMIN_IDENTITY_ALLOWLIST。
+ADMIN_GROUP = ""
 ADMIN_IDENTITY_ALLOWLIST = ""

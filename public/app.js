@@ -184,6 +184,16 @@ function normalizeAssetUrl(value) {
   return value;
 }
 
+// 只允许安全协议的链接，阻断 javascript:/data: 等点击型 XSS。
+// 后台填入的成员/名人堂联系方式会经过这里再渲染。
+function safeLinkUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("/") || raw.startsWith("#")) return raw;
+  if (/^(https?:|mailto:)/i.test(raw)) return raw;
+  return "";
+}
+
 async function renderPostList({ admin = false } = {}) {
   const list = document.querySelector("[data-post-list]");
   const featureGrid = document.querySelector("[data-feature-grid]");
@@ -260,7 +270,7 @@ async function renderUserNav() {
   try {
     const me = await fetchJson("/api/auth/me");
     const html = me.admin
-      ? '<a href="/admin/">管理后台</a><a href="/api/auth/logout">退出登录</a>'
+      ? '<a href="/admin/">管理后台</a><a href="#" data-logout>退出登录</a>'
       : '<a href="/api/auth/login">成员登录</a>';
     navs.forEach((nav) => {
       nav.innerHTML = nav.hasAttribute("data-side-nav")
@@ -350,8 +360,13 @@ async function renderSiteRecord(container, key) {
 }
 
 function renderStructuredRecord(record) {
-  const items = JSON.parse(record.content || "[]");
-  if (!items.length) return '<p class="empty">暂无内容。</p>';
+  let items;
+  try {
+    items = JSON.parse(record.content || "[]");
+  } catch {
+    return '<p class="error">内容数据格式有误。</p>';
+  }
+  if (!Array.isArray(items) || !items.length) return '<p class="empty">暂无内容。</p>';
 
   if (record.key === "members") {
     return renderMembersRecord(record, items);
@@ -418,7 +433,12 @@ function renderProfileCard(item) {
         ${
           links.length
             ? `<p>${links
-                .map((link) => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noreferrer">${escapeHtml(link.label || link.url)}</a>`)
+                .map((link) => {
+                  const href = safeLinkUrl(link.url);
+                  if (!href) return "";
+                  return `<a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(link.label || link.url)}</a>`;
+                })
+                .filter(Boolean)
                 .join(" · ")}</p>`
             : ""
         }
@@ -426,6 +446,22 @@ function renderProfileCard(item) {
     </article>
   `;
 }
+
+// 登出通过 POST 提交，配合后端只接受 POST 的 /api/auth/logout，防 CSRF 强制登出。
+async function logout() {
+  try {
+    await fetch("/api/auth/logout", { method: "POST" });
+  } finally {
+    location.href = "/";
+  }
+}
+
+document.addEventListener("click", (event) => {
+  const trigger = event.target instanceof Element ? event.target.closest("[data-logout]") : null;
+  if (!trigger) return;
+  event.preventDefault();
+  logout();
+});
 
 document.addEventListener("change", (event) => {
   if (!event.target.matches("[data-term-switch]")) return;

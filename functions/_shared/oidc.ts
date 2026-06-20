@@ -11,6 +11,7 @@ export interface UserInfo {
   email?: string;
   name?: string;
   preferred_username?: string;
+  groups?: string[];
 }
 
 interface OidcDiscovery {
@@ -19,11 +20,19 @@ interface OidcDiscovery {
   userinfo_endpoint: string;
 }
 
+// 同一 Worker 实例内缓存 discovery，避免每次登录回调重复拉取 .well-known。
+const discoveryCache = new Map<string, OidcDiscovery>();
+
 export async function getDiscovery(env: Env): Promise<OidcDiscovery> {
   const issuer = env.AUTHENTIK_ISSUER.replace(/\/+$/, "");
+  const cached = discoveryCache.get(issuer);
+  if (cached) return cached;
+
   const response = await fetch(`${issuer}/.well-known/openid-configuration`);
   if (!response.ok) throw new Error("无法加载 Authentik OIDC 配置");
-  return response.json<OidcDiscovery>();
+  const discovery = await response.json<OidcDiscovery>();
+  discoveryCache.set(issuer, discovery);
+  return discovery;
 }
 
 export function redirectUri(env: Env): string {

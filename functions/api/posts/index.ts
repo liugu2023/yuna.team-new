@@ -14,7 +14,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const url = new URL(request.url);
   const includeDrafts = url.searchParams.get("drafts") === "1";
   const session = await getSession(env, request);
-  const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session.user_email));
+  const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
   const includeAll = includeDrafts && canSeeDrafts;
 
   const query = includeAll
@@ -27,7 +27,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const session = await getSession(env, request);
-  if (!session || !isAllowedAdmin(env, session.user_email)) {
+  if (!session || !isAllowedAdmin(env, session)) {
     return json({ error: "需要管理员登录" }, { status: 401 });
   }
 

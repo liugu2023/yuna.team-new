@@ -10,6 +10,7 @@ export interface Env {
   SESSION_SECRET: string;
   MIGRATION_TOKEN?: string;
   ADMIN_IDENTITY_ALLOWLIST?: string;
+  ADMIN_GROUP?: string;
 }
 
 export interface PostRecord {
@@ -29,6 +30,7 @@ export interface UserSession {
   id: string;
   user_email: string;
   user_name: string;
+  user_groups: string;
   expires_at: number;
 }
 

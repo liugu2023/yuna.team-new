@@ -12,7 +12,7 @@ interface UpdatePostPayload {
 export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
   const slug = String(params.slug);
   const session = await getSession(env, request);
-  const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session.user_email));
+  const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
   const post = await env.BLOG_DB.prepare("SELECT * FROM posts WHERE slug = ?")
     .bind(slug)
     .first<PostRecord>();
@@ -27,7 +27,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, re
 
 export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
   const session = await getSession(env, request);
-  if (!session || !isAllowedAdmin(env, session.user_email)) {
+  if (!session || !isAllowedAdmin(env, session)) {
     return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
@@ -89,7 +89,7 @@ function isValidStatus(value: string): value is "draft" | "published" {
 
 export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
   const session = await getSession(env, request);
-  if (!session || !isAllowedAdmin(env, session.user_email)) {
+  if (!session || !isAllowedAdmin(env, session)) {
     return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
