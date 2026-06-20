@@ -188,9 +188,17 @@
               <button type="button" class="secondary" disabled>相关服务跳转链接</button>
               <button type="button" class="secondary" disabled>固定页面图片</button>
               <button type="button" class="secondary" disabled>联系我们页面</button>
-              <button type="button" data-export-db>导出数据库</button>
+              <a class="button" href="/api/admin/export?download=1" data-export-db>导出数据库</a>
             </div>
             <p class="meta" data-export-message></p>
+            <div class="inline-uploader">
+              <label>
+                导入数据库
+                <input data-import-db-file type="file" accept="application/json,.json" />
+              </label>
+              <button type="button" class="danger" data-import-db>强制导入</button>
+            </div>
+            <p class="meta" data-import-message></p>
           </section>
         </div>
       </div>

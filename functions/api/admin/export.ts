@@ -24,12 +24,26 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     env.BLOG_DB.prepare("SELECT * FROM site_record_backups ORDER BY changed_at DESC").all<SiteRecordBackup>(),
   ]);
 
-  return json({
+  const payload = {
     version: 1,
     exportedAt: new Date().toISOString(),
     exportedBy: admin,
     posts: posts.results ?? [],
     siteRecords: siteRecords.results ?? [],
     siteRecordBackups: siteRecordBackups.results ?? [],
-  });
+  };
+
+  const url = new URL(request.url);
+  if (url.searchParams.get("download") === "1") {
+    const filename = `yuna-blog-db-${new Date().toISOString().slice(0, 10)}.json`;
+    return new Response(JSON.stringify(payload, null, 2), {
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "content-disposition": `attachment; filename="${filename}"`,
+        "x-content-type-options": "nosniff",
+      },
+    });
+  }
+
+  return json(payload);
 };

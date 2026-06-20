@@ -38,6 +38,8 @@ const fields = {
   fameMessage: document.querySelector("[data-fame-message]"),
   fameList: document.querySelector("[data-fame-list]"),
   exportMessage: document.querySelector("[data-export-message]"),
+  importFile: document.querySelector("[data-import-db-file]"),
+  importMessage: document.querySelector("[data-import-message]"),
 };
 
 const editorModal = document.querySelector("[data-editor-modal]");
@@ -534,21 +536,35 @@ function updateContactPlaceholder(select, input) {
 }
 
 async function exportDatabase() {
-  fields.exportMessage.textContent = "正在导出...";
+  fields.exportMessage.textContent = "正在下载导出文件...";
+}
+
+async function importDatabase() {
+  const file = fields.importFile.files?.[0];
+  if (!file) {
+    fields.importMessage.textContent = "请选择要导入的 JSON 文件。";
+    return;
+  }
+
+  if (!confirm("导入会强制覆盖文章、固定页面和备份记录，确定继续吗？")) {
+    return;
+  }
+
+  fields.importMessage.textContent = "正在导入...";
   try {
-    const data = await window.blog.fetchJson("/api/admin/export");
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `yuna-blog-db-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    fields.exportMessage.textContent = "数据库已导出。";
+    const payload = JSON.parse(await file.text());
+    const data = await window.blog.fetchJson("/api/admin/import", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    fields.importMessage.textContent =
+      `导入完成：文章 ${data.counts.posts}，页面 ${data.counts.siteRecords}，备份 ${data.counts.siteRecordBackups}。`;
+    fields.importFile.value = "";
+    await Promise.all([refreshPosts(), loadMembers(), loadFame()]);
   } catch (error) {
-    fields.exportMessage.textContent = error.message;
+    fields.importMessage.textContent = error.message;
   }
 }
 
@@ -585,38 +601,55 @@ function insertAtCursor(textarea, text) {
   textarea.focus();
 }
 
-document.querySelector("[data-publish]").addEventListener("click", () => savePost("published"));
-document.querySelector("[data-save-draft]").addEventListener("click", () => savePost("draft"));
-document.querySelector("[data-editor-close]").addEventListener("click", () => closeEditor());
-editorModal.addEventListener("click", (event) => {
+function bind(selector, event, handler) {
+  const element = document.querySelector(selector);
+  if (!element) {
+    console.warn(`后台控件未找到：${selector}`);
+    return;
+  }
+  element.addEventListener(event, handler);
+}
+
+function bindElement(element, event, handler, name) {
+  if (!element) {
+    console.warn(`后台控件未找到：${name}`);
+    return;
+  }
+  element.addEventListener(event, handler);
+}
+
+bind("[data-publish]", "click", () => savePost("published"));
+bind("[data-save-draft]", "click", () => savePost("draft"));
+bind("[data-editor-close]", "click", () => closeEditor());
+bindElement(editorModal, "click", (event) => {
   if (event.target === editorModal) closeEditor();
-});
+}, "data-editor-modal");
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !editorModal.hidden) closeEditor();
+  if (event.key === "Escape" && editorModal && !editorModal.hidden) closeEditor();
 });
-fields.markdown.addEventListener("keydown", (event) => {
+bindElement(fields.markdown, "keydown", (event) => {
   if (event.key !== "Tab") return;
   event.preventDefault();
   insertAtCursor(fields.markdown, "  ");
   updatePreview();
-});
-fields.markdown.addEventListener("paste", (event) => {
+}, "data-markdown");
+bindElement(fields.markdown, "paste", (event) => {
   const files = Array.from(event.clipboardData?.files || []).filter((file) =>
     file.type.startsWith("image/"),
   );
   if (!files.length) return;
   event.preventDefault();
   insertImageFiles(files);
-});
-fields.markdown.addEventListener("dragover", (event) => {
+}, "data-markdown");
+bindElement(fields.markdown, "dragover", (event) => {
   if (!Array.from(event.dataTransfer?.types || []).includes("Files")) return;
   event.preventDefault();
   fields.markdown.classList.add("is-dragover");
-});
-fields.markdown.addEventListener("dragleave", () => {
+}, "data-markdown");
+bindElement(fields.markdown, "dragleave", () => {
   fields.markdown.classList.remove("is-dragover");
-});
-fields.markdown.addEventListener("drop", (event) => {
+}, "data-markdown");
+bindElement(fields.markdown, "drop", (event) => {
   const files = Array.from(event.dataTransfer?.files || []).filter((file) =>
     file.type.startsWith("image/"),
   );
@@ -624,26 +657,27 @@ fields.markdown.addEventListener("drop", (event) => {
   if (!files.length) return;
   event.preventDefault();
   insertImageFiles(files);
-});
-document.querySelector("[data-upload-post-image]").addEventListener("click", uploadPostImage);
-fields.memberImageFile.addEventListener("change", uploadMemberAvatar);
-fields.fameImageFile.addEventListener("change", uploadFameAvatar);
-document.querySelector("[data-save-member-entry]").addEventListener("click", saveMemberEntry);
-document.querySelector("[data-save-fame-entry]").addEventListener("click", saveFameEntry);
-document.querySelector("[data-export-db]").addEventListener("click", exportDatabase);
-fields.memberList.addEventListener("click", handleFixedListClick);
-fields.fameList.addEventListener("click", handleFixedListClick);
-fields.memberContactLabel.addEventListener("change", () => updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl));
-fields.fameContactLabel.addEventListener("change", () => updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl));
-document.querySelector("[data-new]").addEventListener("click", () => {
+}, "data-markdown");
+bind("[data-upload-post-image]", "click", uploadPostImage);
+bindElement(fields.memberImageFile, "change", uploadMemberAvatar, "data-member-image-file");
+bindElement(fields.fameImageFile, "change", uploadFameAvatar, "data-fame-image-file");
+bind("[data-save-member-entry]", "click", saveMemberEntry);
+bind("[data-save-fame-entry]", "click", saveFameEntry);
+bind("[data-export-db]", "click", exportDatabase);
+bind("[data-import-db]", "click", importDatabase);
+bindElement(fields.memberList, "click", handleFixedListClick, "data-member-list");
+bindElement(fields.fameList, "click", handleFixedListClick, "data-fame-list");
+bindElement(fields.memberContactLabel, "change", () => updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl), "data-member-contact-label");
+bindElement(fields.fameContactLabel, "change", () => updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl), "data-fame-contact-label");
+bind("[data-new]", "click", () => {
   resetEditor();
   openEditor();
 });
-fields.search.addEventListener("input", renderAdminPostList);
-fields.filterStatus.addEventListener("change", renderAdminPostList);
-fields.title.addEventListener("input", updatePreview);
-fields.excerpt.addEventListener("input", updatePreview);
-fields.markdown.addEventListener("input", updatePreview);
+bindElement(fields.search, "input", renderAdminPostList, "data-search");
+bindElement(fields.filterStatus, "change", renderAdminPostList, "data-filter-status");
+bindElement(fields.title, "input", updatePreview, "data-title");
+bindElement(fields.excerpt, "input", updatePreview, "data-excerpt");
+bindElement(fields.markdown, "input", updatePreview, "data-markdown");
 bootAdmin().catch((error) => {
   fields.message.textContent = error.message;
 });
