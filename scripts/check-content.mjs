@@ -37,6 +37,11 @@ function checkLocalLink(file, href) {
   }
 }
 
+if (!existsSync(contentRoot)) {
+  console.log("No repository Markdown content to check.");
+  process.exit(0);
+}
+
 for (const file of await walk(contentRoot)) {
   const markdown = await readFile(file, "utf8");
 

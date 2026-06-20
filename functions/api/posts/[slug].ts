@@ -19,10 +19,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   if (!post || (post.status !== "published" && !canSeeDrafts)) return notFound("文章不存在");
 
-  const object = await env.BLOG_BUCKET.get(post.r2_key);
-  if (!object) return notFound("文章 Markdown 内容不存在");
-
-  return json({ post, markdown: await object.text() });
+  return json({ post, markdown: post.markdown_content ?? "" });
 };
 
 export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
@@ -54,22 +51,18 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
   const publishedAt =
     post.published_at ?? (post.status !== "published" && nextStatus === "published" ? now : null);
 
-  if (payload.markdown !== undefined) {
-    await env.BLOG_BUCKET.put(post.r2_key, payload.markdown, {
-      httpMetadata: { contentType: "text/markdown; charset=utf-8" },
-      customMetadata: { slug, title: nextTitle },
-    });
-  }
+  const nextMarkdown = payload.markdown ?? post.markdown_content ?? "";
 
   await env.BLOG_DB.prepare(
     `UPDATE posts
-     SET title = ?, excerpt = ?, status = ?, updated_at = ?, published_at = ?
+     SET title = ?, excerpt = ?, status = ?, markdown_content = ?, updated_at = ?, published_at = ?
      WHERE slug = ?`,
   )
     .bind(
       nextTitle,
       payload.excerpt ?? post.excerpt,
       nextStatus,
+      nextMarkdown,
       now,
       publishedAt,
       slug,
@@ -99,7 +92,6 @@ export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params,
     .first<PostRecord>();
   if (!post) return notFound("文章不存在");
 
-  await env.BLOG_BUCKET.delete(post.r2_key);
   await env.BLOG_DB.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
 
   return json({ ok: true });

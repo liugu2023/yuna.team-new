@@ -39,6 +39,10 @@
             <span class="admin-tab-title">名人堂</span>
             <span class="admin-tab-desc">维护优秀成员履历与去向</span>
           </button>
+          <button type="button" class="admin-tab" data-tab="pages" aria-pressed="false">
+            <span class="admin-tab-title">页面设置</span>
+            <span class="admin-tab-desc">首页入口、服务链接、页面图片、联系方式</span>
+          </button>
         </nav>
 
         <div class="admin-panel" data-panel="posts">
@@ -173,6 +177,20 @@
             </div>
             <p data-fame-message class="meta"></p>
             <div class="post-list" data-fame-list></div>
+          </section>
+        </div>
+
+        <div class="admin-panel" data-panel="pages" hidden>
+          <section class="editor admin-tooling">
+            <h2>页面设置</h2>
+            <div class="placeholder-actions" aria-label="页面设置占位入口">
+              <button type="button" class="secondary" disabled>顶部首页跳转链接</button>
+              <button type="button" class="secondary" disabled>相关服务跳转链接</button>
+              <button type="button" class="secondary" disabled>固定页面图片</button>
+              <button type="button" class="secondary" disabled>联系我们页面</button>
+              <button type="button" data-export-db>导出数据库</button>
+            </div>
+            <p class="meta" data-export-message></p>
           </section>
         </div>
       </div>

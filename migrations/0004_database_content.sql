@@ -1,0 +1,1 @@
+ALTER TABLE posts ADD COLUMN markdown_content TEXT NOT NULL DEFAULT '';

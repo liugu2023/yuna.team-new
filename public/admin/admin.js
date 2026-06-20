@@ -37,6 +37,7 @@ const fields = {
   fameContactUrl: document.querySelector("[data-fame-contact-url]"),
   fameMessage: document.querySelector("[data-fame-message]"),
   fameList: document.querySelector("[data-fame-list]"),
+  exportMessage: document.querySelector("[data-export-message]"),
 };
 
 const editorModal = document.querySelector("[data-editor-modal]");
@@ -532,6 +533,25 @@ function updateContactPlaceholder(select, input) {
   input.placeholder = placeholders[select.value] || "";
 }
 
+async function exportDatabase() {
+  fields.exportMessage.textContent = "正在导出...";
+  try {
+    const data = await window.blog.fetchJson("/api/admin/export");
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `yuna-blog-db-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    fields.exportMessage.textContent = "数据库已导出。";
+  } catch (error) {
+    fields.exportMessage.textContent = error.message;
+  }
+}
+
 function resetEditor() {
   state.editingSlug = null;
   fields.title.value = "";
@@ -610,6 +630,7 @@ fields.memberImageFile.addEventListener("change", uploadMemberAvatar);
 fields.fameImageFile.addEventListener("change", uploadFameAvatar);
 document.querySelector("[data-save-member-entry]").addEventListener("click", saveMemberEntry);
 document.querySelector("[data-save-fame-entry]").addEventListener("click", saveFameEntry);
+document.querySelector("[data-export-db]").addEventListener("click", exportDatabase);
 fields.memberList.addEventListener("click", handleFixedListClick);
 fields.fameList.addEventListener("click", handleFixedListClick);
 fields.memberContactLabel.addEventListener("change", () => updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl));

@@ -80,6 +80,26 @@ export function isAllowedAdmin(env: Env, session: UserSession): boolean {
   return adminGroup ? false : true;
 }
 
+export function isAllowedContentEditor(env: Env, session: UserSession): boolean {
+  const email = session.user_email;
+  if (!email) return false;
+
+  const editorGroup = (env.CONTENT_EDITOR_GROUP ?? "").trim();
+  if (editorGroup && parseGroups(session.user_groups).includes(editorGroup)) {
+    return true;
+  }
+
+  const allowlist = (env.CONTENT_EDITOR_IDENTITY_ALLOWLIST ?? "")
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+  if (allowlist.length > 0) {
+    return allowlist.includes(email.toLowerCase());
+  }
+
+  return isAllowedAdmin(env, session);
+}
+
 function parseGroups(raw: string): string[] {
   try {
     const value = JSON.parse(raw || "[]");
@@ -92,6 +112,19 @@ function parseGroups(raw: string): string[] {
 export async function getAdminIdentity(env: Env, request: Request): Promise<string | null> {
   const session = await getSession(env, request);
   if (session && isAllowedAdmin(env, session)) return session.user_email;
+
+  const authorization = request.headers.get("authorization") || "";
+  const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+  if (env.MIGRATION_TOKEN && token && token === env.MIGRATION_TOKEN) {
+    return "migration";
+  }
+
+  return null;
+}
+
+export async function getContentEditorIdentity(env: Env, request: Request): Promise<string | null> {
+  const session = await getSession(env, request);
+  if (session && isAllowedContentEditor(env, session)) return session.user_email;
 
   const authorization = request.headers.get("authorization") || "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";

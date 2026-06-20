@@ -16,10 +16,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const session = await getSession(env, request);
   const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
   const includeAll = includeDrafts && canSeeDrafts;
+  const columns = "id, slug, title, excerpt, status, r2_key, author_email, created_at, updated_at, published_at";
 
   const query = includeAll
-    ? "SELECT * FROM posts ORDER BY COALESCE(published_at, updated_at) DESC"
-    : "SELECT * FROM posts WHERE status = 'published' ORDER BY published_at DESC";
+    ? `SELECT ${columns} FROM posts ORDER BY COALESCE(published_at, updated_at) DESC`
+    : `SELECT ${columns} FROM posts WHERE status = 'published' ORDER BY published_at DESC`;
 
   const { results } = await env.BLOG_DB.prepare(query).all<PostRecord>();
   return json({ posts: results ?? [] });
@@ -49,17 +50,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   if (!isValidStatus(status)) return badRequest("文章状态无效");
 
   const publishedAt = status === "published" ? now : null;
-  const r2Key = `posts/${slug}.md`;
-
-  await env.BLOG_BUCKET.put(r2Key, payload.markdown, {
-    httpMetadata: { contentType: "text/markdown; charset=utf-8" },
-    customMetadata: { slug, title },
-  });
+  const r2Key = `db/posts/${slug}.md`;
 
   await env.BLOG_DB.prepare(
     `INSERT INTO posts
-      (id, slug, title, excerpt, status, r2_key, author_email, created_at, updated_at, published_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, slug, title, excerpt, status, r2_key, markdown_content, author_email, created_at, updated_at, published_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -68,6 +64,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       payload.excerpt ?? "",
       status,
       r2Key,
+      payload.markdown,
       session.user_email,
       now,
       now,

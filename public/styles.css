@@ -81,6 +81,7 @@ a:hover {
 .nav {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 16px;
   font-size: 14px;
 }
@@ -341,7 +342,7 @@ h1 span {
 
 .campus-quick-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   margin: 16px 0;
 }
@@ -564,6 +565,12 @@ h1 span {
   background: #fff;
 }
 
+.article-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .profile-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -602,7 +609,7 @@ h1 span {
 
 .admin-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 12px;
   margin-bottom: 22px;
 }
@@ -678,6 +685,14 @@ button.secondary {
 button.danger {
   border-color: var(--danger);
   background: var(--danger);
+}
+
+.button:disabled,
+button:disabled {
+  border-color: var(--line);
+  background: #eef3f1;
+  color: var(--muted);
+  cursor: not-allowed;
 }
 
 .editor {
@@ -802,6 +817,10 @@ button.danger {
 
 .modal .editor textarea[data-markdown] {
   min-height: 440px;
+}
+
+.modal .editor textarea[data-page-editor-markdown] {
+  min-height: 520px;
 }
 
 textarea.is-dragover {
@@ -956,6 +975,12 @@ textarea {
 .actions {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px;
+}
+
+.placeholder-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 10px;
 }
 

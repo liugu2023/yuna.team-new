@@ -11,6 +11,8 @@ export interface Env {
   MIGRATION_TOKEN?: string;
   ADMIN_IDENTITY_ALLOWLIST?: string;
   ADMIN_GROUP?: string;
+  CONTENT_EDITOR_IDENTITY_ALLOWLIST?: string;
+  CONTENT_EDITOR_GROUP?: string;
 }
 
 export interface PostRecord {
@@ -20,6 +22,7 @@ export interface PostRecord {
   excerpt: string;
   status: "draft" | "published";
   r2_key: string;
+  markdown_content: string;
   author_email: string;
   created_at: string;
   updated_at: string;

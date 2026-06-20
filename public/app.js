@@ -5,6 +5,18 @@ async function fetchJson(url, options) {
   return data;
 }
 
+let currentUserPromise;
+
+async function currentUser() {
+  if (!currentUserPromise) {
+    currentUserPromise = fetchJson("/api/auth/me").catch((error) => {
+      currentUserPromise = null;
+      throw error;
+    });
+  }
+  return currentUserPromise;
+}
+
 function formatDate(value) {
   if (!value) return "未发布";
   return new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" }).format(new Date(value));
@@ -168,6 +180,11 @@ function normalizeInternalHref(href) {
     return href;
   }
 
+  const markdownAsset = href.split(/[?#]/, 1)[0].match(/^\/(.+)\.md$/i);
+  if (markdownAsset) {
+    return `/page.html?asset=${encodeURIComponent(markdownAsset[1])}`;
+  }
+
   const legacyPage = href.match(/^\/(about-us|lessons|join-us)\/(.+)\.html$/);
   if (legacyPage) {
     return `/page.html?p=${legacyPage[1]}/${legacyPage[2]}`;
@@ -268,9 +285,11 @@ async function renderUserNav() {
   if (!navs.length) return;
 
   try {
-    const me = await fetchJson("/api/auth/me");
+    const me = await currentUser();
     const html = me.admin
       ? '<a href="/admin/">管理后台</a><a href="#" data-logout>退出登录</a>'
+      : me.authenticated
+        ? '<a href="#" data-logout>退出登录</a>'
       : '<a href="/api/auth/login">成员登录</a>';
     navs.forEach((nav) => {
       nav.innerHTML = nav.hasAttribute("data-side-nav")
@@ -323,22 +342,67 @@ async function renderStaticPage() {
     return;
   }
 
-  const page = params.get("p") || "about-us/index";
-  if (!/^[a-z0-9/_-]+$/i.test(page)) {
+  const staticPage = resolveStaticMarkdownPage(params);
+  if (!staticPage) {
     container.innerHTML = '<p class="error">页面路径无效。</p>';
     return;
   }
 
   try {
-    const response = await fetch(`/content/${page}.md`);
-    if (!response.ok) throw new Error("页面不存在");
-    const markdown = await response.text();
-    const title = firstHeading(markdown) || "页面";
+    const data = await fetchJson(pageApiPath(staticPage.key));
+    const markdown = data.page.content || "";
+    if (!markdown) throw new Error("页面不存在");
+
+    const title = firstHeading(markdown) || data.page.title || staticPage.defaultTitle;
     document.title = `${title} · 燕山大学大学生网络信息协会`;
     container.innerHTML = `<div class="article-body">${markdownToHtml(markdown)}</div>`;
+    await attachStaticPageEditor(container, {
+      page: staticPage.key,
+      title,
+      markdown,
+    });
   } catch (error) {
     container.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
+    await attachStaticPageEditor(container, {
+      page: staticPage.key,
+      title: staticPage.defaultTitle,
+      markdown: `# ${staticPage.defaultTitle}\n\n`,
+    });
   }
+}
+
+function resolveStaticMarkdownPage(params) {
+  const asset = params.get("asset");
+  if (asset) {
+    const decoded = decodeURIComponent(asset).replace(/\.md$/i, "").replace(/^\/+|\/+$/g, "");
+    if (!isSafeMarkdownPath(decoded)) return null;
+    return {
+      key: `asset/${decoded}`,
+      defaultTitle: decoded.split("/").pop() || "资料页面",
+    };
+  }
+
+  const page = params.get("p") || "about-us/index";
+  if (!isSafeMarkdownPath(page)) return null;
+  return {
+    key: page,
+    defaultTitle: pageTitleFromPath(page),
+  };
+}
+
+function isSafeMarkdownPath(path) {
+  return Boolean(path) && !path.includes("..") && /^[\w/\-\u4e00-\u9fa5\uff00-\uffef]+$/.test(path);
+}
+
+function pageTitleFromPath(path) {
+  const titles = {
+    "about-us/index": "关于我们",
+    "services/index": "相关服务",
+    "lessons/index": "授课链接",
+    "join-us/how-to": "加入我们",
+    "contact-us/index": "联系我们",
+  };
+  return titles[path] || path.split("/").pop() || "页面";
 }
 
 async function renderSiteRecord(container, key) {
@@ -445,6 +509,212 @@ function renderProfileCard(item) {
       </div>
     </article>
   `;
+}
+
+async function attachStaticPageEditor(container, pageState) {
+  let me;
+  try {
+    me = await currentUser();
+  } catch {
+    return;
+  }
+  if (!me.contentEditor) return;
+
+  const toolbar = document.createElement("div");
+  toolbar.className = "article-actions";
+  toolbar.innerHTML = '<button type="button" class="secondary" data-edit-static-page>编辑页面</button>';
+  container.prepend(toolbar);
+
+  toolbar.querySelector("[data-edit-static-page]").addEventListener("click", () => {
+    openStaticPageEditor(pageState, (nextState) => {
+      pageState.title = nextState.title;
+      pageState.markdown = nextState.markdown;
+      document.title = `${nextState.title} · 燕山大学大学生网络信息协会`;
+      const body = container.querySelector(".article-body");
+      if (body) {
+        body.innerHTML = markdownToHtml(nextState.markdown);
+      } else {
+        container.innerHTML = `<div class="article-body">${markdownToHtml(nextState.markdown)}</div>`;
+        attachStaticPageEditor(container, pageState);
+      }
+    });
+  });
+}
+
+function openStaticPageEditor(pageState, onSaved) {
+  const modal = ensureStaticPageEditorModal();
+  const titleInput = modal.querySelector("[data-page-editor-title]");
+  const markdownInput = modal.querySelector("[data-page-editor-markdown]");
+  const message = modal.querySelector("[data-page-editor-message]");
+
+  titleInput.value = pageState.title || firstHeading(pageState.markdown) || "";
+  markdownInput.value = pageState.markdown || "";
+  message.textContent = "";
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+  markdownInput.focus();
+
+  const close = () => {
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+  };
+
+  modal.querySelector("[data-page-editor-close]").onclick = close;
+  modal.querySelector("[data-page-editor-save]").onclick = async () => {
+    const markdown = markdownInput.value;
+    const title = titleInput.value.trim() || firstHeading(markdown) || "页面";
+    message.textContent = "正在保存...";
+
+    try {
+      await fetchJson(pageApiPath(pageState.page), {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          title,
+          content: markdown,
+        }),
+      });
+      message.textContent = "已保存";
+      onSaved({ title, markdown });
+      close();
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  };
+
+  modal.querySelector("[data-page-editor-upload]").onclick = async () => {
+    const fileInput = modal.querySelector("[data-page-editor-image]");
+    const file = fileInput.files?.[0];
+    if (!file) {
+      message.textContent = "请选择图片";
+      return;
+    }
+    try {
+      await insertStaticPageImage(pageState.page, markdownInput, file, message);
+      fileInput.value = "";
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  };
+
+  markdownInput.onpaste = async (event) => {
+    const files = Array.from(event.clipboardData?.files || []).filter((file) => file.type.startsWith("image/"));
+    if (!files.length) return;
+    event.preventDefault();
+    try {
+      for (const file of files) {
+        await insertStaticPageImage(pageState.page, markdownInput, file, message);
+      }
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  };
+
+  markdownInput.ondragover = (event) => {
+    event.preventDefault();
+    markdownInput.classList.add("is-dragover");
+  };
+  markdownInput.ondragleave = () => markdownInput.classList.remove("is-dragover");
+  markdownInput.ondrop = async (event) => {
+    const files = Array.from(event.dataTransfer?.files || []).filter((file) => file.type.startsWith("image/"));
+    if (!files.length) return;
+    event.preventDefault();
+    markdownInput.classList.remove("is-dragover");
+    try {
+      for (const file of files) {
+        await insertStaticPageImage(pageState.page, markdownInput, file, message);
+      }
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  };
+}
+
+function ensureStaticPageEditorModal() {
+  let modal = document.querySelector("[data-page-editor-modal]");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.dataset.pageEditorModal = "";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="页面编辑器">
+      <div class="modal-head">
+        <div>
+          <h2>编辑页面</h2>
+          <p class="meta">保存后写入 D1 数据库。</p>
+        </div>
+        <button type="button" class="icon-button" data-page-editor-close aria-label="关闭编辑器">✕</button>
+      </div>
+      <div class="modal-body">
+        <section class="editor">
+          <label>
+            标题
+            <input data-page-editor-title placeholder="页面标题" />
+          </label>
+          <label>
+            Markdown 内容（可粘贴或拖拽图片）
+            <textarea data-page-editor-markdown placeholder="# 页面标题"></textarea>
+          </label>
+          <div class="inline-uploader">
+            <label>
+              图片
+              <input data-page-editor-image type="file" accept="image/*" />
+            </label>
+            <button type="button" class="secondary" data-page-editor-upload>上传</button>
+          </div>
+          <div class="actions">
+            <button type="button" data-page-editor-save>保存页面</button>
+          </div>
+          <p class="meta" data-page-editor-message></p>
+        </section>
+      </div>
+    </div>
+  `;
+  document.body.append(modal);
+  return modal;
+}
+
+async function insertStaticPageImage(page, textarea, file, message) {
+  message.textContent = "正在上传图片...";
+  const filename = uploadFilename(file.name);
+  const mediaPath = `pages/${page}/${Date.now()}-${filename}`;
+  const response = await fetch(`/api/content/media/${mediaPath.split("/").map(encodeURIComponent).join("/")}`, {
+    method: "PUT",
+    headers: { "content-type": file.type || "application/octet-stream" },
+    body: file,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `上传失败：${response.status}`);
+
+  insertAtCursor(textarea, `![${filename}](${data.url})`);
+  message.textContent = "图片已上传";
+}
+
+function insertAtCursor(textarea, text) {
+  const start = textarea.selectionStart || 0;
+  const end = textarea.selectionEnd || start;
+  const prefix = textarea.value.slice(0, start);
+  const suffix = textarea.value.slice(end);
+  const needsLeadingBreak = prefix && !prefix.endsWith("\n") ? "\n" : "";
+  const insert = `${needsLeadingBreak}${text}\n`;
+  textarea.value = `${prefix}${insert}${suffix}`;
+  textarea.focus();
+  textarea.selectionStart = textarea.selectionEnd = start + insert.length;
+}
+
+function uploadFilename(name) {
+  const fallback = "image.png";
+  return (name || fallback)
+    .replace(/[\\/:*?"<>|#%&{}$!`'@+=]/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 96) || fallback;
+}
+
+function pageApiPath(page) {
+  return `/api/pages/${page.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 // 登出通过 POST 提交，配合后端只接受 POST 的 /api/auth/logout，防 CSRF 强制登出。

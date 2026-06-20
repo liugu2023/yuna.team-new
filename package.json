@@ -8,6 +8,8 @@
     "deploy": "wrangler pages deploy public",
     "db:migrate:local": "wrangler d1 migrations apply BLOG_DB --local",
     "db:migrate": "wrangler d1 migrations apply BLOG_DB --remote",
+    "db:migrate-pages": "node scripts/migrate-pages-to-d1.mjs",
+    "db:migrate-posts": "node scripts/migrate-posts-to-d1.mjs",
     "media:migrate": "node scripts/migrate-media.mjs",
     "content:check": "node scripts/check-content.mjs",
     "typecheck": "tsc --noEmit"
