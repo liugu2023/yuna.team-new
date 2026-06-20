@@ -16,6 +16,7 @@ const fields = {
   preview: document.querySelector("[data-preview]"),
   search: document.querySelector("[data-search]"),
   filterStatus: document.querySelector("[data-filter-status]"),
+  postListMessage: document.querySelector("[data-post-list-message]"),
   editorHeading: document.querySelector("[data-editor-heading]"),
   editorState: document.querySelector("[data-editor-state]"),
   postImageFile: document.querySelector("[data-post-image-file]"),
@@ -135,7 +136,7 @@ function renderAdminPostList() {
           <p>${window.blog.escapeHtml(post.excerpt || "")}</p>
           <div class="actions">
             <button class="secondary" data-edit-post="${window.blog.escapeHtml(post.slug)}">编辑</button>
-            <a class="button secondary" href="/post.html?slug=${encodeURIComponent(post.slug)}" target="_blank" rel="noreferrer">查看</a>
+            <button class="danger" data-delete-post="${window.blog.escapeHtml(post.slug)}">删除</button>
           </div>
         </article>
       `,
@@ -146,6 +147,11 @@ function renderAdminPostList() {
     button.addEventListener("click", async () => {
       await loadPost(button.dataset.editPost);
       openEditor();
+    });
+  });
+  list.querySelectorAll("[data-delete-post]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await deletePost(button.dataset.deletePost);
     });
   });
 }
@@ -192,6 +198,27 @@ async function savePost(status) {
     history.replaceState(null, "", `/admin/?slug=${data.post.slug}`);
   } catch (error) {
     fields.message.textContent = error.message;
+  }
+}
+
+async function deletePost(slug) {
+  if (!slug) return;
+  const post = state.posts.find((item) => item.slug === slug);
+  const title = post?.title || slug;
+  if (!confirm(`确定删除文章「${title}」吗？此操作不可恢复。`)) return;
+
+  try {
+    fields.postListMessage.textContent = "正在删除文章...";
+    await window.blog.fetchJson(`/api/posts/${encodeURIComponent(slug)}`, {
+      method: "DELETE",
+    });
+    if (state.editingSlug === slug) {
+      resetEditor();
+    }
+    await refreshPosts();
+    fields.postListMessage.textContent = "文章已删除。";
+  } catch (error) {
+    fields.postListMessage.textContent = error.message;
   }
 }
 
