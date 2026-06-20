@@ -64,16 +64,33 @@
         <section class="post-list" data-post-list></section>
       </section>
 
-      <aside class="float-panel float-right" aria-label="快捷入口">
+      <aside class="float-panel float-right" aria-label="部门导航">
         <p class="panel-kicker">部门导航</p>
-        <h2>按方向查看</h2>
-        <a class="side-link primary" href="/page.html?p=join-us/how-to">加入我们</a>
-        <a class="side-link" href="/page.html?p=about-us/dept/dev">开发部</a>
-        <a class="side-link" href="/page.html?p=about-us/dept/cybersec">网络安全部</a>
-        <a class="side-link" href="/page.html?p=about-us/dept/maint">运维部</a>
-        <a class="side-link" href="/page.html?p=about-us/dept/pr">组宣部</a>
-        <a class="side-link" href="/page.html?p=about-us/dept/office">秘书处</a>
+        <h2>五个部门方向</h2>
+        <nav class="dept-nav">
+          <a class="dept-card" href="/page.html?p=about-us/dept/dev">
+            <span class="dept-name">开发部</span>
+            <span class="dept-desc">Web 前后端开发 · 服务器运维 · 高性能计算</span>
+          </a>
+          <a class="dept-card" href="/page.html?p=about-us/dept/cybersec">
+            <span class="dept-name">网络安全部</span>
+            <span class="dept-desc">CTF 攻防比赛与网络安全基础</span>
+          </a>
+          <a class="dept-card" href="/page.html?p=about-us/dept/maint">
+            <span class="dept-name">运维部</span>
+            <span class="dept-desc">校园网络维护与软硬件技术支持</span>
+          </a>
+          <a class="dept-card" href="/page.html?p=about-us/dept/pr">
+            <span class="dept-name">组宣部</span>
+            <span class="dept-desc">宣传设计、活动组织与新媒体运营</span>
+          </a>
+          <a class="dept-card" href="/page.html?p=about-us/dept/office">
+            <span class="dept-name">秘书处</span>
+            <span class="dept-desc">日常事务、资料整理与组织协作</span>
+          </a>
+        </nav>
         <div class="side-divider"></div>
+        <a class="side-link primary" href="/page.html?p=join-us/how-to">加入我们</a>
         <a class="side-link" href="/page.html?p=lessons/index">授课链接</a>
         <span class="side-auth" data-user-nav data-side-nav><a class="side-link" href="/api/auth/login">成员登录</a></span>
       </aside>

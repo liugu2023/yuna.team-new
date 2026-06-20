@@ -251,6 +251,50 @@ a:hover {
   background: var(--line);
 }
 
+.dept-nav {
+  display: grid;
+  gap: 8px;
+}
+
+.dept-card {
+  display: grid;
+  gap: 3px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+}
+
+.dept-card:hover {
+  border-color: #b9d9d6;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.dept-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.dept-name::after {
+  content: "→";
+  color: var(--accent);
+}
+
+.dept-card:hover .dept-name {
+  color: var(--accent-dark);
+}
+
+.dept-desc {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .eyebrow {
   display: inline-flex;
   margin: 0 0 18px;
@@ -819,8 +863,13 @@ textarea {
   .panel-kicker,
   .panel-logo,
   .campus-stats,
+  .dept-nav,
   .side-divider {
     grid-column: 1 / -1;
+  }
+
+  .dept-nav {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   }
 
   .panel-logo {
