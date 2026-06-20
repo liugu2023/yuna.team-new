@@ -219,9 +219,7 @@ async function renderPostList({ admin = false } = {}) {
   try {
     const data = await fetchJson(`/api/posts${admin ? "?drafts=1" : ""}`);
     if (!data.posts.length) {
-      if (featureGrid && !admin) {
-        featureGrid.innerHTML = renderCampusFallbackCards();
-      }
+      if (featureGrid && !admin) featureGrid.innerHTML = "";
       list.innerHTML = '<p class="empty">暂无文章。</p>';
       return;
     }
@@ -253,31 +251,9 @@ async function renderPostList({ admin = false } = {}) {
       )
       .join("");
   } catch (error) {
-    if (featureGrid && !admin) {
-      featureGrid.innerHTML = renderCampusFallbackCards();
-    }
+    if (featureGrid && !admin) featureGrid.innerHTML = "";
     list.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
   }
-}
-
-function renderCampusFallbackCards() {
-  return `
-    <a class="feature-card is-lead" href="/page.html?p=about-us/index">
-      <p class="meta">协会介绍</p>
-      <h2>燕山大学大学生网络信息协会</h2>
-      <p>了解协会方向、部门职责和技术社群氛围。</p>
-    </a>
-    <a class="feature-card" href="/page.html?p=lessons/index">
-      <p class="meta">授课资料</p>
-      <h2>部门课程整理</h2>
-      <p>查看开发、网安、运维、组宣和秘书处课程资料。</p>
-    </a>
-    <a class="feature-card" href="/page.html?p=join-us/how-to">
-      <p class="meta">加入我们</p>
-      <h2>招新与面试安排</h2>
-      <p>查看报名流程、笔试说明和面试信息。</p>
-    </a>
-  `;
 }
 
 async function renderUserNav() {
