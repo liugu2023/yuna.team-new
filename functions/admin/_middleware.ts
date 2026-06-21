@@ -33,38 +33,71 @@ function forbiddenPage(): string {
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div class="scroll-progress" id="scrollProgress"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+    <div class="cursor-glow" id="cursorGlow"></div>
+    <canvas class="particle-canvas" id="particleCanvas"></canvas>
+    <div class="aurora-layer"></div>
     <header class="topbar">
-      <div class="shell">
-        <a class="brand" href="/"><img src="/logo.svg" alt="YUNA" />YUNA</a>
+      <div class="shell topbar-inner">
+        <a class="brand magnetic" href="/"><span>YUNA.ADMIN</span></a>
         <nav class="nav">
-          <span data-user-nav><a class="nav-link nav-login" href="/api/auth/login">成员登录</a></span>
+          <a href="/">首页</a>
+          <a href="/articles.html">文章列表</a>
+          <a href="/knowledge.html">知识库</a>
+          <a href="/team.html">关于协会</a>
+          <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
         </nav>
       </div>
     </header>
-    <main class="page">
-      <div class="shell">
-        <article class="article">
-          <h1>403 · 没有后台管理权限</h1>
-          <p class="meta">你已登录，但当前账号不在控制组中。</p>
-          <p>后台管理仅对控制组（CONTROL_GROUP）成员开放。如果你认为这是误判，请联系管理员把你的账号加入该组。</p>
-          <p>
-            <a class="button secondary" href="/">返回首页</a>
-          </p>
-        </article>
-      </div>
-    </main>
-    <footer class="site-footer">
-      <div class="footer-inner">
-        <div>
-          <strong>YUNA</strong>
-          <span>燕山大学大学生网络信息协会</span>
+    <div class="page-wrap">
+      <div class="hero-bg" id="heroBg"></div>
+      <div class="mist-top"></div>
+      <div class="mist-bottom"></div>
+      <div class="grid-overlay"></div>
+      <section class="shell page-hero">
+        <div class="reveal">
+          <p class="eyebrow">Access Denied</p>
+          <h1>403 · 没有后台管理权限。</h1>
+          <p class="lead">你已登录，但当前账号不在控制组中。后台管理仅对 CONTROL_GROUP 成员开放。</p>
+          <div class="hero-actions">
+            <a class="btn primary magnetic" href="/">返回首页</a>
+            <a class="btn secondary magnetic" href="/admin-login.html">后台入口</a>
+          </div>
         </div>
-      </div>
-    </footer>
+        <div class="page-visual reveal">
+          <div class="tech-sweep"></div>
+          <div class="logo-holo-grid"></div>
+          <div class="scanlines"></div>
+          <div class="tech-web"></div>
+          <div class="visual-lines"></div>
+          <span class="pulse-ring p1"></span>
+          <span class="pulse-ring p2"></span>
+          <span class="pulse-ring p3"></span>
+          <span class="ring r1"></span>
+          <span class="ring r2"></span>
+          <div class="visual-orb"><img src="/images/logo.svg" alt="YUNA" /></div>
+          <span class="tech-pill pill-a">Admin</span>
+          <span class="tech-pill pill-b">Access</span>
+          <span class="tech-pill pill-c">Denied</span>
+          <div class="data-stream"><span>YUNA · ADMIN ACCESS · CONTROL GROUP ·</span><span>IDENTITY · PERMISSION · AUDIT ·</span></div>
+        </div>
+      </section>
+    </div>
+    <main class="main page-main">
+      <section class="shell">
+        <article class="article-body reveal">
+          <h2>权限说明</h2>
+          <p>如果你认为这是误判，请联系管理员把你的账号加入控制组后再进入后台。</p>
+        </article>
+      </section>
+    </main>
+    <footer class="shell footer"><span>YUNA.ADMIN · 无访问权限</span><span>成员权限校验</span></footer>
     <script src="/app.js"></script>
     <script>
       window.blog.renderUserNav();
     </script>
+    <script src="/yuna-ui.js"></script>
   </body>
 </html>`;
 }

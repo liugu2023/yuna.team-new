@@ -3,44 +3,97 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>页面 · 燕山大学大学生网络信息协会</title>
+    <title>页面 · YUNA.BLOG</title>
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div class="scroll-progress" id="scrollProgress"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+    <div class="cursor-glow" id="cursorGlow"></div>
+    <canvas class="particle-canvas" id="particleCanvas"></canvas>
+    <div class="aurora-layer"></div>
+
     <header class="topbar">
-      <div class="shell">
-        <a class="brand" href="/"><img src="/logo.svg" alt="YUNA" />YUNA</a>
-        <nav class="nav">
-          <a class="nav-link nav-lessons" href="/page.html?p=lessons/index">授课链接</a>
-          <a class="nav-link nav-join" href="/page.html?p=join-us/how-to">加入我们</a>
-          <a class="nav-link nav-contact" href="/page.html?p=contact-us/index">联系我们</a>
-          <span data-user-nav><a class="nav-link nav-login" href="/api/auth/login">成员登录</a></span>
+      <div class="shell topbar-inner">
+        <a class="brand magnetic" href="/"><span>YUNA.BLOG</span></a>
+        <nav class="nav" aria-label="站点导航">
+          <a href="/">首页</a>
+          <a href="/articles.html">文章列表</a>
+          <a href="/knowledge.html">知识库</a>
+          <a href="/team.html">关于协会</a>
+          <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
         </nav>
       </div>
     </header>
-    <main class="page">
-      <div class="shell">
-        <article class="article" data-static-page>
-          <p class="empty">正在加载...</p>
-        </article>
-      </div>
-    </main>
-    <footer class="site-footer">
-      <div class="footer-inner">
-        <div>
-          <strong>YUNA</strong>
-          <span>燕山大学大学生网络信息协会</span>
+
+    <div class="page-wrap">
+      <div class="hero-bg" id="heroBg"></div>
+      <div class="mist-top"></div>
+      <div class="mist-bottom"></div>
+      <div class="grid-overlay"></div>
+      <section class="shell page-hero">
+        <div class="reveal">
+          <p class="eyebrow" data-page-hero-eyebrow>Knowledge Base</p>
+          <h1 data-page-hero-title>学习资料与加入入口。</h1>
+          <p class="lead" data-page-hero-lead>这里整理授课资料、招新流程、联系方式和协会常用服务，方便新成员从一页开始了解方向与路径。</p>
+          <div class="page-kpi">
+            <div><strong>授课</strong><span>课件与练习</span></div>
+            <div><strong>招新</strong><span>方向与流程</span></div>
+            <div><strong>联系</strong><span>社群与活动</span></div>
+          </div>
         </div>
-        <nav class="footer-nav" aria-label="底部导航">
-          <a href="/page.html?p=services/index">相关服务</a>
-        </nav>
-      </div>
-    </footer>
+        <div class="page-visual reveal">
+          <div class="tech-sweep"></div>
+          <div class="logo-holo-grid"></div>
+          <div class="scanlines"></div>
+          <div class="tech-web"></div>
+          <div class="visual-lines"></div>
+          <span class="pulse-ring p1"></span>
+          <span class="pulse-ring p2"></span>
+          <span class="pulse-ring p3"></span>
+          <span class="ring r1"></span>
+          <span class="ring r2"></span>
+          <div class="visual-orb"><img src="/images/logo.svg" alt="YUNA" /></div>
+          <span class="tech-pill pill-a">Lessons</span>
+          <span class="tech-pill pill-b">Join</span>
+          <span class="tech-pill pill-c">Contact</span>
+          <div class="data-stream"><span>YUNA · KNOWLEDGE BASE · LESSON INDEX ·</span><span>COURSE NOTES · JOIN GUIDE · CAMPUS TECH COMMUNITY ·</span></div>
+        </div>
+      </section>
+    </div>
+
+    <main class="main page-main" id="content">
+      <section class="shell article-layout">
+        <article class="reveal" data-static-page>
+          <div class="article-body">
+            <p class="empty-state">正在加载...</p>
+          </div>
+        </article>
+        <aside class="toc">
+          <section class="aside-card reveal">
+            <h3>站点导航</h3>
+            <div class="aside-list">
+              <a href="/knowledge.html#lessons">授课链接</a>
+              <a href="/knowledge.html#join">加入我们</a>
+              <a href="/knowledge.html#contact">联系我们</a>
+              <a href="/team.html">关于协会</a>
+            </div>
+          </section>
+          <section class="aside-card reveal">
+            <h3>内容维护</h3>
+            <p>有编辑权限的成员可以在页面正文上方打开编辑器，更新固定页面内容。</p>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="shell footer"><span>YUNA.BLOG · 固定页面</span><span>资料与协会信息</span></footer>
     <script src="/app.js"></script>
     <script>
       window.blog.renderStaticPage();
       window.blog.renderUserNav();
     </script>
+    <script src="/yuna-ui.js"></script>
   </body>
 </html>

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>文章详情 · YUNA.BLOG</title>
+    <title>文章列表 · YUNA.BLOG</title>
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -19,7 +19,7 @@
         <a class="brand magnetic" href="/"><span>YUNA.BLOG</span></a>
         <nav class="nav" aria-label="站点导航">
           <a href="/">首页</a>
-          <a href="/articles.html">文章列表</a>
+          <a class="active" href="/articles.html" aria-current="page">文章列表</a>
           <a href="/knowledge.html">知识库</a>
           <a href="/team.html">关于协会</a>
           <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
@@ -34,9 +34,14 @@
       <div class="grid-overlay"></div>
       <section class="shell page-hero">
         <div class="reveal">
-          <p class="eyebrow">Featured Article</p>
-          <h1 data-article-hero-title>文章详情。</h1>
-          <p class="lead" data-article-hero-lead>一篇面向协会成员的实践记录，把学习、项目与活动经验整理成可以继续复用的内容。</p>
+          <p class="eyebrow">Articles</p>
+          <h1>协会文章与学习记录。</h1>
+          <p class="lead">集中浏览协会近期文章、训练复盘与活动公告。按方向筛选，快速找到适合继续阅读的内容。</p>
+          <div class="page-kpi">
+            <div><strong>文章</strong><span>技术笔记</span></div>
+            <div><strong>公告</strong><span>活动信息</span></div>
+            <div><strong>资料</strong><span>学习路线</span></div>
+          </div>
         </div>
         <div class="page-visual reveal">
           <div class="tech-sweep"></div>
@@ -51,43 +56,50 @@
           <span class="ring r2"></span>
           <div class="visual-orb"><img src="/images/logo.svg" alt="YUNA" /></div>
           <span class="tech-pill pill-a">Article</span>
-          <span class="tech-pill pill-b">Review</span>
-          <span class="tech-pill pill-c">YUNA</span>
-          <div class="data-stream"><span>YUNA · FEATURED ARTICLE · READING STREAM ·</span><span>OPS NOTE · KNOWLEDGE BASE · CAMPUS DATA ·</span></div>
+          <span class="tech-pill pill-b">Campus</span>
+          <span class="tech-pill pill-c">System</span>
+          <div class="data-stream"><span>YUNA · ARTICLE STREAM · CAMPUS DATA ·</span><span>BLOG INDEX · KNOWLEDGE BASE · SECURITY WEB AI ·</span></div>
         </div>
       </section>
     </div>
 
     <main class="main page-main">
-      <section class="shell article-layout">
-        <article class="article-body reveal" data-article>
-          <p class="empty-state">正在加载...</p>
-        </article>
-        <aside class="toc">
+      <section class="shell content-grid">
+        <div>
+          <div class="control-row reveal">
+            <input class="search-input" data-article-search placeholder="搜索标题、摘要或状态" />
+            <select class="select-input" data-article-status>
+              <option value="published">已发布</option>
+              <option value="draft">草稿</option>
+              <option value="all">全部状态</option>
+            </select>
+          </div>
+          <div class="article-list" data-post-list data-post-list-mode="articles">
+            <p class="empty-state">正在加载文章。</p>
+          </div>
+          <p class="empty-state" data-article-empty hidden>没有匹配的文章。</p>
+        </div>
+        <aside>
           <section class="aside-card reveal">
-            <h3>文章信息</h3>
-            <div class="pipeline">
-              <div class="pipeline-row"><strong>分类</strong><span>协会文章</span></div>
-              <div class="pipeline-row"><strong>适合</strong><span>准备继续了解协会内容的同学</span></div>
-              <div class="pipeline-row"><strong>更新</strong><span data-article-updated>加载中</span></div>
-            </div>
+            <h3>浏览建议</h3>
+            <p>先按关键词筛选，再进入详情页阅读完整复盘。</p>
           </section>
           <section class="aside-card reveal">
-            <h3>继续浏览</h3>
+            <h3>热门专题</h3>
             <div class="aside-list">
-              <a href="/articles.html">返回文章列表</a>
-              <a href="/knowledge.html">查看学习资料</a>
-              <a href="/team.html#join">了解加入方式</a>
+              <a href="/knowledge.html#lessons">授课资料</a>
+              <a href="/team.html#join">加入方式</a>
+              <a href="/page.html?record=members">协会成员</a>
             </div>
           </section>
         </aside>
       </section>
     </main>
 
-    <footer class="shell footer"><span>YUNA.BLOG · 文章详情</span><span>精选文章</span></footer>
+    <footer class="shell footer"><span>YUNA.BLOG · 文章列表</span><span>技术笔记与活动公告</span></footer>
     <script src="/app.js"></script>
     <script>
-      window.blog.renderPost();
+      window.blog.renderPostList();
       window.blog.renderUserNav();
     </script>
     <script src="/yuna-ui.js"></script>

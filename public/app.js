@@ -218,10 +218,26 @@ async function renderPostList({ admin = false } = {}) {
   if (!list) return;
 
   try {
+    const mode = list.dataset.postListMode || (admin ? "admin" : "cards");
     const data = await fetchJson(`/api/posts${admin ? "?drafts=1" : ""}`);
     if (!data.posts.length) {
       if (featureGrid && !admin) featureGrid.innerHTML = "";
-      list.innerHTML = '<p class="empty">暂无文章。</p>';
+      list.innerHTML = '<p class="empty-state">暂无文章。</p>';
+      return;
+    }
+
+    if (mode === "compact") {
+      list.innerHTML = data.posts
+        .slice(0, 3)
+        .map(
+          (post) => `
+            <a href="/post.html?slug=${encodeURIComponent(post.slug)}">
+              ${escapeHtml(post.title)}
+              <span>${formatDate(post.published_at || post.updated_at)}</span>
+            </a>
+          `,
+        )
+        .join("");
       return;
     }
 
@@ -230,7 +246,8 @@ async function renderPostList({ admin = false } = {}) {
       featureGrid.innerHTML = featuredPosts
         .map(
           (post, index) => `
-            <a class="feature-card${index === 0 ? " is-lead" : ""}" href="/post.html?slug=${encodeURIComponent(post.slug)}">
+            <a class="resource-card reveal visible${index === 0 ? " is-lead" : ""}" href="/post.html?slug=${encodeURIComponent(post.slug)}">
+              <span class="flash"></span>
               <p class="meta">${index === 0 ? "最新" : "动态"} · ${formatDate(post.published_at || post.updated_at)}</p>
               <h2>${escapeHtml(post.title)}</h2>
               <p>${escapeHtml(post.excerpt || "")}</p>
@@ -243,18 +260,60 @@ async function renderPostList({ admin = false } = {}) {
     list.innerHTML = data.posts
       .map(
         (post) => `
-          <article class="post-card feed-card">
-            <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${formatDate(post.published_at || post.updated_at)}</p>
+          <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-category="all">
+            <span class="flash"></span>
+            <div class="article-cover"></div>
+            <div class="article-head">
+              <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${post.status === "published" ? "已发布" : "草稿"}</span></div>
+              <span class="tag">${post.status === "published" ? "已发布" : "草稿"}</span>
+            </div>
             <h2><a href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
+            <div class="card-footer">
+              <a class="read-more" href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">阅读全文 →</a>
+              <span class="tag">YUNA.BLOG</span>
+            </div>
           </article>
         `,
       )
       .join("");
+    bindArticleFilters();
   } catch (error) {
     if (featureGrid && !admin) featureGrid.innerHTML = "";
-    list.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
+    list.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
   }
+}
+
+function bindArticleFilters() {
+  const cards = Array.from(document.querySelectorAll("[data-article-card]"));
+  if (!cards.length) return;
+
+  const search = document.querySelector("[data-article-search]");
+  const status = document.querySelector("[data-article-status]");
+  const empty = document.querySelector("[data-article-empty]");
+  const filter = () => {
+    const keyword = (search?.value || "").trim().toLowerCase();
+    const statusValue = status?.value || "all";
+    let visible = 0;
+    cards.forEach((card) => {
+      const matchesText = !keyword || card.textContent.toLowerCase().includes(keyword);
+      const matchesStatus = statusValue === "all" || card.dataset.status === statusValue;
+      const show = matchesText && matchesStatus;
+      card.hidden = !show;
+      if (show) visible += 1;
+    });
+    if (empty) empty.hidden = visible > 0;
+  };
+
+  if (search && !search.dataset.boundArticleFilter) {
+    search.dataset.boundArticleFilter = "1";
+    search.addEventListener("input", filter);
+  }
+  if (status && !status.dataset.boundArticleFilter) {
+    status.dataset.boundArticleFilter = "1";
+    status.addEventListener("change", filter);
+  }
+  filter();
 }
 
 async function renderHomeHero() {
@@ -269,7 +328,8 @@ async function renderHomeHero() {
     const active = items.find((item) => item.active) || items[0];
     if (!active?.url) return;
 
-    hero.style.setProperty("--hero-image", `url("${normalizeAssetUrl(active.url)}")`);
+    const target = hero.querySelector(".hero-bg") || hero;
+    target.style.backgroundImage = `url("${normalizeAssetUrl(active.url)}")`;
     hero.classList.add("has-background");
   } catch {
     hero.classList.remove("has-background");
@@ -282,23 +342,31 @@ async function renderUserNav() {
 
   try {
     const me = await currentUser();
-    const loginHtml = `<a class="nav-link nav-login" href="${loginHref()}">成员登录</a>`;
-    const html = me.admin
-      ? '<a class="nav-link nav-admin" href="/admin/">管理后台</a><a class="nav-link nav-logout" href="#" data-logout>退出登录</a>'
-      : me.authenticated
-        ? '<a class="nav-link nav-logout" href="#" data-logout>退出登录</a>'
-        : loginHtml;
     navs.forEach((nav) => {
       nav.innerHTML = nav.hasAttribute("data-side-nav")
-        ? decorateSideNav(html)
-        : html;
+        ? decorateSideNav(userNavHtml(nav, me))
+        : userNavHtml(nav, me);
     });
   } catch {
     navs.forEach((nav) => {
-      const html = `<a class="nav-link nav-login" href="${loginHref()}">成员登录</a>`;
+      const html = guestNavHtml(nav);
       nav.innerHTML = nav.hasAttribute("data-side-nav") ? decorateSideNav(html) : html;
     });
   }
+}
+
+function userNavHtml(nav, me) {
+  if (me.admin) {
+    return '<a class="nav-link nav-admin" href="/admin/">管理后台</a><a class="nav-link nav-logout" href="#" data-logout>退出登录</a>';
+  }
+  if (me.authenticated) return '<a class="nav-link nav-logout" href="#" data-logout>退出登录</a>';
+  return guestNavHtml(nav);
+}
+
+function guestNavHtml(nav) {
+  const label = nav.dataset.loginLabel || "成员登录";
+  const href = nav.dataset.loginHref || (label === "后台入口" ? "/admin-login.html" : loginHref());
+  return `<a class="nav-link nav-login" href="${href}">${escapeHtml(label)}</a>`;
 }
 
 function loginHref() {
@@ -323,13 +391,21 @@ async function renderPost() {
   try {
     const data = await fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
     document.title = `${data.post.title} · 燕山大学大学生网络信息协会`;
+    const date = formatDate(data.post.published_at || data.post.updated_at);
+    const heroTitle = document.querySelector("[data-article-hero-title]");
+    const heroLead = document.querySelector("[data-article-hero-lead]");
+    const updated = document.querySelector("[data-article-updated]");
+    if (heroTitle) heroTitle.textContent = data.post.title;
+    if (heroLead) heroLead.textContent = data.post.excerpt || "协会文章与学习记录。";
+    if (updated) updated.textContent = date;
     article.innerHTML = `
-      <p class="meta">${formatDate(data.post.published_at || data.post.updated_at)}</p>
-      <h1>${escapeHtml(data.post.title)}</h1>
-      <div class="article-body">${markdownToHtml(data.markdown)}</div>
+      <div class="meta"><span>${date}</span><span>${data.post.status === "published" ? "已发布" : "草稿"}</span><span>YUNA.BLOG</span></div>
+      <h2>${escapeHtml(data.post.title)}</h2>
+      ${data.post.excerpt ? `<p>${escapeHtml(data.post.excerpt)}</p>` : ""}
+      ${markdownToHtml(data.markdown)}
     `;
   } catch (error) {
-    article.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
+    article.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
   }
 }
 
@@ -346,7 +422,7 @@ async function renderStaticPage() {
 
   const staticPage = resolveStaticMarkdownPage(params);
   if (!staticPage) {
-    container.innerHTML = '<p class="error">页面路径无效。</p>';
+    container.innerHTML = '<div class="article-body"><p class="empty-state error">页面路径无效。</p></div>';
     return;
   }
 
@@ -357,6 +433,7 @@ async function renderStaticPage() {
 
     const title = firstHeading(markdown) || data.page.title || staticPage.defaultTitle;
     document.title = `${title} · 燕山大学大学生网络信息协会`;
+    updateStaticPageHero(title, staticPage.key);
     container.innerHTML = `<div class="article-body">${markdownToHtml(markdown)}</div>`;
     await attachStaticPageEditor(container, {
       page: staticPage.key,
@@ -364,13 +441,31 @@ async function renderStaticPage() {
       markdown,
     });
   } catch (error) {
-    container.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
+    updateStaticPageHero(staticPage.defaultTitle, staticPage.key);
+    container.innerHTML = `<div class="article-body"><p class="empty-state error">${escapeHtml(error.message)}</p></div>`;
     await attachStaticPageEditor(container, {
       page: staticPage.key,
       title: staticPage.defaultTitle,
       markdown: `# ${staticPage.defaultTitle}\n\n`,
     });
   }
+}
+
+function updateStaticPageHero(title, key) {
+  const heroTitle = document.querySelector("[data-page-hero-title]");
+  const heroEyebrow = document.querySelector("[data-page-hero-eyebrow]");
+  const heroLead = document.querySelector("[data-page-hero-lead]");
+  if (heroTitle) heroTitle.textContent = `${title}。`;
+  if (heroEyebrow) heroEyebrow.textContent = key.includes("about-us") ? "About YUNA" : "Knowledge Base";
+  if (heroLead) heroLead.textContent = pageHeroLead(key);
+}
+
+function pageHeroLead(key) {
+  if (key.includes("about-us")) return "了解协会方向、部门职责、成员故事和长期沉淀的校园技术实践。";
+  if (key.includes("join-us")) return "这里整理招新流程、方向说明和参与方式，方便新同学快速找到入口。";
+  if (key.includes("contact-us")) return "这里整理协会联系方式、社群入口和活动沟通方式。";
+  if (key.includes("services")) return "这里整理协会维护的常用服务、资料归档和站点入口。";
+  return "这里整理授课资料、招新流程、联系方式和协会常用服务，方便新成员从一页开始了解方向与路径。";
 }
 
 function resolveStaticMarkdownPage(params) {
@@ -409,19 +504,20 @@ function pageTitleFromPath(path) {
 
 async function renderSiteRecord(container, key) {
   if (!/^[a-z0-9_-]+$/i.test(key)) {
-    container.innerHTML = '<p class="error">内容标识无效。</p>';
+    container.innerHTML = '<div class="article-body"><p class="empty-state error">内容标识无效。</p></div>';
     return;
   }
 
   try {
     const data = await fetchJson(`/api/site/${key}`);
     document.title = `${data.record.title} · 燕山大学大学生网络信息协会`;
+    updateStaticPageHero(data.record.title, key);
     container.innerHTML =
       data.record.kind === "json"
         ? renderStructuredRecord(data.record)
         : `<div class="article-body">${markdownToHtml(data.record.content)}</div>`;
   } catch (error) {
-    container.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
+    container.innerHTML = `<div class="article-body"><p class="empty-state error">${escapeHtml(error.message)}</p></div>`;
   }
 }
 
@@ -430,9 +526,9 @@ function renderStructuredRecord(record) {
   try {
     items = JSON.parse(record.content || "[]");
   } catch {
-    return '<p class="error">内容数据格式有误。</p>';
+    return '<div class="article-body"><p class="empty-state error">内容数据格式有误。</p></div>';
   }
-  if (!Array.isArray(items) || !items.length) return '<p class="empty">暂无内容。</p>';
+  if (!Array.isArray(items) || !items.length) return '<div class="article-body"><p class="empty-state">暂无内容。</p></div>';
 
   if (record.key === "members") {
     return renderMembersRecord(record, items);
@@ -441,7 +537,7 @@ function renderStructuredRecord(record) {
   return `
     <div class="article-body">
       <h1>${escapeHtml(record.title)}</h1>
-      <div class="profile-grid">
+      <div class="member-grid refined-member-grid">
         ${items.map(renderProfileCard).join("")}
       </div>
     </div>
@@ -454,9 +550,9 @@ function renderMembersRecord(record, items) {
   return `
     <div class="article-body">
       <h1>${escapeHtml(record.title)}</h1>
-      <label class="inline-control">
-        届数
-        <select data-term-switch>
+      <label class="field-lite inline-control">
+        <span>届数</span>
+        <select class="select-input" data-term-switch>
           ${terms.map((term) => `<option value="${escapeHtml(term)}">${escapeHtml(term)}</option>`).join("")}
         </select>
       </label>
@@ -477,7 +573,7 @@ function renderMemberTerm(term, items, active) {
           if (!departmentItems.length) return "";
           return `
             <h2>${escapeHtml(department)}</h2>
-            <div class="profile-grid">
+            <div class="member-grid refined-member-grid">
               ${departmentItems.map(renderProfileCard).join("")}
             </div>
           `;
@@ -489,26 +585,33 @@ function renderMemberTerm(term, items, active) {
 
 function renderProfileCard(item) {
   const links = Array.isArray(item.links) ? item.links : [];
+  const avatarText = (item.name || item.title || "Y").slice(0, 2).toUpperCase();
   return `
-    <article class="profile-card">
-      ${item.avatar ? `<img src="${normalizeAssetUrl(escapeHtml(item.avatar))}" alt="${escapeHtml(item.name)}" loading="lazy">` : ""}
-      <div>
-        <h3>${escapeHtml(item.name || "")}</h3>
-        ${item.title ? `<p class="meta">${escapeHtml(item.title)}</p>` : ""}
-        ${item.desc ? `<p>${escapeHtml(item.desc)}</p>` : ""}
+    <article class="member-card refined-member-card reveal visible">
+      <span class="flash"></span>
+      <div class="member-card-top">
         ${
-          links.length
-            ? `<p>${links
-                .map((link) => {
-                  const href = safeLinkUrl(link.url);
-                  if (!href) return "";
-                  return `<a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(link.label || link.url)}</a>`;
-                })
-                .filter(Boolean)
-                .join(" · ")}</p>`
-            : ""
+          item.avatar
+            ? `<img class="avatar image-avatar" src="${normalizeAssetUrl(escapeHtml(item.avatar))}" alt="${escapeHtml(item.name || "")}" loading="lazy">`
+            : `<div class="avatar">${escapeHtml(avatarText)}</div>`
         }
+        <span class="tag">${escapeHtml(item.department || item.title || "YUNA")}</span>
       </div>
+      <h3>${escapeHtml(item.name || "")}</h3>
+      ${item.title ? `<p class="meta">${escapeHtml(item.title)}</p>` : ""}
+      ${item.desc ? `<p>${escapeHtml(item.desc)}</p>` : ""}
+      ${
+        links.length
+          ? `<div class="member-actions">${links
+              .map((link) => {
+                const href = safeLinkUrl(link.url);
+                if (!href) return "";
+                return `<a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(link.label || link.url)}</a>`;
+              })
+              .filter(Boolean)
+              .join("")}</div>`
+          : ""
+      }
     </article>
   `;
 }
@@ -524,7 +627,7 @@ async function attachStaticPageEditor(container, pageState) {
 
   const toolbar = document.createElement("div");
   toolbar.className = "article-actions";
-  toolbar.innerHTML = '<button type="button" class="secondary" data-edit-static-page>编辑页面</button>';
+  toolbar.innerHTML = '<button type="button" class="btn secondary" data-edit-static-page>编辑页面</button>';
   container.prepend(toolbar);
 
   toolbar.querySelector("[data-edit-static-page]").addEventListener("click", () => {
@@ -532,7 +635,7 @@ async function attachStaticPageEditor(container, pageState) {
       pageState.title = nextState.title;
       pageState.markdown = nextState.markdown;
       document.title = `${nextState.title} · 燕山大学大学生网络信息协会`;
-      const body = container.querySelector(".article-body");
+      const body = container.matches(".article-body") ? container : container.querySelector(".article-body");
       if (body) {
         body.innerHTML = markdownToHtml(nextState.markdown);
       } else {
@@ -647,27 +750,27 @@ function ensureStaticPageEditorModal() {
           <h2>编辑页面</h2>
           <p class="meta">保存后写入 D1 数据库。</p>
         </div>
-        <button type="button" class="icon-button" data-page-editor-close aria-label="关闭编辑器">✕</button>
+        <button type="button" class="icon-button" data-page-editor-close aria-label="关闭编辑器">×</button>
       </div>
       <div class="modal-body">
-        <section class="editor">
+        <section class="editor-shell admin-form">
           <label>
             标题
-            <input data-page-editor-title placeholder="页面标题" />
+            <input class="admin-input" data-page-editor-title placeholder="页面标题" />
           </label>
           <label>
             Markdown 内容（可粘贴或拖拽图片）
-            <textarea data-page-editor-markdown placeholder="# 页面标题"></textarea>
+            <textarea class="admin-input" data-page-editor-markdown placeholder="# 页面标题"></textarea>
           </label>
           <div class="inline-uploader">
             <label>
               图片
-              <input data-page-editor-image type="file" accept="image/*" />
+              <input class="admin-input" data-page-editor-image type="file" accept="image/*" />
             </label>
-            <button type="button" class="secondary" data-page-editor-upload>上传</button>
+            <button type="button" class="btn secondary" data-page-editor-upload>上传</button>
           </div>
-          <div class="actions">
-            <button type="button" data-page-editor-save>保存页面</button>
+          <div class="editor-actions">
+            <button type="button" class="btn primary" data-page-editor-save>保存页面</button>
           </div>
           <p class="meta" data-page-editor-message></p>
         </section>

@@ -126,20 +126,20 @@ function renderAdminPostList() {
   });
 
   if (!posts.length) {
-    list.innerHTML = '<p class="empty">没有匹配的文章。</p>';
+    list.innerHTML = '<p class="empty-state">没有匹配的文章。</p>';
     return;
   }
 
   list.innerHTML = posts
     .map(
       (post) => `
-        <article class="post-card admin-post-card${state.editingSlug === post.slug ? " is-active" : ""}">
+        <article class="admin-item admin-post-card${state.editingSlug === post.slug ? " active is-active" : ""}">
           <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${window.blog.formatDate(post.published_at || post.updated_at)}</p>
-          <h2>${window.blog.escapeHtml(post.title)}</h2>
+          <strong>${window.blog.escapeHtml(post.title)}</strong>
           <p>${window.blog.escapeHtml(post.excerpt || "")}</p>
-          <div class="actions">
-            <button class="secondary" data-edit-post="${window.blog.escapeHtml(post.slug)}">编辑</button>
-            <button class="danger" data-delete-post="${window.blog.escapeHtml(post.slug)}">删除</button>
+          <div class="editor-actions">
+            <button class="btn secondary" data-edit-post="${window.blog.escapeHtml(post.slug)}">编辑</button>
+            <button class="btn danger" data-delete-post="${window.blog.escapeHtml(post.slug)}">删除</button>
           </div>
         </article>
       `,
@@ -541,7 +541,7 @@ async function saveFixedRecord(key, title, items, messageEl) {
 
 function renderFixedList(items, listEl, type) {
   if (!items.length) {
-    listEl.innerHTML = '<p class="empty">当前暂无条目。</p>';
+    listEl.innerHTML = '<p class="empty-state">当前暂无条目。</p>';
     return;
   }
 
@@ -551,22 +551,22 @@ function renderFixedList(items, listEl, type) {
         type === "members"
           ? `${window.blog.escapeHtml(item.term || "未填写届数")} · ${window.blog.escapeHtml(item.department || "")}`
           : "名人堂";
+      const avatarText = (item.name || item.title || "Y").slice(0, 2).toUpperCase();
       const avatar = item.avatar
-        ? `<img class="fixed-avatar" src="${window.blog.escapeHtml(window.blog.normalizeAssetUrl(item.avatar))}" alt="${window.blog.escapeHtml(item.name || "")}" loading="lazy">`
-        : `<span class="fixed-avatar fixed-avatar-empty" aria-hidden="true"></span>`;
+        ? `<img class="avatar image-avatar" src="${window.blog.escapeHtml(window.blog.normalizeAssetUrl(item.avatar))}" alt="${window.blog.escapeHtml(item.name || "")}" loading="lazy">`
+        : `<div class="avatar">${window.blog.escapeHtml(avatarText)}</div>`;
       return `
-        <article class="post-card admin-fixed-card${isEditingFixedItem(type, index) ? " is-active" : ""}">
-          <div class="fixed-card-head">
+        <article class="member-card refined-member-card admin-fixed-card${isEditingFixedItem(type, index) ? " is-active" : ""}">
+          <span class="flash"></span>
+          <div class="member-card-top">
             ${avatar}
-            <div class="fixed-card-meta">
-              <p class="meta">${meta}</p>
-              <h2>${window.blog.escapeHtml(item.name)}</h2>
-              <p>${window.blog.escapeHtml(item.title || "")}</p>
-            </div>
+            <span class="tag">${meta}</span>
           </div>
+          <h3>${window.blog.escapeHtml(item.name)}</h3>
+          <p class="meta">${window.blog.escapeHtml(item.title || "")}</p>
           ${item.desc ? `<p>${window.blog.escapeHtml(item.desc)}</p>` : ""}
-          <div class="actions">
-            <button type="button" class="secondary" data-edit-fixed="${type}:${index}">编辑</button>
+          <div class="member-actions">
+            <button type="button" data-edit-fixed="${type}:${index}">编辑</button>
             <button type="button" class="danger" data-remove-fixed="${type}:${index}">删除</button>
           </div>
         </article>
@@ -693,21 +693,22 @@ function updateGalleryCropPreview() {
 function renderGalleryList() {
   if (!fields.galleryList) return;
   if (!state.galleryItems.length) {
-    fields.galleryList.innerHTML = '<p class="empty">当前暂无主页背景图片。</p>';
+    fields.galleryList.innerHTML = '<p class="empty-state">当前暂无主页背景图片。</p>';
     return;
   }
 
   fields.galleryList.innerHTML = state.galleryItems
     .map(
       (item, index) => `
-        <article class="gallery-admin-card${item.active ? " is-active" : ""}">
+        <article class="gallery-admin-card visual-card${item.active ? " is-active" : ""}">
+          <span class="flash"></span>
           <img src="${window.blog.escapeHtml(window.blog.normalizeAssetUrl(item.url))}" alt="${window.blog.escapeHtml(item.title || "主页背景")}" loading="lazy">
           <div>
             <h4>${window.blog.escapeHtml(item.title || "未命名图片")}</h4>
             <p class="meta">${item.active ? "当前展示" : "未展示"}</p>
-            <div class="actions">
-              <button type="button" class="secondary" data-gallery-active="${index}" ${item.active ? "disabled" : ""}>设为展示</button>
-              <button type="button" class="danger" data-gallery-remove="${index}">删除</button>
+            <div class="editor-actions">
+              <button type="button" class="btn secondary" data-gallery-active="${index}" ${item.active ? "disabled" : ""}>设为展示</button>
+              <button type="button" class="btn danger" data-gallery-remove="${index}">删除</button>
             </div>
           </div>
         </article>
