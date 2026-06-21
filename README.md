@@ -161,10 +161,7 @@ PUBLIC_BASE_URL = "https://yuna.liugu.cc"
 AUTHENTIK_ISSUER = "https://sso.yuna.welain.com/application/o/yuna-docs/"
 AUTHENTIK_CLIENT_ID = "esxw1ynBDm6B6r5dzIdCtBfJ3ifkKVk7WbIRD7Py"
 AUTHENTIK_REDIRECT_PATH = "/auth/callback"
-ADMIN_GROUP = ""
-ADMIN_IDENTITY_ALLOWLIST = ""
-CONTENT_EDITOR_GROUP = ""
-CONTENT_EDITOR_IDENTITY_ALLOWLIST = ""
+CONTROL_GROUP = "yuna-docs-edit"
 GITHUB_BACKUP_REPO = ""
 GITHUB_BACKUP_BRANCH = "main"
 GITHUB_BACKUP_PATH = "yuna-blog"
@@ -209,10 +206,10 @@ http://localhost:8788/auth/callback
 
 后台权限规则：
 
-- 设置了 `ADMIN_GROUP` 时，登录用户必须属于该 Authentik 用户组。
-- `ADMIN_GROUP` 为空时，可使用 `ADMIN_IDENTITY_ALLOWLIST` 作为 email/username 白名单。
-- 两者都为空时，任何完成 Authentik 登录的用户都可以进入后台。
-- 固定页面编辑权限可使用 `CONTENT_EDITOR_GROUP` 或 `CONTENT_EDITOR_IDENTITY_ALLOWLIST` 单独控制；留空时沿用管理员权限。
+- `CONTROL_GROUP` 是唯一控制权限组。
+- 登录用户必须属于 `CONTROL_GROUP` 对应的 Authentik 用户组，才可以进入后台、管理文章、维护成员和名人堂、编辑固定 Markdown 页面、上传后台资源。
+- 未登录用户，以及已登录但不在该组内的用户，都没有控制权限。
+- `CONTROL_GROUP` 为空时，没有任何登录用户拥有控制权限。
 
 用户组信息会在登录时写入会话。Authentik 侧改组后，用户需要退出并重新登录。
 
@@ -222,7 +219,7 @@ http://localhost:8788/auth/callback
 /api/auth/me
 ```
 
-返回里的 `user.groups` 是 Authentik 通过 `groups` scope 返回并写入会话的用户组，`authz.adminGroupMatched` 和 `authz.contentEditorGroupMatched` 会显示当前配置的组名是否命中。
+返回里的 `user.groups` 是 Authentik 通过 `groups` scope 返回并写入会话的用户组，`authz.controlGroupMatched` 会显示当前配置的组名是否命中。
 
 ## 部署
 

@@ -10,8 +10,7 @@ import type { Env } from "../../_shared/types";
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const session = await getSession(env, request);
   const groups = session ? getSessionGroups(session) : [];
-  const adminGroup = (env.ADMIN_GROUP || "").trim();
-  const contentEditorGroup = (env.CONTENT_EDITOR_GROUP || "").trim();
+  const controlGroup = (env.CONTROL_GROUP || "").trim();
   return json({
     authenticated: Boolean(session),
     admin: Boolean(session && isAllowedAdmin(env, session)),
@@ -25,10 +24,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
         }
       : null,
     authz: {
-      adminGroup,
-      contentEditorGroup,
-      adminGroupMatched: Boolean(adminGroup && groups.includes(adminGroup)),
-      contentEditorGroupMatched: Boolean(contentEditorGroup && groups.includes(contentEditorGroup)),
+      controlGroup,
+      controlGroupMatched: Boolean(controlGroup && groups.includes(controlGroup)),
     },
   });
 };

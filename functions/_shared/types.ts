@@ -9,10 +9,7 @@ export interface Env {
   AUTHENTIK_REDIRECT_PATH: string;
   SESSION_SECRET: string;
   MIGRATION_TOKEN?: string;
-  ADMIN_IDENTITY_ALLOWLIST?: string;
-  ADMIN_GROUP?: string;
-  CONTENT_EDITOR_IDENTITY_ALLOWLIST?: string;
-  CONTENT_EDITOR_GROUP?: string;
+  CONTROL_GROUP?: string;
   GITHUB_BACKUP_REPO?: string;
   GITHUB_BACKUP_BRANCH?: string;
   GITHUB_BACKUP_PATH?: string;

@@ -57,51 +57,22 @@ export async function getSession(env: Env, request: Request): Promise<UserSessio
 }
 
 export function isAllowedAdmin(env: Env, session: UserSession): boolean {
-  const email = session.user_email;
-  if (!email) return false;
-
-  // 1) 优先用 Authentik 用户组判定：配置了 ADMIN_GROUP 且会话用户组命中即放行。
-  //    增删管理员只需在 Authentik 改组成员，无需改代码或重新部署。
-  const adminGroup = (env.ADMIN_GROUP ?? "").trim();
-  if (adminGroup && parseGroups(session.user_groups).includes(adminGroup)) {
-    return true;
-  }
-
-  // 2) 兜底白名单：Authentik 还没配好时用 ADMIN_IDENTITY_ALLOWLIST（逗号分隔、大小写不敏感）。
-  const allowlist = (env.ADMIN_IDENTITY_ALLOWLIST ?? "")
-    .split(",")
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean);
-  if (allowlist.length > 0) {
-    return allowlist.includes(email.toLowerCase());
-  }
-
-  // 3) 两者都没配：沿用既有行为，信任 Authentik 应用层授权，任何登录成员即管理员。
-  return adminGroup ? false : true;
+  return isAllowedControl(env, session);
 }
 
 export function isAllowedContentEditor(env: Env, session: UserSession): boolean {
-  const email = session.user_email;
-  if (!email) return false;
-
-  const editorGroup = (env.CONTENT_EDITOR_GROUP ?? "").trim();
-  if (editorGroup && parseGroups(session.user_groups).includes(editorGroup)) {
-    return true;
-  }
-
-  const allowlist = (env.CONTENT_EDITOR_IDENTITY_ALLOWLIST ?? "")
-    .split(",")
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean);
-  if (allowlist.length > 0) {
-    return allowlist.includes(email.toLowerCase());
-  }
-
-  return isAllowedAdmin(env, session);
+  return isAllowedControl(env, session);
 }
 
 export function getSessionGroups(session: UserSession): string[] {
   return parseGroups(session.user_groups);
+}
+
+function isAllowedControl(env: Env, session: UserSession): boolean {
+  if (!session.user_email) return false;
+  const controlGroup = (env.CONTROL_GROUP ?? "").trim();
+  if (!controlGroup) return false;
+  return parseGroups(session.user_groups).includes(controlGroup);
 }
 
 function parseGroups(raw: string): string[] {
