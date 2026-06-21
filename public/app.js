@@ -213,35 +213,13 @@ function safeLinkUrl(value) {
 }
 
 async function renderPostList({ admin = false } = {}) {
-  const list = document.querySelector("[data-post-list]");
+  const lists = Array.from(document.querySelectorAll("[data-post-list]"));
   const featureGrid = document.querySelector("[data-feature-grid]");
-  if (!list) return;
+  if (!lists.length) return;
 
   try {
-    const mode = list.dataset.postListMode || (admin ? "admin" : "cards");
     const data = await fetchJson(`/api/posts${admin ? "?drafts=1" : ""}`);
-    if (!data.posts.length) {
-      if (featureGrid && !admin) featureGrid.innerHTML = "";
-      list.innerHTML = '<p class="empty-state">暂无文章。</p>';
-      return;
-    }
-
-    if (mode === "compact") {
-      list.innerHTML = data.posts
-        .slice(0, 3)
-        .map(
-          (post) => `
-            <a href="/post.html?slug=${encodeURIComponent(post.slug)}">
-              ${escapeHtml(post.title)}
-              <span>${formatDate(post.published_at || post.updated_at)}</span>
-            </a>
-          `,
-        )
-        .join("");
-      return;
-    }
-
-    if (featureGrid && !admin) {
+    if (featureGrid && !admin && data.posts.length) {
       const featuredPosts = data.posts.slice(0, 3);
       featureGrid.innerHTML = featuredPosts
         .map(
@@ -257,31 +235,80 @@ async function renderPostList({ admin = false } = {}) {
         .join("");
     }
 
-    list.innerHTML = data.posts
+    if (!data.posts.length && featureGrid && !admin) featureGrid.innerHTML = "";
+    lists.forEach((list) => renderPostListInto(list, data.posts, admin));
+    bindArticleFilters();
+  } catch (error) {
+    if (featureGrid && !admin) featureGrid.innerHTML = "";
+    lists.forEach((list) => {
+      list.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
+    });
+  }
+}
+
+function renderPostListInto(list, posts, admin) {
+  const mode = list.dataset.postListMode || (admin ? "admin" : "cards");
+  if (!posts.length) {
+    list.innerHTML = '<p class="empty-state">暂无文章。</p>';
+    return;
+  }
+
+  if (mode === "compact") {
+    list.innerHTML = posts
+      .slice(0, 3)
       .map(
         (post) => `
-          <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-category="all">
+          <a href="/post.html?slug=${encodeURIComponent(post.slug)}">
+            ${escapeHtml(post.title)}
+            <span>${formatDate(post.published_at || post.updated_at)}</span>
+          </a>
+        `,
+      )
+      .join("");
+    return;
+  }
+
+  if (mode === "home") {
+    list.innerHTML = posts
+      .slice(0, 3)
+      .map(
+        (post) => `
+          <article class="card reveal visible">
             <span class="flash"></span>
-            <div class="article-cover"></div>
-            <div class="article-head">
-              <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${post.status === "published" ? "已发布" : "草稿"}</span></div>
-              <span class="tag">${post.status === "published" ? "已发布" : "草稿"}</span>
-            </div>
-            <h2><a href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">${escapeHtml(post.title)}</a></h2>
+            <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${post.status === "published" ? "已发布" : "草稿"}</span><span>YUNA.BLOG</span></div>
+            <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
             <div class="card-footer">
-              <a class="read-more" href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">阅读全文 →</a>
-              <span class="tag">YUNA.BLOG</span>
+              <span class="tag">协会动态</span>
+              <a class="read-more" href="/post.html?slug=${encodeURIComponent(post.slug)}">阅读全文 →</a>
             </div>
           </article>
         `,
       )
       .join("");
-    bindArticleFilters();
-  } catch (error) {
-    if (featureGrid && !admin) featureGrid.innerHTML = "";
-    list.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
+    return;
   }
+
+  list.innerHTML = posts
+    .map(
+      (post) => `
+        <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-category="all">
+          <span class="flash"></span>
+          <div class="article-cover"></div>
+          <div class="article-head">
+            <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${post.status === "published" ? "已发布" : "草稿"}</span></div>
+            <span class="tag">${post.status === "published" ? "已发布" : "草稿"}</span>
+          </div>
+          <h2><a href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">${escapeHtml(post.title)}</a></h2>
+          <p>${escapeHtml(post.excerpt || "")}</p>
+          <div class="card-footer">
+            <a class="read-more" href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">阅读全文 →</a>
+            <span class="tag">YUNA.BLOG</span>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
 }
 
 function bindArticleFilters() {

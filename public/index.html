@@ -85,17 +85,20 @@
     </div>
 
     <main class="main" id="content">
-      <div class="shell home-summary-grid">
-        <section class="aside-card home-summary-card reveal">
-          <h2>站点动态</h2>
-          <p>这里展示协会最近动态和站内热点，帮助新同学快速找到正在发生的内容。</p>
-          <div class="home-summary-actions">
-            <a class="read-more" href="/articles.html">查看全部内容 →</a>
-            <a class="read-more" href="/knowledge.html">查看学习资料 →</a>
+      <div class="shell content-grid">
+        <section>
+          <div class="tabs reveal">
+            <button class="tab active" type="button">全部文章</button>
+            <button class="tab" type="button">运维与研发</button>
+            <button class="tab" type="button">网络安全</button>
+            <button class="tab" type="button">数据与 AI</button>
+          </div>
+          <div data-post-list data-post-list-mode="home">
+            <p class="empty-state">正在加载最新文章。</p>
           </div>
         </section>
 
-        <div class="home-side-stack">
+        <aside>
           <section class="aside-card reveal">
             <h3>团队公告</h3>
             <p>招新答疑开放中，欢迎同学了解开发、安全、运维和组宣方向。</p>
@@ -107,8 +110,32 @@
               <a href="/articles.html">正在加载最新文章 <span>请稍候</span></a>
             </div>
           </section>
-        </div>
+        </aside>
       </div>
+
+      <section class="shell home-knowledge-section">
+        <div class="section-title reveal">
+          <p class="eyebrow">Knowledge Base</p>
+          <h2>文章、资料、项目统一沉淀。</h2>
+        </div>
+        <div class="knowledge-grid">
+          <article class="knowledge-card reveal">
+            <div class="num">01</div>
+            <h3>运维与研发</h3>
+            <p>服务器部署、Docker、CI/CD、前后端工程化。</p>
+          </article>
+          <article class="knowledge-card reveal">
+            <div class="num">02</div>
+            <h3>网络安全</h3>
+            <p>CTF、逆向、渗透基础、校园网安全记录。</p>
+          </article>
+          <article class="knowledge-card reveal">
+            <div class="num">03</div>
+            <h3>数据与 AI</h3>
+            <p>Agent、知识库、多模态应用与团队工具链。</p>
+          </article>
+        </div>
+      </section>
     </main>
 
     <footer class="shell footer">

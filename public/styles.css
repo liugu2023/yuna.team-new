@@ -367,6 +367,9 @@
       font-weight:900;
       font-variant-numeric:tabular-nums;
     }
+    .home-knowledge-section{
+      margin-top:18px;
+    }
 
     /* Homepage compact flow: remove the old full-screen hero gap and align the two content columns. */
     .hero-wrap{
