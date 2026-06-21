@@ -88,12 +88,6 @@ export async function getAdminIdentity(env: Env, request: Request): Promise<stri
   const session = await getSession(env, request);
   if (session && isAllowedAdmin(env, session)) return session.user_email;
 
-  const authorization = request.headers.get("authorization") || "";
-  const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
-  if (env.MIGRATION_TOKEN && token && token === env.MIGRATION_TOKEN) {
-    return "migration";
-  }
-
   return null;
 }
 
@@ -101,10 +95,13 @@ export async function getContentEditorIdentity(env: Env, request: Request): Prom
   const session = await getSession(env, request);
   if (session && isAllowedContentEditor(env, session)) return session.user_email;
 
-  const authorization = request.headers.get("authorization") || "";
-  const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
-  if (env.MIGRATION_TOKEN && token && token === env.MIGRATION_TOKEN) {
-    return "migration";
+  return null;
+}
+
+export function getR2MigrationIdentity(env: Env, request: Request): string | null {
+  const token = bearerToken(request);
+  if (env.R2_MIGRATION_TOKEN && token && token === env.R2_MIGRATION_TOKEN) {
+    return "r2-migration";
   }
 
   return null;
@@ -112,4 +109,9 @@ export async function getContentEditorIdentity(env: Env, request: Request): Prom
 
 async function currentSessionId(env: Env, request: Request): Promise<string | null> {
   return verifySignedValue(getCookie(request, SESSION_COOKIE), env.SESSION_SECRET);
+}
+
+function bearerToken(request: Request): string {
+  const authorization = request.headers.get("authorization") || "";
+  return authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
 }

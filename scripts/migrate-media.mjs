@@ -2,7 +2,7 @@ import { open, readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
 const baseUrl = requiredEnv("SITE_BASE_URL").replace(/\/+$/, "");
-const token = requiredEnv("MIGRATION_TOKEN");
+const authHeaders = migrationAuthHeaders();
 const sourceRoot = process.env.SOURCE_ROOT || "../yuna.team/docs";
 const directUploadLimit = 8 * 1024 * 1024;
 
@@ -69,7 +69,7 @@ async function putBinary(route, body, type) {
   const response = await fetch(`${baseUrl}${route}`, {
     method: "PUT",
     headers: {
-      authorization: `Bearer ${token}`,
+      ...authHeaders,
       "content-type": type,
     },
     body,
@@ -100,7 +100,7 @@ async function putMultipart(mediaPath, absolutePath, size, type) {
         {
           method: "PUT",
           headers: {
-            authorization: `Bearer ${token}`,
+            ...authHeaders,
             "content-type": type,
           },
           body: buffer.subarray(0, bytesRead),
@@ -134,7 +134,7 @@ async function postJson(url, payload) {
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      authorization: `Bearer ${token}`,
+      ...authHeaders,
       "content-type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -162,4 +162,14 @@ function requiredEnv(name) {
   const value = process.env[name];
   if (!value) throw new Error(`${name} is required`);
   return value;
+}
+
+function migrationAuthHeaders() {
+  const token = process.env.R2_MIGRATION_TOKEN || "";
+  if (token) return { authorization: `Bearer ${token}` };
+
+  const session = process.env.ADMIN_SESSION_COOKIE || "";
+  if (session) return { cookie: session.includes("=") ? session : `yuna_session=${session}` };
+
+  throw new Error("R2_MIGRATION_TOKEN or ADMIN_SESSION_COOKIE is required");
 }

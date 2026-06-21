@@ -1,4 +1,4 @@
-import { badRequest, json, readJson } from "./http";
+import { badRequest, forbidden, json, readJson } from "./http";
 import {
   MULTIPART_UPLOAD_MAX_PART_BYTES,
   MULTIPART_UPLOAD_PART_BYTES,
@@ -27,16 +27,22 @@ interface AbortUploadPayload {
   uploadId?: string;
 }
 
+interface MultipartMediaUploadOptions {
+  allowPath?: (path: string) => boolean;
+}
+
 export async function initMultipartMediaUpload(
   env: Env,
   request: Request,
   uploadedBy: string,
+  options: MultipartMediaUploadOptions = {},
 ): Promise<Response> {
   const payload = await readJson<InitUploadPayload>(request);
   if (!payload) return badRequest("上传初始化参数无效");
 
   const path = normalizeUploadPath(payload.path);
   if (!path) return badRequest("媒体路径无效");
+  if (!isAllowedUploadPath(path, options)) return forbidden();
 
   const contentType = resolveStoredContentType(path, payload.contentType || "");
   const upload = await env.BLOG_BUCKET.createMultipartUpload(mediaKey(path), {
@@ -58,13 +64,18 @@ export async function initMultipartMediaUpload(
   });
 }
 
-export async function uploadMultipartMediaPart(env: Env, request: Request): Promise<Response> {
+export async function uploadMultipartMediaPart(
+  env: Env,
+  request: Request,
+  options: MultipartMediaUploadOptions = {},
+): Promise<Response> {
   const url = new URL(request.url);
   const path = normalizeUploadPath(url.searchParams.get("path"));
   const uploadId = (url.searchParams.get("uploadId") || "").trim();
   const partNumber = Number(url.searchParams.get("partNumber") || "0");
 
   if (!path) return badRequest("媒体路径无效");
+  if (!isAllowedUploadPath(path, options)) return forbidden();
   if (!uploadId) return badRequest("缺少 uploadId");
   if (!Number.isInteger(partNumber) || partNumber < 1 || partNumber > 10000) {
     return badRequest("分片序号无效");
@@ -81,12 +92,17 @@ export async function uploadMultipartMediaPart(env: Env, request: Request): Prom
   return json(part);
 }
 
-export async function completeMultipartMediaUpload(env: Env, request: Request): Promise<Response> {
+export async function completeMultipartMediaUpload(
+  env: Env,
+  request: Request,
+  options: MultipartMediaUploadOptions = {},
+): Promise<Response> {
   const payload = await readJson<CompleteUploadPayload>(request);
   if (!payload) return badRequest("完成上传参数无效");
 
   const path = normalizeUploadPath(payload.path);
   if (!path) return badRequest("媒体路径无效");
+  if (!isAllowedUploadPath(path, options)) return forbidden();
   if (!payload.uploadId) return badRequest("缺少 uploadId");
 
   const parts = normalizeUploadedParts(payload.parts);
@@ -104,12 +120,17 @@ export async function completeMultipartMediaUpload(env: Env, request: Request): 
   });
 }
 
-export async function abortMultipartMediaUpload(env: Env, request: Request): Promise<Response> {
+export async function abortMultipartMediaUpload(
+  env: Env,
+  request: Request,
+  options: MultipartMediaUploadOptions = {},
+): Promise<Response> {
   const payload = await readJson<AbortUploadPayload>(request);
   if (!payload) return badRequest("取消上传参数无效");
 
   const path = normalizeUploadPath(payload.path);
   if (!path) return badRequest("媒体路径无效");
+  if (!isAllowedUploadPath(path, options)) return forbidden();
   if (!payload.uploadId) return badRequest("缺少 uploadId");
 
   const upload = env.BLOG_BUCKET.resumeMultipartUpload(mediaKey(path), payload.uploadId);
@@ -122,6 +143,10 @@ function normalizeUploadPath(value: unknown): string {
     .replace(/^\/+|\/+$/g, "")
     .replace(/^media\//, "");
   return isSafeMediaPath(path) ? path : "";
+}
+
+function isAllowedUploadPath(path: string, options: MultipartMediaUploadOptions): boolean {
+  return options.allowPath ? options.allowPath(path) : true;
 }
 
 function normalizeUploadedParts(value: unknown): R2UploadedPart[] {

@@ -4,17 +4,18 @@
 //   node scripts/clean-orphan-media.mjs --delete # 实际删除孤儿
 //
 // 需要环境变量：
-//   PUBLIC_BASE_URL（或 SITE_URL） + MIGRATION_TOKEN
+//   PUBLIC_BASE_URL（或 SITE_URL） + ADMIN_SESSION_COOKIE
 // 也可登录后用浏览器直接访问 GET /api/admin/media-orphans 看 dry-run 结果。
 
 const baseUrl = (process.env.PUBLIC_BASE_URL || process.env.SITE_URL || "").replace(/\/+$/, "");
-const token = process.env.MIGRATION_TOKEN || "";
 const doDelete = process.argv.includes("--delete");
 
-if (!baseUrl || !token) {
-  console.error("需要设置 PUBLIC_BASE_URL 或 SITE_URL，以及 MIGRATION_TOKEN。");
+if (!baseUrl) {
+  console.error("需要设置 PUBLIC_BASE_URL 或 SITE_URL。");
   process.exit(1);
 }
+
+const authHeaders = adminAuthHeaders();
 
 const url = doDelete
   ? `${baseUrl}/api/admin/media-orphans?confirm=delete`
@@ -22,7 +23,7 @@ const url = doDelete
 
 const response = await fetch(url, {
   method: doDelete ? "POST" : "GET",
-  headers: { authorization: `Bearer ${token}` },
+  headers: authHeaders,
 });
 const data = await response.json().catch(() => ({}));
 
@@ -57,4 +58,11 @@ if (!doDelete) {
 if (data.unknown?.length) {
   console.log("\n⚠️ 未知前缀对象（未自动处理，请人工确认）：");
   for (const entry of data.unknown) console.log(`  ${entry.key}`);
+}
+
+function adminAuthHeaders() {
+  const session = process.env.ADMIN_SESSION_COOKIE || "";
+  if (session) return { cookie: session.includes("=") ? session : `yuna_session=${session}` };
+  console.error("需要设置 ADMIN_SESSION_COOKIE。登录后台后复制 yuna_session Cookie 值即可。");
+  process.exit(1);
 }

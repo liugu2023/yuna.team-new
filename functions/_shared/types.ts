@@ -8,8 +8,9 @@ export interface Env {
   AUTHENTIK_CLIENT_SECRET: string;
   AUTHENTIK_REDIRECT_PATH: string;
   SESSION_SECRET: string;
-  MIGRATION_TOKEN?: string;
   CONTROL_GROUP?: string;
+  R2_MIGRATION_TOKEN?: string;
+  R2_MIGRATION_PREFIXES?: string;
   GITHUB_BACKUP_REPO?: string;
   GITHUB_BACKUP_BRANCH?: string;
   GITHUB_BACKUP_PATH?: string;

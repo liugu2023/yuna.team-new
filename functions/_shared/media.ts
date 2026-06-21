@@ -1,3 +1,5 @@
+import type { Env } from "./types";
+
 // 媒体类型白名单：只有这些可以以原始类型内联渲染，其余一律按二进制处理。
 // 目的是防止上传 HTML / SVG 等可执行内容后通过 /media/ 在主域形成存储型 XSS。
 const INLINE_IMAGE_TYPES = new Set([
@@ -64,4 +66,17 @@ export function mediaKey(path: string): string {
 
 export function mediaUrl(path: string): string {
   return `/media/${path.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+export function isAllowedMediaMigrationPath(env: Env, path: string): boolean {
+  const prefixes = mediaMigrationPrefixes(env);
+  return prefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
+
+function mediaMigrationPrefixes(env: Env): string[] {
+  const raw = (env.R2_MIGRATION_PREFIXES || "activates").trim();
+  return raw
+    .split(",")
+    .map((prefix) => normalizeMediaPath(prefix).replace(/^\/+|\/+$/g, "").replace(/^media\//, ""))
+    .filter((prefix) => prefix && isSafeMediaPath(`${prefix}/placeholder`));
 }

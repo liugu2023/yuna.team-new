@@ -1,4 +1,5 @@
 AUTHENTIK_CLIENT_SECRET=replace-with-client-secret
 SESSION_SECRET=replace-with-at-least-32-random-bytes
-MIGRATION_TOKEN=replace-with-random-import-token
+R2_MIGRATION_TOKEN=replace-with-random-r2-migration-token
+R2_MIGRATION_PREFIXES=activates
 GITHUB_BACKUP_TOKEN=replace-with-github-fine-grained-token

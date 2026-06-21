@@ -80,7 +80,8 @@ copy .dev.vars.example .dev.vars
 ```text
 AUTHENTIK_CLIENT_SECRET=Authentik Provider 的 client secret
 SESSION_SECRET=至少 32 字节的随机字符串
-MIGRATION_TOKEN=仅迁移脚本或数据库导入接口需要
+R2_MIGRATION_TOKEN=仅旧媒体迁移脚本写入 R2 时需要
+R2_MIGRATION_PREFIXES=activates
 GITHUB_BACKUP_TOKEN=GitHub fine-grained token，仅 Markdown 备份需要
 ```
 
@@ -143,7 +144,7 @@ Cloudflare Pages 项目名以控制台为准。当前线上项目使用过 `yuna
 ```bash
 npx wrangler pages secret put AUTHENTIK_CLIENT_SECRET --project-name yuna-team-new
 npx wrangler pages secret put SESSION_SECRET --project-name yuna-team-new
-npx wrangler pages secret put MIGRATION_TOKEN --project-name yuna-team-new
+npx wrangler pages secret put R2_MIGRATION_TOKEN --project-name yuna-team-new
 npx wrangler pages secret put GITHUB_BACKUP_TOKEN --project-name yuna-team-new
 ```
 
@@ -151,7 +152,7 @@ npx wrangler pages secret put GITHUB_BACKUP_TOKEN --project-name yuna-team-new
 
 - `AUTHENTIK_CLIENT_SECRET`：Authentik OAuth Provider 的客户端密钥。
 - `SESSION_SECRET`：用于签名登录会话 Cookie，必须是随机长字符串。
-- `MIGRATION_TOKEN`：只用于受保护的数据迁移、导入类接口，普通访问不依赖它。
+- `R2_MIGRATION_TOKEN`：只用于旧媒体迁移脚本写入 R2，不具备后台管理权限。
 - `GITHUB_BACKUP_TOKEN`：写入私有 GitHub 备份仓库的 token。
 
 `wrangler.toml` 中的公开变量：
@@ -162,6 +163,7 @@ AUTHENTIK_ISSUER = "https://sso.yuna.welain.com/application/o/yuna-docs/"
 AUTHENTIK_CLIENT_ID = "esxw1ynBDm6B6r5dzIdCtBfJ3ifkKVk7WbIRD7Py"
 AUTHENTIK_REDIRECT_PATH = "/auth/callback"
 CONTROL_GROUP = "yuna-docs-edit"
+R2_MIGRATION_PREFIXES = "activates"
 GITHUB_BACKUP_REPO = ""
 GITHUB_BACKUP_BRANCH = "main"
 GITHUB_BACKUP_PATH = "yuna-blog"
@@ -257,11 +259,12 @@ npm run db:migrate
 - 文章管理：创建、编辑、发布、保存草稿、删除文章。
 - 协会成员：按届数、部门、职位维护成员。
 - 名人堂：维护头像、名称、职位、履历和联系方式。
-- 站点维护：上传资料文件、手动同步 Markdown 备份、导出数据库、强制导入数据库、维护首页图库。
+- 站点维护：手动同步 Markdown 备份、导出数据库、强制导入数据库、维护首页图库。
+- 文章编辑器：上传图片和附件资料，并自动插入 Markdown 链接。
 
 数据库导出会生成完整 JSON 备份。数据库导入会以导入内容为准强制覆盖对应数据，操作前建议先导出一份当前数据。
 
-资料文件保存在 R2。后台上传资料时，8MB 以内走普通上传，超过 8MB 自动按 8MB 分片上传并在 R2 合并。
+资料文件保存在 R2。文章编辑器上传附件时，8MB 以内走普通上传，超过 8MB 自动按 8MB 分片上传并在 R2 合并。
 
 ## 数据迁移
 
@@ -269,7 +272,7 @@ npm run db:migrate
 
 ```powershell
 $env:PUBLIC_BASE_URL="https://yuna.liugu.cc"
-$env:MIGRATION_TOKEN="与 Cloudflare Pages 中一致的 MIGRATION_TOKEN"
+$env:ADMIN_SESSION_COOKIE="登录后台后的 yuna_session Cookie 值"
 $env:CONTENT_SOURCE_REF="旧内容所在的 git ref，例如 9e4fd12^"
 npm run db:migrate-pages
 ```
@@ -278,7 +281,7 @@ npm run db:migrate-pages
 
 ```powershell
 $env:PUBLIC_BASE_URL="https://yuna.liugu.cc"
-$env:MIGRATION_TOKEN="与 Cloudflare Pages 中一致的 MIGRATION_TOKEN"
+$env:ADMIN_SESSION_COOKIE="登录后台后的 yuna_session Cookie 值"
 npm run db:migrate-posts
 ```
 
@@ -286,12 +289,12 @@ npm run db:migrate-posts
 
 ```powershell
 $env:SITE_BASE_URL="https://yuna.liugu.cc"
-$env:MIGRATION_TOKEN="与 Cloudflare Pages 中一致的 MIGRATION_TOKEN"
+$env:R2_MIGRATION_TOKEN="与 Cloudflare Pages 中一致的 R2_MIGRATION_TOKEN"
 $env:SOURCE_ROOT="D:\System\Desktop\yuna\yuna.team\docs"
 npm run media:migrate
 ```
 
-`media:migrate` 只迁移旧站 `public/activates` 下的授课资料。小文件直接上传，大文件自动使用 R2 multipart 分片上传。
+`media:migrate` 只迁移旧站 `public/activates` 下的授课资料。小文件直接上传，大文件自动使用 R2 multipart 分片上传。`R2_MIGRATION_TOKEN` 只允许写入 `R2_MIGRATION_PREFIXES` 配置的媒体前缀，默认是 `activates`。
 
 这些迁移脚本只用于旧内容搬迁，日常写文章和传图片直接在后台完成。
 
@@ -342,7 +345,7 @@ npm run media:migrate     # 旧媒体文件迁移到 R2
 
 ## 安全说明
 
-- 不要把 `AUTHENTIK_CLIENT_SECRET`、`SESSION_SECRET`、`MIGRATION_TOKEN` 提交进仓库。
+- 不要把 `AUTHENTIK_CLIENT_SECRET`、`SESSION_SECRET`、`R2_MIGRATION_TOKEN`、`GITHUB_BACKUP_TOKEN` 提交进仓库。
 - `SESSION_SECRET` 修改后，已有登录会话会失效。
 - R2 文件通过后端接口输出，非图片类型会按下载文件处理。
 - 联系方式链接会限制协议，避免写入危险链接。
