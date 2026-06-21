@@ -1,4 +1,5 @@
 import { badRequest, json, notFound, readJson } from "../../_shared/http";
+import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
 import { getSession, isAllowedAdmin } from "../../_shared/session";
 import type { Env, PostRecord } from "../../_shared/types";
 
@@ -22,7 +23,7 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, re
   return json({ post, markdown: post.markdown_content ?? "" });
 };
 
-export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
+export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, request, waitUntil }) => {
   const session = await getSession(env, request);
   if (!session || !isAllowedAdmin(env, session)) {
     return json({ error: "需要管理员登录" }, { status: 401 });
@@ -73,6 +74,8 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
     .bind(slug)
     .first<PostRecord>();
 
+  queueMarkdownGithubSync(env, waitUntil, "post:update", session.user_email);
+
   return json({ post: updated });
 };
 
@@ -80,7 +83,7 @@ function isValidStatus(value: string): value is "draft" | "published" {
   return value === "draft" || value === "published";
 }
 
-export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
+export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params, request, waitUntil }) => {
   const session = await getSession(env, request);
   if (!session || !isAllowedAdmin(env, session)) {
     return json({ error: "需要管理员登录" }, { status: 401 });
@@ -93,6 +96,8 @@ export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params,
   if (!post) return notFound("文章不存在");
 
   await env.BLOG_DB.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
+
+  queueMarkdownGithubSync(env, waitUntil, "post:delete", session.user_email);
 
   return json({ ok: true });
 };

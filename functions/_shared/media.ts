@@ -13,7 +13,15 @@ const EXT_CONTENT_TYPE: Record<string, string> = {
   jpeg: "image/jpeg",
   gif: "image/gif",
   webp: "image/webp",
+  md: "text/markdown; charset=utf-8",
+  txt: "text/plain; charset=utf-8",
+  pdf: "application/pdf",
+  zip: "application/zip",
 };
+
+export const DIRECT_MEDIA_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+export const MULTIPART_UPLOAD_PART_BYTES = 8 * 1024 * 1024;
+export const MULTIPART_UPLOAD_MAX_PART_BYTES = 16 * 1024 * 1024;
 
 function normalizeContentType(value: string): string {
   return (value || "").split(";")[0].trim().toLowerCase();
@@ -34,4 +42,26 @@ export function resolveStoredContentType(path: string, requested: string): strin
 
 export function isInlineImageType(contentType: string): boolean {
   return INLINE_IMAGE_TYPES.has(normalizeContentType(contentType));
+}
+
+export function normalizeMediaPath(path: string): string {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+}
+
+export function isSafeMediaPath(path: string): boolean {
+  if (!path || path.length > 512 || path.startsWith("/") || path.endsWith("/")) return false;
+  if (/[\0\r\n\\]/.test(path)) return false;
+  return path.split("/").every((segment) => segment && segment !== "." && segment !== "..");
+}
+
+export function mediaKey(path: string): string {
+  return `media/${path}`;
+}
+
+export function mediaUrl(path: string): string {
+  return `/media/${path.split("/").map(encodeURIComponent).join("/")}`;
 }

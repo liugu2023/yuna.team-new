@@ -1,4 +1,4 @@
-import { isInlineImageType } from "../_shared/media";
+import { isInlineImageType, isSafeMediaPath, mediaKey, normalizeMediaPath } from "../_shared/media";
 import type { Env } from "../_shared/types";
 
 export const onRequestGet: PagesFunction<Env, "path"> = async ({ env, params }) => {
@@ -9,7 +9,7 @@ export const onRequestGet: PagesFunction<Env, "path"> = async ({ env, params }) 
     return new Response("资源不存在", { status: 404 });
   }
 
-  const key = `media/${rawPath}`;
+  const key = mediaKey(rawPath);
   const object = await env.BLOG_BUCKET.get(key);
   if (!object) return new Response("资源不存在", { status: 404 });
 
@@ -29,15 +29,3 @@ export const onRequestGet: PagesFunction<Env, "path"> = async ({ env, params }) 
 
   return new Response(object.body, { headers });
 };
-
-function isSafeMediaPath(path: string): boolean {
-  return Boolean(path) && !path.includes("..") && /^[\w. /()\-\u4e00-\u9fa5\uff00-\uffef]+$/.test(path);
-}
-
-function normalizeMediaPath(path: string): string {
-  try {
-    return decodeURIComponent(path);
-  } catch {
-    return path;
-  }
-}

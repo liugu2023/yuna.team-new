@@ -43,6 +43,10 @@ const fields = {
   exportMessage: document.querySelector("[data-export-message]"),
   importFile: document.querySelector("[data-import-db-file]"),
   importMessage: document.querySelector("[data-import-message]"),
+  docFolder: document.querySelector("[data-doc-folder]"),
+  docFiles: document.querySelector("[data-doc-files]"),
+  docMessage: document.querySelector("[data-doc-message]"),
+  syncMessage: document.querySelector("[data-sync-message]"),
   galleryTitle: document.querySelector("[data-gallery-title]"),
   galleryFile: document.querySelector("[data-gallery-file]"),
   galleryScale: document.querySelector("[data-gallery-scale]"),
@@ -55,6 +59,7 @@ const fields = {
 };
 
 const editorModal = document.querySelector("[data-editor-modal]");
+const DIRECT_UPLOAD_LIMIT = 8 * 1024 * 1024;
 
 function statusLabel(status) {
   return status === "published" ? "已发布" : "草稿";
@@ -289,11 +294,133 @@ async function uploadFameAvatar() {
 async function uploadImage(file, folder) {
   const safeName = `${Date.now()}-${file.name}`.replace(/[^\w.\-\u4e00-\u9fa5]+/g, "-");
   const path = `${folder}/${safeName}`.replace(/^\/+/, "");
-  return window.blog.fetchJson(`/api/admin/media/${encodeURI(path)}`, {
-    method: "PUT",
-    headers: { "content-type": file.type || "application/octet-stream" },
-    body: file,
+  return uploadMedia(file, path);
+}
+
+async function uploadMedia(file, path, onProgress) {
+  if (file.size <= DIRECT_UPLOAD_LIMIT) {
+    const data = await window.blog.fetchJson(`/api/admin/media/${encodeMediaPath(path)}`, {
+      method: "PUT",
+      headers: { "content-type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    onProgress?.(file.size, file.size);
+    return data;
+  }
+
+  return uploadMultipartMedia(file, path, onProgress);
+}
+
+async function uploadMultipartMedia(file, path, onProgress) {
+  const init = await window.blog.fetchJson("/api/admin/uploads/init", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      path,
+      contentType: file.type || "application/octet-stream",
+      size: file.size,
+    }),
   });
+
+  const parts = [];
+  const partSize = init.partSize || DIRECT_UPLOAD_LIMIT;
+  let uploaded = 0;
+
+  try {
+    for (let offset = 0, partNumber = 1; offset < file.size; offset += partSize, partNumber += 1) {
+      const chunk = file.slice(offset, Math.min(file.size, offset + partSize));
+      const response = await fetch(
+        `/api/admin/uploads/part?path=${encodeURIComponent(path)}&uploadId=${encodeURIComponent(init.uploadId)}&partNumber=${partNumber}`,
+        {
+          method: "PUT",
+          headers: { "content-type": file.type || "application/octet-stream" },
+          body: chunk,
+        },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `分片上传失败：${response.status}`);
+
+      parts.push(data);
+      uploaded += chunk.size;
+      onProgress?.(uploaded, file.size);
+    }
+
+    return window.blog.fetchJson("/api/admin/uploads/complete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        path,
+        uploadId: init.uploadId,
+        parts,
+      }),
+    });
+  } catch (error) {
+    await window.blog.fetchJson("/api/admin/uploads/abort", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        path,
+        uploadId: init.uploadId,
+      }),
+    }).catch(() => {});
+    throw error;
+  }
+}
+
+function encodeMediaPath(path) {
+  return path.split("/").map(encodeURIComponent).join("/");
+}
+
+function uploadPercent(loaded, total) {
+  if (!total) return "0%";
+  return `${Math.min(100, Math.round((loaded / total) * 100))}%`;
+}
+
+function cleanDocumentFolder(value) {
+  return (value || "activates")
+    .replace(/\\/g, "/")
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/^media\//, "")
+    .split("/")
+    .map((segment) => cleanDocumentName(segment))
+    .filter(Boolean)
+    .join("/") || "activates";
+}
+
+function cleanDocumentName(value) {
+  return (value || "file")
+    .replace(/[\\/:*?"<>|#%&{}$!`'@+=]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120) || "file";
+}
+
+async function uploadDocuments() {
+  const files = Array.from(fields.docFiles.files || []);
+  if (!files.length) {
+    fields.docMessage.textContent = "请选择要上传的资料文件。";
+    return;
+  }
+
+  const folder = cleanDocumentFolder(fields.docFolder.value);
+  const urls = [];
+  fields.docMessage.textContent = "准备上传资料...";
+
+  try {
+    for (const [index, file] of files.entries()) {
+      const name = cleanDocumentName(file.name);
+      const path = `${folder}/${name}`;
+      const data = await uploadMedia(file, path, (loaded, total) => {
+        fields.docMessage.textContent = `正在上传 ${index + 1}/${files.length}：${file.name} ${uploadPercent(loaded, total)}`;
+      });
+      urls.push(data.url);
+    }
+
+    fields.docFiles.value = "";
+    fields.docMessage.textContent = `上传完成：${urls.join(" ")}`;
+  } catch (error) {
+    fields.docMessage.textContent = error.message;
+  }
 }
 
 async function loadMembers() {
@@ -785,6 +912,20 @@ async function importDatabase() {
   }
 }
 
+async function syncMarkdownBackup() {
+  fields.syncMessage.textContent = "正在同步 Markdown 到 GitHub...";
+  try {
+    const data = await window.blog.fetchJson("/api/admin/github-sync", {
+      method: "POST",
+    });
+    fields.syncMessage.textContent = data.skipped
+      ? data.reason || "未配置 GitHub 同步，已跳过。"
+      : `同步完成：${data.files} 个 Markdown 文件。`;
+  } catch (error) {
+    fields.syncMessage.textContent = error.message;
+  }
+}
+
 function resetEditor() {
   state.editingSlug = null;
   fields.title.value = "";
@@ -882,6 +1023,8 @@ bind("[data-save-member-entry]", "click", saveMemberEntry);
 bind("[data-save-fame-entry]", "click", saveFameEntry);
 bind("[data-export-db]", "click", exportDatabase);
 bind("[data-import-db]", "click", importDatabase);
+bind("[data-upload-docs]", "click", uploadDocuments);
+bind("[data-sync-markdown]", "click", syncMarkdownBackup);
 bind("[data-add-gallery-image]", "click", addGalleryImage);
 bindElement(fields.galleryFile, "change", updateGalleryCropPreview, "data-gallery-file");
 bindElement(fields.galleryScale, "input", updateGalleryCropPreview, "data-gallery-scale");

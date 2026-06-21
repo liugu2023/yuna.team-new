@@ -1,4 +1,5 @@
 import { badRequest, json, readJson } from "../../../_shared/http";
+import { queueMarkdownGithubSync } from "../../../_shared/github-markdown-sync";
 import { getAdminIdentity } from "../../../_shared/session";
 import { upsertSiteRecord } from "../../../_shared/site-records";
 import type { Env } from "../../../_shared/types";
@@ -9,7 +10,7 @@ interface SaveSiteRecordPayload {
   content?: string;
 }
 
-export const onRequestPut: PagesFunction<Env, "key"> = async ({ env, params, request }) => {
+export const onRequestPut: PagesFunction<Env, "key"> = async ({ env, params, request, waitUntil }) => {
   const admin = await getAdminIdentity(env, request);
   if (!admin) {
     return json({ error: "需要管理员登录" }, { status: 401 });
@@ -37,6 +38,10 @@ export const onRequestPut: PagesFunction<Env, "key"> = async ({ env, params, req
     kind: payload.kind,
     content: payload.content,
   });
+
+  if (payload.kind === "markdown") {
+    queueMarkdownGithubSync(env, waitUntil, "site-markdown:update", admin);
+  }
 
   return json({ record });
 };

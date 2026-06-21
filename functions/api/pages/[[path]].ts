@@ -1,4 +1,5 @@
 import { badRequest, json, notFound, readJson } from "../../_shared/http";
+import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
 import { getContentEditorIdentity } from "../../_shared/session";
 import { getSiteRecord, upsertSiteRecord } from "../../_shared/site-records";
 import type { Env } from "../../_shared/types";
@@ -18,7 +19,7 @@ export const onRequestGet: PagesFunction<Env, "path"> = async ({ env, params }) 
   return json({ page: record });
 };
 
-export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, request }) => {
+export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, request, waitUntil }) => {
   const editor = await getContentEditorIdentity(env, request);
   if (!editor) {
     return json({ error: "需要页面编辑权限" }, { status: 401 });
@@ -41,6 +42,8 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
     kind: "markdown",
     content: payload.content,
   });
+
+  queueMarkdownGithubSync(env, waitUntil, "page:update", editor);
 
   return json({ page: record });
 };

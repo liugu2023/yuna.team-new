@@ -1,4 +1,5 @@
 import { badRequest, json, readJson } from "../../_shared/http";
+import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
 import { getAdminIdentity } from "../../_shared/session";
 import type { Env, PostRecord, SiteRecord } from "../../_shared/types";
 
@@ -18,7 +19,7 @@ interface SiteRecordBackup {
   changed_at: string;
 }
 
-export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUntil }) => {
   const admin = await getAdminIdentity(env, request);
   if (!admin) {
     return json({ error: "需要管理员登录" }, { status: 401 });
@@ -103,6 +104,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   }
 
   await env.BLOG_DB.batch(statements);
+
+  queueMarkdownGithubSync(env, waitUntil, "database:import", admin);
 
   return json({
     ok: true,

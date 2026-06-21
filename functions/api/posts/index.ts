@@ -1,4 +1,5 @@
 import { badRequest, json, readJson } from "../../_shared/http";
+import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
 import { getSession, isAllowedAdmin } from "../../_shared/session";
 import type { Env, PostRecord } from "../../_shared/types";
 
@@ -26,7 +27,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   return json({ posts: results ?? [] });
 };
 
-export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUntil }) => {
   const session = await getSession(env, request);
   if (!session || !isAllowedAdmin(env, session)) {
     return json({ error: "需要管理员登录" }, { status: 401 });
@@ -75,6 +76,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const post = await env.BLOG_DB.prepare("SELECT * FROM posts WHERE id = ?")
     .bind(id)
     .first<PostRecord>();
+
+  queueMarkdownGithubSync(env, waitUntil, "post:create", session.user_email);
 
   return json({ post }, { status: 201 });
 };

@@ -1,9 +1,17 @@
 import { json } from "../../_shared/http";
-import { getSession, isAllowedAdmin, isAllowedContentEditor } from "../../_shared/session";
+import {
+  getSession,
+  getSessionGroups,
+  isAllowedAdmin,
+  isAllowedContentEditor,
+} from "../../_shared/session";
 import type { Env } from "../../_shared/types";
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const session = await getSession(env, request);
+  const groups = session ? getSessionGroups(session) : [];
+  const adminGroup = (env.ADMIN_GROUP || "").trim();
+  const contentEditorGroup = (env.CONTENT_EDITOR_GROUP || "").trim();
   return json({
     authenticated: Boolean(session),
     admin: Boolean(session && isAllowedAdmin(env, session)),
@@ -13,7 +21,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
           email: session.user_email,
           name: session.user_name,
           expiresAt: session.expires_at,
+          groups,
         }
       : null,
+    authz: {
+      adminGroup,
+      contentEditorGroup,
+      adminGroupMatched: Boolean(adminGroup && groups.includes(adminGroup)),
+      contentEditorGroupMatched: Boolean(contentEditorGroup && groups.includes(contentEditorGroup)),
+    },
   });
 };

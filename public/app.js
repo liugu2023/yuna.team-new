@@ -6,6 +6,7 @@ async function fetchJson(url, options) {
 }
 
 let currentUserPromise;
+const DIRECT_MEDIA_UPLOAD_LIMIT = 8 * 1024 * 1024;
 
 async function currentUser() {
   if (!currentUserPromise) {
@@ -675,16 +676,88 @@ async function insertStaticPageImage(page, textarea, file, message) {
   message.textContent = "正在上传图片...";
   const filename = uploadFilename(file.name);
   const mediaPath = `pages/${page}/${Date.now()}-${filename}`;
-  const response = await fetch(`/api/content/media/${mediaPath.split("/").map(encodeURIComponent).join("/")}`, {
-    method: "PUT",
-    headers: { "content-type": file.type || "application/octet-stream" },
-    body: file,
+  const data = await uploadContentMedia(file, mediaPath, (loaded, total) => {
+    message.textContent = `正在上传图片... ${uploadPercent(loaded, total)}`;
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || `上传失败：${response.status}`);
 
   insertAtCursor(textarea, `![${filename}](${data.url})`);
   message.textContent = "图片已上传";
+}
+
+async function uploadContentMedia(file, path, onProgress) {
+  if (file.size <= DIRECT_MEDIA_UPLOAD_LIMIT) {
+    const response = await fetch(`/api/content/media/${path.split("/").map(encodeURIComponent).join("/")}`, {
+      method: "PUT",
+      headers: { "content-type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `上传失败：${response.status}`);
+    onProgress?.(file.size, file.size);
+    return data;
+  }
+
+  return uploadMultipartContentMedia(file, path, onProgress);
+}
+
+async function uploadMultipartContentMedia(file, path, onProgress) {
+  const init = await fetchJson("/api/content/uploads/init", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      path,
+      contentType: file.type || "application/octet-stream",
+      size: file.size,
+    }),
+  });
+
+  const parts = [];
+  const partSize = init.partSize || DIRECT_MEDIA_UPLOAD_LIMIT;
+  let uploaded = 0;
+
+  try {
+    for (let offset = 0, partNumber = 1; offset < file.size; offset += partSize, partNumber += 1) {
+      const chunk = file.slice(offset, Math.min(file.size, offset + partSize));
+      const response = await fetch(
+        `/api/content/uploads/part?path=${encodeURIComponent(path)}&uploadId=${encodeURIComponent(init.uploadId)}&partNumber=${partNumber}`,
+        {
+          method: "PUT",
+          headers: { "content-type": file.type || "application/octet-stream" },
+          body: chunk,
+        },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `分片上传失败：${response.status}`);
+      parts.push(data);
+      uploaded += chunk.size;
+      onProgress?.(uploaded, file.size);
+    }
+
+    return fetchJson("/api/content/uploads/complete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        path,
+        uploadId: init.uploadId,
+        parts,
+      }),
+    });
+  } catch (error) {
+    await fetchJson("/api/content/uploads/abort", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        path,
+        uploadId: init.uploadId,
+      }),
+    }).catch(() => {});
+    throw error;
+  }
+}
+
+function uploadPercent(loaded, total) {
+  if (!total) return "0%";
+  return `${Math.min(100, Math.round((loaded / total) * 100))}%`;
 }
 
 function insertAtCursor(textarea, text) {

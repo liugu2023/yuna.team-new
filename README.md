@@ -12,7 +12,9 @@
 - 名人堂独立维护头像、名称、职位、履历和联系方式。
 - 固定页面内容可以从数据库读取和编辑。
 - 后台支持数据库导出和强制导入，方便整站数据迁移。
-- 图片上传直接写入 R2，页面通过 `/media/...` 访问。
+- 图片和授课资料上传直接写入 R2，页面通过 `/media/...` 访问。
+- R2 上传支持小文件直传和大文件分片上传。
+- 文章或固定 Markdown 页面发生改动后，会自动同步 Markdown 快照到私有 GitHub 仓库。
 - Authentik OIDC 登录后进入管理后台。
 
 ## 技术栈
@@ -55,7 +57,7 @@ R2 存储：
 - 文章内图片。
 - 成员头像、名人堂头像。
 - 首页背景图。
-- PDF、压缩包等非 Markdown 文件。
+- 授课资料、PDF、压缩包等资料文件。
 
 仓库不再保存实际文章内容。重新部署 Pages 不会自动修改 D1 数据，也不会自动执行数据库迁移。
 
@@ -79,6 +81,7 @@ copy .dev.vars.example .dev.vars
 AUTHENTIK_CLIENT_SECRET=Authentik Provider 的 client secret
 SESSION_SECRET=至少 32 字节的随机字符串
 MIGRATION_TOKEN=仅迁移脚本或数据库导入接口需要
+GITHUB_BACKUP_TOKEN=GitHub fine-grained token，仅 Markdown 备份需要
 ```
 
 初始化本地 D1：
@@ -141,6 +144,7 @@ Cloudflare Pages 项目名以控制台为准。当前线上项目使用过 `yuna
 npx wrangler pages secret put AUTHENTIK_CLIENT_SECRET --project-name yuna-team-new
 npx wrangler pages secret put SESSION_SECRET --project-name yuna-team-new
 npx wrangler pages secret put MIGRATION_TOKEN --project-name yuna-team-new
+npx wrangler pages secret put GITHUB_BACKUP_TOKEN --project-name yuna-team-new
 ```
 
 说明：
@@ -148,6 +152,7 @@ npx wrangler pages secret put MIGRATION_TOKEN --project-name yuna-team-new
 - `AUTHENTIK_CLIENT_SECRET`：Authentik OAuth Provider 的客户端密钥。
 - `SESSION_SECRET`：用于签名登录会话 Cookie，必须是随机长字符串。
 - `MIGRATION_TOKEN`：只用于受保护的数据迁移、导入类接口，普通访问不依赖它。
+- `GITHUB_BACKUP_TOKEN`：写入私有 GitHub 备份仓库的 token。
 
 `wrangler.toml` 中的公开变量：
 
@@ -160,7 +165,21 @@ ADMIN_GROUP = ""
 ADMIN_IDENTITY_ALLOWLIST = ""
 CONTENT_EDITOR_GROUP = ""
 CONTENT_EDITOR_IDENTITY_ALLOWLIST = ""
+GITHUB_BACKUP_REPO = ""
+GITHUB_BACKUP_BRANCH = "main"
+GITHUB_BACKUP_PATH = "yuna-blog"
 ```
+
+GitHub Markdown 备份配置：
+
+- `GITHUB_BACKUP_REPO`：目标仓库，格式为 `owner/repo`。
+- `GITHUB_BACKUP_BRANCH`：目标分支，默认 `main`，需要提前存在。
+- `GITHUB_BACKUP_PATH`：写入仓库内的目录前缀，默认 `yuna-blog`。
+- `GITHUB_BACKUP_TOKEN`：GitHub fine-grained personal access token，至少需要目标仓库的 `Contents: Read and write` 权限。
+
+保存文章、删除文章、编辑固定 Markdown 页面、导入数据库或迁移旧文章后，系统会在响应返回后自动同步 D1 里的 Markdown 快照到 GitHub。配置缺失时会跳过同步，不影响正常写入。
+
+备份仓库建议使用独立私有仓库，不要把它绑定到 Cloudflare Pages 项目。这个同步只会向 GitHub 写入 Markdown 快照，不会调用 Cloudflare 部署；如果目标仓库本身被 Pages 监听，GitHub 提交仍然会触发 Pages 构建。
 
 ## Authentik 配置
 
@@ -196,6 +215,14 @@ http://localhost:8788/auth/callback
 - 固定页面编辑权限可使用 `CONTENT_EDITOR_GROUP` 或 `CONTENT_EDITOR_IDENTITY_ALLOWLIST` 单独控制；留空时沿用管理员权限。
 
 用户组信息会在登录时写入会话。Authentik 侧改组后，用户需要退出并重新登录。
+
+调试权限时，登录后访问：
+
+```text
+/api/auth/me
+```
+
+返回里的 `user.groups` 是 Authentik 通过 `groups` scope 返回并写入会话的用户组，`authz.adminGroupMatched` 和 `authz.contentEditorGroupMatched` 会显示当前配置的组名是否命中。
 
 ## 部署
 
@@ -233,9 +260,11 @@ npm run db:migrate
 - 文章管理：创建、编辑、发布、保存草稿、删除文章。
 - 协会成员：按届数、部门、职位维护成员。
 - 名人堂：维护头像、名称、职位、履历和联系方式。
-- 站点维护：导出数据库、强制导入数据库、维护首页图库。
+- 站点维护：上传资料文件、手动同步 Markdown 备份、导出数据库、强制导入数据库、维护首页图库。
 
 数据库导出会生成完整 JSON 备份。数据库导入会以导入内容为准强制覆盖对应数据，操作前建议先导出一份当前数据。
+
+资料文件保存在 R2。后台上传资料时，8MB 以内走普通上传，超过 8MB 自动按 8MB 分片上传并在 R2 合并。
 
 ## 数据迁移
 
@@ -256,7 +285,7 @@ $env:MIGRATION_TOKEN="与 Cloudflare Pages 中一致的 MIGRATION_TOKEN"
 npm run db:migrate-posts
 ```
 
-旧图片、PDF 等文件迁移到 R2：
+旧授课资料、PDF、压缩包等文件迁移到 R2：
 
 ```powershell
 $env:SITE_BASE_URL="https://yuna.liugu.cc"
@@ -264,6 +293,8 @@ $env:MIGRATION_TOKEN="与 Cloudflare Pages 中一致的 MIGRATION_TOKEN"
 $env:SOURCE_ROOT="D:\System\Desktop\yuna\yuna.team\docs"
 npm run media:migrate
 ```
+
+`media:migrate` 只迁移旧站 `public/activates` 下的授课资料。小文件直接上传，大文件自动使用 R2 multipart 分片上传。
 
 这些迁移脚本只用于旧内容搬迁，日常写文章和传图片直接在后台完成。
 
@@ -303,6 +334,11 @@ npm run media:migrate     # 旧媒体文件迁移到 R2
 - `PUT /api/posts/:slug`：更新文章。
 - `DELETE /api/posts/:slug`：删除文章。
 - `PUT /api/admin/media/:path`：上传媒体到 R2。
+- `POST /api/admin/uploads/init`：初始化 R2 分片上传。
+- `PUT /api/admin/uploads/part`：上传一个 R2 分片。
+- `POST /api/admin/uploads/complete`：完成 R2 分片上传。
+- `POST /api/admin/uploads/abort`：取消 R2 分片上传。
+- `POST /api/admin/github-sync`：手动同步 D1 Markdown 快照到 GitHub。
 - `PUT /api/admin/site/:key`：更新站点记录。
 - `GET /api/admin/export?download=1`：导出数据库数据。
 - `POST /api/admin/import`：导入数据库数据。

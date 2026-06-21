@@ -100,6 +100,10 @@ export function isAllowedContentEditor(env: Env, session: UserSession): boolean 
   return isAllowedAdmin(env, session);
 }
 
+export function getSessionGroups(session: UserSession): string[] {
+  return parseGroups(session.user_groups);
+}
+
 function parseGroups(raw: string): string[] {
   try {
     const value = JSON.parse(raw || "[]");

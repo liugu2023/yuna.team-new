@@ -13,6 +13,12 @@ export interface Env {
   ADMIN_GROUP?: string;
   CONTENT_EDITOR_IDENTITY_ALLOWLIST?: string;
   CONTENT_EDITOR_GROUP?: string;
+  GITHUB_BACKUP_REPO?: string;
+  GITHUB_BACKUP_BRANCH?: string;
+  GITHUB_BACKUP_PATH?: string;
+  GITHUB_BACKUP_TOKEN?: string;
+  GITHUB_BACKUP_AUTHOR_NAME?: string;
+  GITHUB_BACKUP_AUTHOR_EMAIL?: string;
 }
 
 export interface PostRecord {

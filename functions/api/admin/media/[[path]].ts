@@ -1,9 +1,14 @@
 import { badRequest, json } from "../../../_shared/http";
-import { resolveStoredContentType } from "../../../_shared/media";
+import {
+  DIRECT_MEDIA_UPLOAD_MAX_BYTES,
+  isSafeMediaPath,
+  mediaKey,
+  mediaUrl,
+  normalizeMediaPath,
+  resolveStoredContentType,
+} from "../../../_shared/media";
 import { getAdminIdentity } from "../../../_shared/session";
 import type { Env } from "../../../_shared/types";
-
-const MAX_MEDIA_BYTES = 10 * 1024 * 1024;
 
 export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, request }) => {
   const admin = await getAdminIdentity(env, request);
@@ -20,7 +25,7 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
 
   // content-length 仅作快速拒绝；真正的上限在下面按实际字节计量，防止伪造头绕过。
   const declaredLength = Number(request.headers.get("content-length") || "0");
-  if (declaredLength > MAX_MEDIA_BYTES) {
+  if (declaredLength > DIRECT_MEDIA_UPLOAD_MAX_BYTES) {
     return badRequest("媒体文件不能超过 10MB");
   }
 
@@ -29,7 +34,7 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
   }
 
   const buffer = await request.arrayBuffer();
-  if (buffer.byteLength > MAX_MEDIA_BYTES) {
+  if (buffer.byteLength > DIRECT_MEDIA_UPLOAD_MAX_BYTES) {
     return badRequest("媒体文件不能超过 10MB");
   }
 
@@ -38,23 +43,11 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
     rawPath,
     request.headers.get("content-type") || "",
   );
-  const key = `media/${rawPath}`;
+  const key = mediaKey(rawPath);
   await env.BLOG_BUCKET.put(key, buffer, {
     httpMetadata: { contentType },
     customMetadata: { uploadedBy: admin },
   });
 
-  return json({ key, url: `/media/${rawPath}`, contentType });
+  return json({ key, url: mediaUrl(rawPath), contentType });
 };
-
-function isSafeMediaPath(path: string): boolean {
-  return Boolean(path) && !path.includes("..") && /^[\w. /()\-\u4e00-\u9fa5\uff00-\uffef]+$/.test(path);
-}
-
-function normalizeMediaPath(path: string): string {
-  try {
-    return decodeURIComponent(path);
-  } catch {
-    return path;
-  }
-}
