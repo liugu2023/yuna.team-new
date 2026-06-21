@@ -11,7 +11,7 @@ interface UpdatePostPayload {
 }
 
 export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
-  const slug = String(params.slug);
+  const slug = routeSlug(params.slug);
   const session = await getSession(env, request);
   const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
   const post = await env.BLOG_DB.prepare("SELECT * FROM posts WHERE slug = ?")
@@ -42,7 +42,7 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
     return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
-  const slug = String(params.slug);
+  const slug = routeSlug(params.slug);
   const post = await env.BLOG_DB.prepare("SELECT * FROM posts WHERE slug = ?")
     .bind(slug)
     .first<PostRecord>();
@@ -102,7 +102,7 @@ export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params,
     return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
-  const slug = String(params.slug);
+  const slug = routeSlug(params.slug);
   const post = await env.BLOG_DB.prepare("SELECT * FROM posts WHERE slug = ?")
     .bind(slug)
     .first<PostRecord>();
@@ -114,3 +114,12 @@ export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params,
 
   return json({ ok: true });
 };
+
+function routeSlug(value: string | string[] | undefined): string {
+  const raw = Array.isArray(value) ? value.join("/") : String(value || "");
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
