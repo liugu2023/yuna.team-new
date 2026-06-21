@@ -192,6 +192,7 @@ async function buildMarkdownDocuments(env: Env, prefix: string): Promise<Markdow
         source: "post",
         slug: post.slug,
         title: post.title,
+        tag: post.tag || "",
         status: post.status,
         excerpt: post.excerpt,
         author_email: post.author_email,

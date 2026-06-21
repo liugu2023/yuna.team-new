@@ -23,6 +23,7 @@ export interface PostRecord {
   id: string;
   slug: string;
   title: string;
+  tag: string;
   excerpt: string;
   status: "draft" | "published";
   r2_key: string;

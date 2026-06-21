@@ -5,6 +5,7 @@ import type { Env, PostRecord } from "../../_shared/types";
 
 interface UpdatePostPayload {
   title?: string;
+  tag?: string;
   excerpt?: string;
   status?: "draft" | "published";
   markdown?: string;
@@ -62,6 +63,7 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
   const now = new Date().toISOString();
   const nextStatus = payload.status ?? post.status;
   const nextTitle = payload.title?.trim() ?? post.title;
+  const nextTag = payload.tag !== undefined ? normalizeTag(payload.tag) : post.tag;
   const publishedAt =
     post.published_at ?? (post.status !== "published" && nextStatus === "published" ? now : null);
 
@@ -69,11 +71,12 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   await env.BLOG_DB.prepare(
     `UPDATE posts
-     SET title = ?, excerpt = ?, status = ?, markdown_content = ?, updated_at = ?, published_at = ?
+     SET title = ?, tag = ?, excerpt = ?, status = ?, markdown_content = ?, updated_at = ?, published_at = ?
      WHERE slug = ?`,
   )
     .bind(
       nextTitle,
+      nextTag,
       payload.excerpt ?? post.excerpt,
       nextStatus,
       nextMarkdown,
@@ -94,6 +97,11 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
 
 function isValidStatus(value: string): value is "draft" | "published" {
   return value === "draft" || value === "published";
+}
+
+function normalizeTag(value: unknown): string {
+  const tag = typeof value === "string" ? value.trim() : "";
+  return tag || "协会动态";
 }
 
 export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params, request, waitUntil }) => {

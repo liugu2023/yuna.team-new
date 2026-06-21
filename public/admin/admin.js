@@ -10,6 +10,7 @@ const state = {
 };
 const fields = {
   title: document.querySelector("[data-title]"),
+  tag: document.querySelector("[data-post-tag]"),
   excerpt: document.querySelector("[data-excerpt]"),
   markdown: document.querySelector("[data-markdown]"),
   message: document.querySelector("[data-message]"),
@@ -66,6 +67,7 @@ function statusLabel(status) {
 function editorSnapshot() {
   return JSON.stringify({
     title: fields.title.value,
+    tag: fields.tag.value,
     excerpt: fields.excerpt.value,
     markdown: fields.markdown.value,
   });
@@ -121,7 +123,7 @@ function renderAdminPostList() {
   const status = fields.filterStatus.value;
   const posts = state.posts.filter((post) => {
     const matchesStatus = status === "all" || post.status === status;
-    const haystack = `${post.title} ${post.excerpt || ""} ${post.slug}`.toLowerCase();
+    const haystack = `${post.title} ${post.tag || ""} ${post.excerpt || ""} ${post.slug}`.toLowerCase();
     return matchesStatus && (!keyword || haystack.includes(keyword));
   });
 
@@ -134,7 +136,7 @@ function renderAdminPostList() {
     .map(
       (post) => `
         <article class="admin-item admin-post-card${state.editingSlug === post.slug ? " active is-active" : ""}">
-          <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${window.blog.formatDate(post.published_at || post.updated_at)} · ${window.blog.formatViews(post.view_count)}</p>
+          <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${window.blog.escapeHtml(post.tag || "未分类")} · ${window.blog.formatDate(post.published_at || post.updated_at)} · ${window.blog.formatViews(post.view_count)}</p>
           <strong>${window.blog.escapeHtml(post.title)}</strong>
           <p>${window.blog.escapeHtml(post.excerpt || "")}</p>
           <div class="editor-actions">
@@ -163,6 +165,7 @@ async function loadPost(slug) {
   const data = await window.blog.fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
   state.editingSlug = slug;
   fields.title.value = data.post.title;
+  fields.tag.value = data.post.tag || "协会动态";
   fields.excerpt.value = data.post.excerpt || "";
   fields.markdown.value = data.markdown;
   fields.editorHeading.textContent = "编辑文章";
@@ -176,6 +179,7 @@ async function loadPost(slug) {
 async function savePost(status) {
   const payload = {
     title: fields.title.value.trim(),
+    tag: fields.tag.value.trim(),
     excerpt: fields.excerpt.value.trim(),
     status,
     markdown: fields.markdown.value,
@@ -920,6 +924,7 @@ async function syncMarkdownBackup() {
 function resetEditor() {
   state.editingSlug = null;
   fields.title.value = "";
+  fields.tag.value = "协会动态";
   fields.excerpt.value = "";
   fields.markdown.value = "";
   fields.editorHeading.textContent = "新建文章";
@@ -933,8 +938,10 @@ function resetEditor() {
 
 function updatePreview() {
   const title = fields.title.value.trim() || "未命名文章";
+  const tag = fields.tag.value.trim() || "协会动态";
   const excerpt = fields.excerpt.value.trim();
   fields.preview.innerHTML = `
+    <p class="meta">${window.blog.escapeHtml(tag)}</p>
     <h1>${window.blog.escapeHtml(title)}</h1>
     ${excerpt ? `<p>${window.blog.escapeHtml(excerpt)}</p>` : ""}
     ${window.blog.markdownToHtml(fields.markdown.value || "开始输入 Markdown 内容。")}
@@ -1031,6 +1038,7 @@ bind("[data-new]", "click", () => {
 bindElement(fields.search, "input", renderAdminPostList, "data-search");
 bindElement(fields.filterStatus, "change", renderAdminPostList, "data-filter-status");
 bindElement(fields.title, "input", updatePreview, "data-title");
+bindElement(fields.tag, "input", updatePreview, "data-post-tag");
 bindElement(fields.excerpt, "input", updatePreview, "data-excerpt");
 bindElement(fields.markdown, "input", updatePreview, "data-markdown");
 bootAdmin().catch((error) => {

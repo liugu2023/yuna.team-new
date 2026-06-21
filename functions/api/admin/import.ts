@@ -67,12 +67,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
     statements.push(
       env.BLOG_DB.prepare(
         `INSERT INTO posts
-          (id, slug, title, excerpt, status, r2_key, markdown_content, author_email, created_at, updated_at, published_at, view_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, slug, title, tag, excerpt, status, r2_key, markdown_content, author_email, created_at, updated_at, published_at, view_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         post.id,
         post.slug,
         post.title,
+        post.tag,
         post.excerpt,
         post.status,
         post.r2_key,
@@ -165,6 +166,7 @@ function normalizePost(input: Partial<PostRecord>): PostRecord {
     id: text(input.id) || crypto.randomUUID(),
     slug,
     title: requireText(input.title, `文章 ${slug} 缺少标题`),
+    tag: text(input.tag).trim() || "协会动态",
     excerpt: text(input.excerpt),
     status,
     r2_key: text(input.r2_key) || `db/posts/${slug}.md`,

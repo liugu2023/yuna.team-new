@@ -37,6 +37,11 @@ function formatViews(value) {
   return `${viewCount(value).toLocaleString("zh-CN")} 次阅读`;
 }
 
+function postTag(post) {
+  const tag = String(post?.tag || "").trim();
+  return tag || "未分类";
+}
+
 function escapeHtml(value) {
   return value.replace(/[&<>"']/g, (char) => {
     const entities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -299,7 +304,7 @@ function renderPostListInto(list, posts, admin) {
             <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
             <div class="card-footer">
-              <span class="tag">协会动态</span>
+              <span class="tag">${escapeHtml(postTag(post))}</span>
               <a class="read-more" href="/post.html?slug=${encodeURIComponent(post.slug)}">阅读全文 →</a>
             </div>
           </article>
@@ -323,7 +328,7 @@ function renderPostListInto(list, posts, admin) {
           <p>${escapeHtml(post.excerpt || "")}</p>
           <div class="card-footer">
             <a class="read-more" href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">阅读全文 →</a>
-            <span class="tag">YUNA.BLOG</span>
+            <span class="tag">${escapeHtml(postTag(post))}</span>
           </div>
         </article>
       `,
@@ -521,7 +526,7 @@ async function renderPost() {
     if (updated) updated.textContent = date;
     if (viewNode) viewNode.textContent = views;
     article.innerHTML = `
-      <div class="meta"><span>${date}</span><span>${data.post.status === "published" ? "已发布" : "草稿"}</span><span>${views}</span></div>
+      <div class="meta"><span>${date}</span><span>${data.post.status === "published" ? "已发布" : "草稿"}</span><span>${escapeHtml(postTag(data.post))}</span><span>${views}</span></div>
       <h2>${escapeHtml(data.post.title)}</h2>
       ${data.post.excerpt ? `<p>${escapeHtml(data.post.excerpt)}</p>` : ""}
       ${markdownToHtml(data.markdown)}
