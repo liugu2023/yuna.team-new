@@ -20,6 +20,19 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   if (!post || (post.status !== "published" && !canSeeDrafts)) return notFound("文章不存在");
 
+  if (post.status === "published" && !canSeeDrafts) {
+    await env.BLOG_DB.prepare(
+      "UPDATE posts SET view_count = COALESCE(view_count, 0) + 1 WHERE slug = ?",
+    )
+      .bind(slug)
+      .run();
+
+    const updated = await env.BLOG_DB.prepare("SELECT * FROM posts WHERE slug = ?")
+      .bind(slug)
+      .first<PostRecord>();
+    if (updated) return json({ post: updated, markdown: updated.markdown_content ?? "" });
+  }
+
   return json({ post, markdown: post.markdown_content ?? "" });
 };
 

@@ -7,6 +7,11 @@ async function fetchJson(url, options) {
 
 let currentUserPromise;
 const DIRECT_MEDIA_UPLOAD_LIMIT = 8 * 1024 * 1024;
+const HOME_NOTICE_KEY = "homepage-notice";
+const DEFAULT_HOME_NOTICE = {
+  title: "协会公告",
+  markdown: "招新答疑开放中，欢迎同学了解开发、安全、运维和组宣方向。",
+};
 
 async function currentUser() {
   if (!currentUserPromise) {
@@ -21,6 +26,15 @@ async function currentUser() {
 function formatDate(value) {
   if (!value) return "未发布";
   return new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" }).format(new Date(value));
+}
+
+function viewCount(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+}
+
+function formatViews(value) {
+  return `${viewCount(value).toLocaleString("zh-CN")} 次阅读`;
 }
 
 function escapeHtml(value) {
@@ -226,7 +240,7 @@ async function renderPostList({ admin = false } = {}) {
           (post, index) => `
             <a class="resource-card reveal visible${index === 0 ? " is-lead" : ""}" href="/post.html?slug=${encodeURIComponent(post.slug)}">
               <span class="flash"></span>
-              <p class="meta">${index === 0 ? "最新" : "动态"} · ${formatDate(post.published_at || post.updated_at)}</p>
+              <p class="meta">${index === 0 ? "最新" : "动态"} · ${formatDate(post.published_at || post.updated_at)} · ${formatViews(post.view_count)}</p>
               <h2>${escapeHtml(post.title)}</h2>
               <p>${escapeHtml(post.excerpt || "")}</p>
             </a>
@@ -254,13 +268,19 @@ function renderPostListInto(list, posts, admin) {
   }
 
   if (mode === "compact") {
-    list.innerHTML = posts
+    const hotPosts = [...posts].sort((left, right) => {
+      const views = viewCount(right.view_count) - viewCount(left.view_count);
+      if (views) return views;
+      return new Date(right.published_at || right.updated_at || 0) - new Date(left.published_at || left.updated_at || 0);
+    });
+
+    list.innerHTML = hotPosts
       .slice(0, 3)
       .map(
         (post) => `
           <a href="/post.html?slug=${encodeURIComponent(post.slug)}">
             ${escapeHtml(post.title)}
-            <span>${formatDate(post.published_at || post.updated_at)}</span>
+            <span>${formatViews(post.view_count)} · ${formatDate(post.published_at || post.updated_at)}</span>
           </a>
         `,
       )
@@ -275,7 +295,7 @@ function renderPostListInto(list, posts, admin) {
         (post) => `
           <article class="card reveal visible">
             <span class="flash"></span>
-            <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${post.status === "published" ? "已发布" : "草稿"}</span><span>YUNA.BLOG</span></div>
+            <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${post.status === "published" ? "已发布" : "草稿"}</span><span>${formatViews(post.view_count)}</span></div>
             <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
             <div class="card-footer">
@@ -296,7 +316,7 @@ function renderPostListInto(list, posts, admin) {
           <span class="flash"></span>
           <div class="article-cover"></div>
           <div class="article-head">
-            <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${post.status === "published" ? "已发布" : "草稿"}</span></div>
+            <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${post.status === "published" ? "已发布" : "草稿"}</span><span>${formatViews(post.view_count)}</span></div>
             <span class="tag">${post.status === "published" ? "已发布" : "草稿"}</span>
           </div>
           <h2><a href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">${escapeHtml(post.title)}</a></h2>
@@ -363,6 +383,78 @@ async function renderHomeHero() {
   }
 }
 
+async function renderHomeNotice() {
+  const card = document.querySelector("[data-home-notice]");
+  if (!card) return;
+
+  const noticeState = { ...DEFAULT_HOME_NOTICE };
+  try {
+    const data = await fetchJson(`/api/site/${HOME_NOTICE_KEY}`);
+    if (data.record?.kind === "markdown") {
+      noticeState.title = data.record.title || DEFAULT_HOME_NOTICE.title;
+      noticeState.markdown = data.record.content || DEFAULT_HOME_NOTICE.markdown;
+    }
+  } catch {
+    // Missing records are fine: the homepage keeps the built-in default notice.
+  }
+
+  renderHomeNoticeCard(card, noticeState);
+  await attachHomeNoticeEditor(card, noticeState);
+}
+
+function renderHomeNoticeCard(card, noticeState) {
+  const title = card.querySelector("[data-home-notice-title]");
+  const content = card.querySelector("[data-home-notice-content]");
+  if (title) title.textContent = noticeState.title || DEFAULT_HOME_NOTICE.title;
+  if (content) content.innerHTML = markdownToHtml(noticeState.markdown || DEFAULT_HOME_NOTICE.markdown);
+}
+
+async function attachHomeNoticeEditor(card, noticeState) {
+  let me;
+  try {
+    me = await currentUser();
+  } catch {
+    return;
+  }
+  if (!me.admin) return;
+
+  const actions = card.querySelector("[data-home-notice-actions]");
+  if (!actions) return;
+
+  actions.hidden = false;
+  actions.innerHTML = '<button type="button" class="btn secondary" data-edit-home-notice>编辑公告</button>';
+  actions.querySelector("[data-edit-home-notice]").addEventListener("click", () => {
+    openStaticPageEditor(
+      {
+        page: HOME_NOTICE_KEY,
+        title: noticeState.title,
+        markdown: noticeState.markdown,
+        editorTitle: "编辑协会公告",
+        editorHelper: "保存后会更新首页右侧公告。",
+        uploadScope: `site/${HOME_NOTICE_KEY}`,
+        save: ({ title, markdown }) => saveSiteMarkdownRecord(HOME_NOTICE_KEY, title, markdown),
+      },
+      (nextState) => {
+        noticeState.title = nextState.title;
+        noticeState.markdown = nextState.markdown;
+        renderHomeNoticeCard(card, noticeState);
+      },
+    );
+  });
+}
+
+function saveSiteMarkdownRecord(key, title, markdown) {
+  return fetchJson(`/api/admin/site/${encodeURIComponent(key)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      title,
+      kind: "markdown",
+      content: markdown,
+    }),
+  });
+}
+
 async function renderUserNav() {
   const navs = document.querySelectorAll("[data-user-nav]");
   if (!navs.length) return;
@@ -419,14 +511,17 @@ async function renderPost() {
     const data = await fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
     document.title = `${data.post.title} · 燕山大学大学生网络信息协会`;
     const date = formatDate(data.post.published_at || data.post.updated_at);
+    const views = formatViews(data.post.view_count);
     const heroTitle = document.querySelector("[data-article-hero-title]");
     const heroLead = document.querySelector("[data-article-hero-lead]");
     const updated = document.querySelector("[data-article-updated]");
+    const viewNode = document.querySelector("[data-article-views]");
     if (heroTitle) heroTitle.textContent = data.post.title;
     if (heroLead) heroLead.textContent = data.post.excerpt || "协会文章与学习记录。";
     if (updated) updated.textContent = date;
+    if (viewNode) viewNode.textContent = views;
     article.innerHTML = `
-      <div class="meta"><span>${date}</span><span>${data.post.status === "published" ? "已发布" : "草稿"}</span><span>YUNA.BLOG</span></div>
+      <div class="meta"><span>${date}</span><span>${data.post.status === "published" ? "已发布" : "草稿"}</span><span>${views}</span></div>
       <h2>${escapeHtml(data.post.title)}</h2>
       ${data.post.excerpt ? `<p>${escapeHtml(data.post.excerpt)}</p>` : ""}
       ${markdownToHtml(data.markdown)}
@@ -675,10 +770,14 @@ async function attachStaticPageEditor(container, pageState) {
 
 function openStaticPageEditor(pageState, onSaved) {
   const modal = ensureStaticPageEditorModal();
+  const heading = modal.querySelector("[data-page-editor-heading]");
+  const helper = modal.querySelector("[data-page-editor-helper]");
   const titleInput = modal.querySelector("[data-page-editor-title]");
   const markdownInput = modal.querySelector("[data-page-editor-markdown]");
   const message = modal.querySelector("[data-page-editor-message]");
 
+  if (heading) heading.textContent = pageState.editorTitle || "编辑页面";
+  if (helper) helper.textContent = pageState.editorHelper || "保存后写入 D1 数据库。";
   titleInput.value = pageState.title || firstHeading(pageState.markdown) || "";
   markdownInput.value = pageState.markdown || "";
   message.textContent = "";
@@ -698,14 +797,18 @@ function openStaticPageEditor(pageState, onSaved) {
     message.textContent = "正在保存...";
 
     try {
-      await fetchJson(pageApiPath(pageState.page), {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          title,
-          content: markdown,
-        }),
-      });
+      if (pageState.save) {
+        await pageState.save({ title, markdown });
+      } else {
+        await fetchJson(pageApiPath(pageState.page), {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            title,
+            content: markdown,
+          }),
+        });
+      }
       message.textContent = "已保存";
       onSaved({ title, markdown });
       close();
@@ -722,7 +825,7 @@ function openStaticPageEditor(pageState, onSaved) {
       return;
     }
     try {
-      await insertStaticPageImage(pageState.page, markdownInput, file, message);
+      await insertStaticPageImage(pageState.uploadScope || pageState.page, markdownInput, file, message);
       fileInput.value = "";
     } catch (error) {
       message.textContent = error.message;
@@ -735,7 +838,7 @@ function openStaticPageEditor(pageState, onSaved) {
     event.preventDefault();
     try {
       for (const file of files) {
-        await insertStaticPageImage(pageState.page, markdownInput, file, message);
+        await insertStaticPageImage(pageState.uploadScope || pageState.page, markdownInput, file, message);
       }
     } catch (error) {
       message.textContent = error.message;
@@ -754,7 +857,7 @@ function openStaticPageEditor(pageState, onSaved) {
     markdownInput.classList.remove("is-dragover");
     try {
       for (const file of files) {
-        await insertStaticPageImage(pageState.page, markdownInput, file, message);
+        await insertStaticPageImage(pageState.uploadScope || pageState.page, markdownInput, file, message);
       }
     } catch (error) {
       message.textContent = error.message;
@@ -774,8 +877,8 @@ function ensureStaticPageEditorModal() {
     <div class="modal" role="dialog" aria-modal="true" aria-label="页面编辑器">
       <div class="modal-head">
         <div>
-          <h2>编辑页面</h2>
-          <p class="meta">保存后写入 D1 数据库。</p>
+          <h2 data-page-editor-heading>编辑页面</h2>
+          <p class="meta" data-page-editor-helper>保存后写入 D1 数据库。</p>
         </div>
         <button type="button" class="icon-button" data-page-editor-close aria-label="关闭编辑器">×</button>
       </div>
@@ -959,11 +1062,13 @@ function firstHeading(markdown) {
 window.blog = {
   fetchJson,
   formatDate,
+  formatViews,
   escapeHtml,
   markdownToHtml,
   normalizeAssetUrl,
   renderPostList,
   renderHomeHero,
+  renderHomeNotice,
   renderPost,
   renderUserNav,
   renderStaticPage,

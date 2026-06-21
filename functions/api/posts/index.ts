@@ -17,7 +17,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const session = await getSession(env, request);
   const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
   const includeAll = includeDrafts && canSeeDrafts;
-  const columns = "id, slug, title, excerpt, status, r2_key, author_email, created_at, updated_at, published_at";
+  const columns = "id, slug, title, excerpt, status, r2_key, author_email, created_at, updated_at, published_at, view_count";
 
   const query = includeAll
     ? `SELECT ${columns} FROM posts ORDER BY COALESCE(published_at, updated_at) DESC`

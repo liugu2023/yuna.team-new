@@ -67,8 +67,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
     statements.push(
       env.BLOG_DB.prepare(
         `INSERT INTO posts
-          (id, slug, title, excerpt, status, r2_key, markdown_content, author_email, created_at, updated_at, published_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, slug, title, excerpt, status, r2_key, markdown_content, author_email, created_at, updated_at, published_at, view_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         post.id,
         post.slug,
@@ -81,6 +81,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
         post.created_at,
         post.updated_at,
         post.published_at,
+        post.view_count,
       ),
     );
   }
@@ -172,6 +173,7 @@ function normalizePost(input: Partial<PostRecord>): PostRecord {
     created_at: text(input.created_at) || now,
     updated_at: text(input.updated_at) || now,
     published_at: input.published_at ? text(input.published_at) : null,
+    view_count: integer(input.view_count),
   };
 }
 
@@ -210,6 +212,11 @@ function requireText(value: unknown, message: string): string {
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : value == null ? "" : String(value);
+}
+
+function integer(value: unknown): number {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
 }
 
 function ensureUnique(values: string[], message: string): void {

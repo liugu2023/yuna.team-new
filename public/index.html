@@ -99,10 +99,13 @@
         </section>
 
         <aside>
-          <section class="aside-card reveal">
-            <h3>团队公告</h3>
-            <p>招新答疑开放中，欢迎同学了解开发、安全、运维和组宣方向。</p>
+          <section class="aside-card reveal" data-home-notice>
+            <h3 data-home-notice-title>协会公告</h3>
+            <div data-home-notice-content>
+              <p>招新答疑开放中，欢迎同学了解开发、安全、运维和组宣方向。</p>
+            </div>
             <div class="aside-meta">燕山大学大学生网络信息协会</div>
+            <div class="home-notice-actions" data-home-notice-actions hidden></div>
           </section>
           <section class="aside-card reveal">
             <h3>热门博客</h3>
@@ -145,6 +148,7 @@
     <script src="/app.js"></script>
     <script>
       window.blog.renderHomeHero();
+      window.blog.renderHomeNotice();
       window.blog.renderPostList();
       window.blog.renderUserNav();
     </script>

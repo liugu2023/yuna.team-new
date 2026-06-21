@@ -134,7 +134,7 @@ function renderAdminPostList() {
     .map(
       (post) => `
         <article class="admin-item admin-post-card${state.editingSlug === post.slug ? " active is-active" : ""}">
-          <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${window.blog.formatDate(post.published_at || post.updated_at)}</p>
+          <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${window.blog.formatDate(post.published_at || post.updated_at)} · ${window.blog.formatViews(post.view_count)}</p>
           <strong>${window.blog.escapeHtml(post.title)}</strong>
           <p>${window.blog.escapeHtml(post.excerpt || "")}</p>
           <div class="editor-actions">

@@ -198,6 +198,7 @@ async function buildMarkdownDocuments(env: Env, prefix: string): Promise<Markdow
         created_at: post.created_at,
         updated_at: post.updated_at,
         published_at: post.published_at || "",
+        view_count: String(post.view_count ?? 0),
       },
       post.markdown_content || "",
     ),

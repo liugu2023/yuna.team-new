@@ -31,6 +31,7 @@ export interface PostRecord {
   created_at: string;
   updated_at: string;
   published_at: string | null;
+  view_count: number;
 }
 
 export interface UserSession {
