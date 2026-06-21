@@ -21,7 +21,7 @@
       <a href="/articles.html">文章列表</a>
       <a href="/knowledge.html">知识库</a>
       <a class="active" href="/team.html" aria-current="page">关于协会</a>
-      <a href="/admin-login.html">后台入口</a>
+      <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
     </nav>
   </div>
 </header>
@@ -155,6 +155,10 @@
   <span>YUNA.BLOG · 关于协会</span>
   <span>学习 · 实践 · 分享</span>
 </footer>
+<script src="/app.js"></script>
+<script>
+  window.blog.renderUserNav();
+</script>
 <script src="/yuna-ui.js"></script>
 </body>
 </html>
