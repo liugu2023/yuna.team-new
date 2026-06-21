@@ -897,14 +897,15 @@ async function importDatabase() {
   fields.importMessage.textContent = "正在导入...";
   try {
     const payload = JSON.parse(await file.text());
-    const data = await window.blog.fetchJson("/api/admin/import", {
+    const data = await window.blog.fetchJson("/api/admin/import?mode=replace-all", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
     });
 
+    const snapshotNote = data.snapshotKey ? `导入前已备份至 ${data.snapshotKey}。` : "";
     fields.importMessage.textContent =
-      `导入完成：文章 ${data.counts.posts}，页面 ${data.counts.siteRecords}，备份 ${data.counts.siteRecordBackups}。`;
+      `导入完成：文章 ${data.counts.posts}，页面 ${data.counts.siteRecords}，备份 ${data.counts.siteRecordBackups}。${snapshotNote}`;
     fields.importFile.value = "";
     await Promise.all([refreshPosts(), loadMembers(), loadFame(), loadGallery()]);
   } catch (error) {

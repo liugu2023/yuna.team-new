@@ -12,6 +12,7 @@
     "db:migrate-posts": "node scripts/migrate-posts-to-d1.mjs",
     "media:migrate": "node scripts/migrate-media.mjs",
     "content:check": "node scripts/check-content.mjs",
+    "media:clean": "node scripts/clean-orphan-media.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

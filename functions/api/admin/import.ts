@@ -25,6 +25,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
     return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
+  // 导入会清空并覆盖全部数据，属于不可逆操作，要求显式声明意图，避免误调用。
+  const url = new URL(request.url);
+  if (url.searchParams.get("mode") !== "replace-all") {
+    return badRequest("导入会清空现有数据，请在请求中显式声明 mode=replace-all");
+  }
+
   const payload = await readJson<DatabaseImportPayload>(request);
   if (!payload) return badRequest("导入文件不是有效的 JSON");
   if (!Array.isArray(payload.posts) || !Array.isArray(payload.siteRecords)) {
@@ -47,6 +53,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   } catch (error) {
     return badRequest(error instanceof Error ? error.message : "导入数据格式有误");
   }
+
+  // 删除前先把当前库快照到 R2，导入出错或选错文件时可据此还原。
+  const snapshotKey = await snapshotCurrentDatabase(env, admin);
 
   const statements: D1PreparedStatement[] = [
     env.BLOG_DB.prepare("DELETE FROM site_record_backups"),
@@ -111,6 +120,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
     ok: true,
     importedBy: admin,
     importedAt: new Date().toISOString(),
+    snapshotKey,
     counts: {
       posts: posts.length,
       siteRecords: siteRecords.length,
@@ -118,6 +128,33 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
     },
   });
 };
+
+// 把导入前的全库内容写入 R2，作为一次性还原点。命名带时间戳便于排序。
+async function snapshotCurrentDatabase(env: Env, admin: string): Promise<string> {
+  const [posts, siteRecords, backups] = await Promise.all([
+    env.BLOG_DB.prepare("SELECT * FROM posts").all<PostRecord>(),
+    env.BLOG_DB.prepare("SELECT * FROM site_records").all<SiteRecord>(),
+    env.BLOG_DB.prepare("SELECT * FROM site_record_backups").all<SiteRecordBackup>(),
+  ]);
+
+  const snapshot = {
+    version: 1,
+    snapshotAt: new Date().toISOString(),
+    snapshotBy: admin,
+    reason: "pre-import",
+    posts: posts.results ?? [],
+    siteRecords: siteRecords.results ?? [],
+    siteRecordBackups: backups.results ?? [],
+  };
+
+  const key = `db-snapshots/pre-import-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+  await env.BLOG_BUCKET.put(key, JSON.stringify(snapshot), {
+    httpMetadata: { contentType: "application/json; charset=utf-8" },
+    customMetadata: { snapshotBy: admin, reason: "pre-import" },
+  });
+
+  return key;
+}
 
 function normalizePost(input: Partial<PostRecord>): PostRecord {
   const slug = requireText(input.slug, "文章 slug 不能为空");
