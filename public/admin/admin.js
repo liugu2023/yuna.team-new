@@ -20,6 +20,7 @@ const fields = {
   editorHeading: document.querySelector("[data-editor-heading]"),
   editorState: document.querySelector("[data-editor-state]"),
   postImageFile: document.querySelector("[data-post-image-file]"),
+  postFile: document.querySelector("[data-post-file]"),
   memberTerm: document.querySelector("[data-member-term]"),
   memberDepartment: document.querySelector("[data-member-department]"),
   memberRole: document.querySelector("[data-member-role]"),
@@ -43,9 +44,6 @@ const fields = {
   exportMessage: document.querySelector("[data-export-message]"),
   importFile: document.querySelector("[data-import-db-file]"),
   importMessage: document.querySelector("[data-import-message]"),
-  docFolder: document.querySelector("[data-doc-folder]"),
-  docFiles: document.querySelector("[data-doc-files]"),
-  docMessage: document.querySelector("[data-doc-message]"),
   syncMessage: document.querySelector("[data-sync-message]"),
   galleryTitle: document.querySelector("[data-gallery-title]"),
   galleryFile: document.querySelector("[data-gallery-file]"),
@@ -259,6 +257,36 @@ async function uploadPostImage() {
   await insertImageFile(file);
 }
 
+async function uploadPostFiles() {
+  const files = Array.from(fields.postFile.files || []);
+  if (!files.length) {
+    fields.message.textContent = "请选择要上传的附件资料。";
+    return;
+  }
+
+  const urls = [];
+  const folder = `posts/${state.editingSlug || "drafts"}/files`;
+  fields.message.textContent = "准备上传附件...";
+
+  try {
+    for (const [index, file] of files.entries()) {
+      const name = `${Date.now()}-${cleanDocumentName(file.name)}`;
+      const path = `${folder}/${name}`;
+      const data = await uploadMedia(file, path, (loaded, total) => {
+        fields.message.textContent = `正在上传附件 ${index + 1}/${files.length}：${file.name} ${uploadPercent(loaded, total)}`;
+      });
+      urls.push(data.url);
+      insertAtCursor(fields.markdown, `\n[点击下载](${data.url})\n`);
+    }
+
+    fields.postFile.value = "";
+    fields.message.textContent = `附件已上传：${urls.join(" ")}`;
+    updatePreview();
+  } catch (error) {
+    fields.message.textContent = error.message;
+  }
+}
+
 async function uploadMemberAvatar() {
   const file = fields.memberImageFile.files[0];
   if (!file) {
@@ -376,51 +404,12 @@ function uploadPercent(loaded, total) {
   return `${Math.min(100, Math.round((loaded / total) * 100))}%`;
 }
 
-function cleanDocumentFolder(value) {
-  return (value || "activates")
-    .replace(/\\/g, "/")
-    .replace(/^\/+|\/+$/g, "")
-    .replace(/^media\//, "")
-    .split("/")
-    .map((segment) => cleanDocumentName(segment))
-    .filter(Boolean)
-    .join("/") || "activates";
-}
-
 function cleanDocumentName(value) {
   return (value || "file")
     .replace(/[\\/:*?"<>|#%&{}$!`'@+=]/g, "-")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 120) || "file";
-}
-
-async function uploadDocuments() {
-  const files = Array.from(fields.docFiles.files || []);
-  if (!files.length) {
-    fields.docMessage.textContent = "请选择要上传的资料文件。";
-    return;
-  }
-
-  const folder = cleanDocumentFolder(fields.docFolder.value);
-  const urls = [];
-  fields.docMessage.textContent = "准备上传资料...";
-
-  try {
-    for (const [index, file] of files.entries()) {
-      const name = cleanDocumentName(file.name);
-      const path = `${folder}/${name}`;
-      const data = await uploadMedia(file, path, (loaded, total) => {
-        fields.docMessage.textContent = `正在上传 ${index + 1}/${files.length}：${file.name} ${uploadPercent(loaded, total)}`;
-      });
-      urls.push(data.url);
-    }
-
-    fields.docFiles.value = "";
-    fields.docMessage.textContent = `上传完成：${urls.join(" ")}`;
-  } catch (error) {
-    fields.docMessage.textContent = error.message;
-  }
 }
 
 async function loadMembers() {
@@ -1018,13 +1007,13 @@ bindElement(fields.markdown, "drop", (event) => {
   insertImageFiles(files);
 }, "data-markdown");
 bind("[data-upload-post-image]", "click", uploadPostImage);
+bind("[data-upload-post-file]", "click", uploadPostFiles);
 bindElement(fields.memberImageFile, "change", uploadMemberAvatar, "data-member-image-file");
 bindElement(fields.fameImageFile, "change", uploadFameAvatar, "data-fame-image-file");
 bind("[data-save-member-entry]", "click", saveMemberEntry);
 bind("[data-save-fame-entry]", "click", saveFameEntry);
 bind("[data-export-db]", "click", exportDatabase);
 bind("[data-import-db]", "click", importDatabase);
-bind("[data-upload-docs]", "click", uploadDocuments);
 bind("[data-sync-markdown]", "click", syncMarkdownBackup);
 bind("[data-add-gallery-image]", "click", addGalleryImage);
 bindElement(fields.galleryFile, "change", updateGalleryCropPreview, "data-gallery-file");
