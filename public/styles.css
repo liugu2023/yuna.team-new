@@ -1177,6 +1177,19 @@
       backdrop-filter:none;
       padding:0;
     }
+    .preview .mini-preview,
+    .preview .mini-preview :where(h1,h2,h3,h4,h5,h6,p,li,blockquote,strong,em,span,a,code){
+      color:#111827!important;
+    }
+    .preview .mini-preview a{
+      text-decoration:underline;
+      text-underline-offset:3px;
+    }
+    .preview .mini-preview pre{
+      background:rgba(255,255,255,.68)!important;
+      border:1px solid rgba(177,204,231,.42);
+      color:#111827!important;
+    }
     @media(max-width:760px){
       .grid,
       .site-map{
