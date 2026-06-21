@@ -6,7 +6,9 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
 
   // 未登录才跳登录。已登录但无权限不能再跳登录，否则会和回调形成无限循环。
   if (!session) {
+    const currentUrl = new URL(request.url);
     const url = new URL("/api/auth/login", request.url);
+    url.searchParams.set("return_to", `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
     return Response.redirect(url.toString(), 302);
   }
 
@@ -46,7 +48,7 @@ function forbiddenPage(): string {
           <p class="meta">你已登录，但当前账号不在控制组中。</p>
           <p>后台管理仅对控制组（CONTROL_GROUP）成员开放。如果你认为这是误判，请联系管理员把你的账号加入该组。</p>
           <p>
-            <a class="hero-link" href="/">返回首页</a>
+            <a class="button secondary" href="/">返回首页</a>
           </p>
         </article>
       </div>

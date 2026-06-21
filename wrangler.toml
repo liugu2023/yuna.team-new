@@ -17,8 +17,10 @@ PUBLIC_BASE_URL = "https://yuna.liugu.cc"
 AUTHENTIK_ISSUER = "https://sso.yuna.welain.com/application/o/yuna-docs/"
 AUTHENTIK_CLIENT_ID = "esxw1ynBDm6B6r5dzIdCtBfJ3ifkKVk7WbIRD7Py"
 AUTHENTIK_REDIRECT_PATH = "/auth/callback"
+
 # 拥有全部控制权限的 Authentik 用户组；留空则没有登录用户拥有控制权限。
 CONTROL_GROUP = "yuna-docs-edit"
+
 # Markdown 自动备份到私有 GitHub 仓库；token 用 Pages secret GITHUB_BACKUP_TOKEN。
 GITHUB_BACKUP_REPO = ""
 GITHUB_BACKUP_BRANCH = "main"

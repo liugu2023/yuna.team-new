@@ -282,11 +282,12 @@ async function renderUserNav() {
 
   try {
     const me = await currentUser();
+    const loginHtml = `<a class="nav-link nav-login" href="${loginHref()}">成员登录</a>`;
     const html = me.admin
       ? '<a class="nav-link nav-admin" href="/admin/">管理后台</a><a class="nav-link nav-logout" href="#" data-logout>退出登录</a>'
       : me.authenticated
         ? '<a class="nav-link nav-logout" href="#" data-logout>退出登录</a>'
-      : '<a class="nav-link nav-login" href="/api/auth/login">成员登录</a>';
+        : loginHtml;
     navs.forEach((nav) => {
       nav.innerHTML = nav.hasAttribute("data-side-nav")
         ? decorateSideNav(html)
@@ -294,10 +295,15 @@ async function renderUserNav() {
     });
   } catch {
     navs.forEach((nav) => {
-      const html = '<a class="nav-link nav-login" href="/api/auth/login">成员登录</a>';
+      const html = `<a class="nav-link nav-login" href="${loginHref()}">成员登录</a>`;
       nav.innerHTML = nav.hasAttribute("data-side-nav") ? decorateSideNav(html) : html;
     });
   }
+}
+
+function loginHref() {
+  const returnTo = `${location.pathname}${location.search}${location.hash}`;
+  return `/api/auth/login?return_to=${encodeURIComponent(returnTo || "/")}`;
 }
 
 function decorateSideNav(html) {

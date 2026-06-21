@@ -8,6 +8,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const storedState = await verifySignedValue(getCookie(request, "oidc_state"), env.SESSION_SECRET);
+  const returnTo = safeReturnTo(
+    await verifySignedValue(getCookie(request, "login_return_to"), env.SESSION_SECRET),
+  );
 
   if (!code || !state || !storedState || state !== storedState) {
     return new Response("登录回调无效，请重新登录。", { status: 400 });
@@ -32,9 +35,26 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   return new Response(null, {
     status: 302,
     headers: [
-      ["location", "/admin/"],
+      ["location", returnTo],
       ["set-cookie", sessionCookie],
       ["set-cookie", serializeCookie("oidc_state", "", { maxAge: 0 })],
+      ["set-cookie", serializeCookie("login_return_to", "", { maxAge: 0 })],
     ],
   });
 };
+
+function safeReturnTo(value: string | null): string {
+  if (!value) return "/";
+
+  try {
+    const parsed = new URL(value, "https://yuna.local");
+    if (parsed.origin !== "https://yuna.local") return "/";
+
+    const target = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    if (!target.startsWith("/") || target.startsWith("//")) return "/";
+    if (target.startsWith("/api/auth/login") || target.startsWith("/auth/callback")) return "/";
+    return target;
+  } catch {
+    return "/";
+  }
+}
