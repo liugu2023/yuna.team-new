@@ -25,7 +25,18 @@ async function currentUser() {
 
 function formatDate(value) {
   if (!value) return "未发布";
-  return new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" }).format(new Date(value));
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "时间无效";
+  return new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
 }
 
 function viewCount(value) {
@@ -40,6 +51,18 @@ function formatViews(value) {
 function postTag(post) {
   const tag = String(post?.tag || "").trim();
   return tag || "未分类";
+}
+
+function postTags(posts) {
+  const seen = new Set();
+  const tags = [];
+  for (const post of posts) {
+    const tag = postTag(post);
+    if (seen.has(tag)) continue;
+    seen.add(tag);
+    tags.push(tag);
+  }
+  return tags;
 }
 
 function escapeHtml(value) {
@@ -238,6 +261,7 @@ async function renderPostList({ admin = false } = {}) {
 
   try {
     const data = await fetchJson(`/api/posts${admin ? "?drafts=1" : ""}`);
+    if (!admin) renderHomePostTabs(data.posts);
     if (featureGrid && !admin && data.posts.length) {
       const featuredPosts = data.posts.slice(0, 3);
       featureGrid.innerHTML = featuredPosts
@@ -263,6 +287,37 @@ async function renderPostList({ admin = false } = {}) {
       list.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
     });
   }
+}
+
+function renderHomePostTabs(posts) {
+  const tabs = document.querySelector("[data-home-post-tabs]");
+  if (!tabs) return;
+
+  const tags = postTags(posts);
+  const selected = tags.includes(tabs.dataset.selectedTag) ? tabs.dataset.selectedTag : "all";
+  tabs.dataset.selectedTag = selected;
+  tabs.innerHTML = [
+    `<button class="tab${selected === "all" ? " active" : ""}" type="button" data-home-post-tag="all">全部文章</button>`,
+    ...tags.map((tag) => (
+      `<button class="tab${selected === tag ? " active" : ""}" type="button" data-home-post-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`
+    )),
+  ].join("");
+
+  tabs.querySelectorAll("[data-home-post-tag]").forEach((button) => {
+    button.addEventListener("click", () => {
+      tabs.dataset.selectedTag = button.dataset.homePostTag || "all";
+      tabs.querySelectorAll("[data-home-post-tag]").forEach((item) => {
+        item.classList.toggle("active", item === button);
+      });
+      document.querySelectorAll('[data-post-list][data-post-list-mode="home"]').forEach((list) => {
+        renderPostListInto(list, posts, false);
+      });
+    });
+  });
+}
+
+function selectedHomePostTag() {
+  return document.querySelector("[data-home-post-tabs]")?.dataset.selectedTag || "all";
 }
 
 function renderPostListInto(list, posts, admin) {
@@ -294,7 +349,17 @@ function renderPostListInto(list, posts, admin) {
   }
 
   if (mode === "home") {
-    list.innerHTML = posts
+    const selectedTag = selectedHomePostTag();
+    const homePosts = selectedTag === "all"
+      ? posts
+      : posts.filter((post) => postTag(post) === selectedTag);
+
+    if (!homePosts.length) {
+      list.innerHTML = `<p class="empty-state">暂无${selectedTag === "all" ? "" : escapeHtml(selectedTag)}文章。</p>`;
+      return;
+    }
+
+    list.innerHTML = homePosts
       .slice(0, 3)
       .map(
         (post) => `
