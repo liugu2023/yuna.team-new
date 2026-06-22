@@ -1386,13 +1386,14 @@ function renderTeamMembers(items) {
   return `
     ${
       terms.length > 1
-        ? `<div class="control-row team-record-controls">
-            <label class="field-lite inline-control">
-              <span>届数</span>
-              <select class="select-input" data-team-term-switch>
-                ${terms.map((term) => `<option value="${escapeHtml(term)}">${escapeHtml(term)}</option>`).join("")}
-              </select>
-            </label>
+        ? `<div class="team-term-switcher" role="group" aria-label="往届成员届数切换">
+            ${terms
+              .map((term) => {
+                const count = items.filter((item) => (item.term || "未填写届数") === term).length;
+                const active = term === activeTerm;
+                return `<button class="team-term-button${active ? " is-active" : ""}" type="button" data-team-term-button="${escapeHtml(term)}" aria-pressed="${active ? "true" : "false"}">${escapeHtml(term)}<span>${count.toLocaleString("zh-CN")} 人</span></button>`;
+              })
+              .join("")}
           </div>`
         : ""
     }
@@ -1414,11 +1415,19 @@ function renderTeamMembers(items) {
 }
 
 function bindTeamMemberTermSwitch(container) {
-  const select = container.querySelector("[data-team-term-switch]");
-  if (!select) return;
-  select.addEventListener("change", () => {
-    container.querySelectorAll("[data-team-term-panel]").forEach((panel) => {
-      panel.hidden = panel.dataset.teamTermPanel !== select.value;
+  const buttons = Array.from(container.querySelectorAll("[data-team-term-button]"));
+  if (!buttons.length) return;
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const term = button.dataset.teamTermButton || "";
+      buttons.forEach((item) => {
+        const active = item === button;
+        item.classList.toggle("is-active", active);
+        item.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+      container.querySelectorAll("[data-team-term-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.teamTermPanel !== term;
+      });
     });
   });
 }

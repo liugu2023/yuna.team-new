@@ -1184,6 +1184,50 @@
     [data-team-term-panel][hidden]{
       display:none!important;
     }
+    .team-term-switcher{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin:0 0 22px;
+      padding:14px;
+      border-radius:24px;
+      background:rgba(255,255,255,.62);
+      border:1px solid rgba(255,255,255,.38);
+      box-shadow:var(--soft);
+    }
+    .team-term-button{
+      min-height:48px;
+      border-radius:999px;
+      border:1px solid rgba(10,141,219,.18);
+      background:rgba(230,245,255,.76);
+      color:#0a6fb1;
+      padding:0 18px;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      font:inherit;
+      font-weight:950;
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    .team-term-button span{
+      color:#60728a;
+      font-size:13px;
+      font-weight:850;
+    }
+    .team-term-button:hover,
+    .team-term-button:focus-visible,
+    .team-term-button.is-active{
+      background:#0a8ddb;
+      border-color:#0a8ddb;
+      color:#fff;
+      transform:translateY(-1px);
+    }
+    .team-term-button:hover span,
+    .team-term-button:focus-visible span,
+    .team-term-button.is-active span{
+      color:rgba(255,255,255,.84);
+    }
     .editable-block{
       position:relative;
     }
