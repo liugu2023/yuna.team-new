@@ -1446,6 +1446,10 @@
       scrollbar-width:thin;
       scrollbar-color:rgba(10,141,219,.42) rgba(255,255,255,.42);
     }
+    textarea.admin-input{
+      overflow:auto;
+      background-clip:padding-box;
+    }
     .modal::-webkit-scrollbar,
     .modal-body::-webkit-scrollbar,
     textarea.admin-input::-webkit-scrollbar,
@@ -1459,6 +1463,9 @@
     .mini-preview::-webkit-scrollbar-track{
       background:rgba(255,255,255,.42);
       border-radius:999px;
+    }
+    textarea.admin-input::-webkit-scrollbar-track{
+      margin-block:10px;
     }
     .modal::-webkit-scrollbar-thumb,
     .modal-body::-webkit-scrollbar-thumb,
