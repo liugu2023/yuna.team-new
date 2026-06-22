@@ -1728,3 +1728,432 @@
         margin-top:24px;
       }
     }
+
+    /* Dedicated phone layout pass. Keep desktop/tablet rules intact and make small screens dense, scroll-safe, and touch-friendly. */
+    @media(max-width:640px){
+      html{
+        scroll-padding-top:82px;
+      }
+      body{
+        background:#eef5ff;
+        font-size:15px;
+      }
+      .shell{
+        width:calc(100% - 24px);
+      }
+      .topbar{
+        background:rgba(248,252,255,.94);
+        border-bottom:1px solid rgba(177,204,231,.46);
+      }
+      .topbar-inner{
+        height:auto;
+        padding:10px 0 9px;
+        gap:9px;
+        align-items:flex-start;
+      }
+      .brand{
+        min-height:34px;
+        font-size:20px;
+        letter-spacing:0;
+      }
+      .brand img{
+        width:34px;
+        height:34px;
+      }
+      .nav{
+        width:100%;
+        display:flex;
+        flex-wrap:nowrap;
+        gap:8px;
+        overflow-x:auto;
+        overflow-y:hidden;
+        padding:1px 0 5px;
+        scrollbar-width:none;
+        -webkit-overflow-scrolling:touch;
+      }
+      .nav::-webkit-scrollbar{
+        display:none;
+      }
+      .nav [data-user-nav]{
+        display:contents;
+      }
+      .nav a{
+        flex:0 0 auto;
+        min-height:36px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        padding:0 12px;
+        border-radius:999px;
+        background:rgba(230,245,255,.72);
+        border:1px solid rgba(10,141,219,.12);
+        color:#245b82;
+        font-size:14px;
+        line-height:1;
+        white-space:nowrap;
+      }
+      .nav a.active{
+        background:#0a8ddb;
+        color:#fff;
+        border-color:#0a8ddb;
+      }
+      .hero-wrap,
+      .page-wrap{
+        min-height:auto!important;
+      }
+      .hero,
+      .page-hero{
+        grid-template-columns:1fr!important;
+        gap:18px;
+        min-height:auto!important;
+        padding:30px 0 62px!important;
+      }
+      .page-hero{
+        padding-top:34px!important;
+        padding-bottom:82px!important;
+      }
+      .hero-side,
+      .page-visual{
+        display:none!important;
+      }
+      .hero h1,
+      .page-hero h1,
+      .home-page .hero-copy h1{
+        font-size:38px!important;
+        line-height:1.16!important;
+        letter-spacing:0!important;
+        padding-bottom:0!important;
+      }
+      .lead,
+      .page-hero .lead{
+        margin-top:18px;
+        font-size:16px;
+        line-height:1.72;
+      }
+      .eyebrow{
+        margin-bottom:10px;
+        font-size:12px;
+        line-height:1.5;
+        letter-spacing:.08em;
+      }
+      .hero-actions,
+      .home-summary-actions,
+      .editor-actions,
+      .toolbar-actions{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:10px;
+      }
+      .btn,
+      .file-button{
+        width:100%;
+        min-height:48px;
+        height:auto;
+        padding:12px 16px;
+        font-size:15px;
+        line-height:1.35;
+        white-space:normal;
+      }
+      .main,
+      .page-main,
+      .hero-wrap + .main{
+        margin-top:0!important;
+        padding-top:34px!important;
+        padding-bottom:54px;
+      }
+      .main::before,
+      .hero-wrap + .main::before{
+        display:none!important;
+      }
+      .section-title{
+        margin-bottom:18px;
+      }
+      .section-title h2,
+      .home-summary-card h2{
+        font-size:32px!important;
+        line-height:1.18!important;
+        letter-spacing:0!important;
+      }
+      .page-kpi,
+      .hero-stats,
+      .content-grid,
+      .content-grid>aside,
+      .home-summary-grid,
+      .home-entry-layout,
+      .quick-button-grid,
+      .campus-stats,
+      .knowledge-grid,
+      .resource-grid,
+      .member-grid,
+      .feature-grid,
+      .module-grid,
+      .tool-grid,
+      .site-map,
+      .gallery-grid,
+      .service-strip,
+      .article-layout,
+      .login-wrap,
+      .admin-layout,
+      .admin-post-list,
+      .usage-kpis,
+      .usage-detail{
+        grid-template-columns:1fr!important;
+      }
+      .card,
+      .aside-card,
+      .knowledge-card,
+      .resource-card,
+      .member-card,
+      .visual-card,
+      .tool-card,
+      .login-card,
+      .editor-shell,
+      .article-body{
+        padding:18px;
+        border-radius:20px;
+        min-height:0;
+      }
+      .card:hover,
+      .aside-card:hover,
+      .knowledge-card:hover,
+      .resource-card:hover,
+      .member-card:hover,
+      .visual-card:hover,
+      .quick-action:hover{
+        transform:none;
+      }
+      .card h2,
+      .knowledge-card h3,
+      .resource-card h3,
+      .member-card h3,
+      .visual-card h3,
+      .tool-card h3,
+      .aside-card h3{
+        font-size:22px;
+        line-height:1.28;
+        letter-spacing:0;
+      }
+      .card p,
+      .aside-card p,
+      .knowledge-card p,
+      .resource-card p,
+      .member-card p,
+      .visual-card p{
+        font-size:15px;
+        line-height:1.75;
+      }
+      .meta{
+        gap:8px 12px;
+        font-size:13px;
+        line-height:1.55;
+      }
+      .tabs,
+      .team-term-switcher,
+      .resource-tabs,
+      .admin-tabs{
+        display:flex!important;
+        flex-wrap:nowrap;
+        gap:8px;
+        overflow-x:auto;
+        padding:10px;
+        border-radius:18px;
+        scrollbar-width:none;
+        -webkit-overflow-scrolling:touch;
+      }
+      .tabs::-webkit-scrollbar,
+      .team-term-switcher::-webkit-scrollbar,
+      .resource-tabs::-webkit-scrollbar,
+      .admin-tabs::-webkit-scrollbar{
+        display:none;
+      }
+      .tab,
+      .team-term-button,
+      .resource-tab,
+      .admin-tab{
+        flex:0 0 auto;
+        min-width:132px;
+        min-height:44px;
+        padding:10px 14px;
+      }
+      .team-term-button{
+        width:auto;
+      }
+      .resource-tab,
+      .admin-tab{
+        width:176px;
+      }
+      .resource-tab span,
+      .admin-tab-desc{
+        font-size:13px;
+        line-height:1.45;
+      }
+      .control-row{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:10px;
+      }
+      .search-input,
+      .select-input,
+      textarea.admin-input,
+      input.admin-input{
+        width:100%;
+        min-width:0;
+        min-height:46px;
+        border-radius:14px;
+      }
+      .article-cover{
+        height:148px;
+        border-radius:18px;
+        margin-bottom:16px;
+      }
+      .article-head,
+      .card-footer,
+      .attach-item,
+      .pipeline-row,
+      .state-panel,
+      .member-card-top,
+      .usage-detail p{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:8px;
+      }
+      .card-footer{
+        align-items:start;
+      }
+      .read-more{
+        min-height:42px;
+        display:inline-flex;
+        align-items:center;
+      }
+      .tag{
+        width:max-content;
+        max-width:100%;
+      }
+      .office-map{
+        min-height:220px;
+        height:auto;
+        aspect-ratio:1.18;
+        border-radius:18px;
+        margin-top:16px;
+      }
+      .pipeline-row{
+        padding:12px 14px;
+        border-radius:14px;
+      }
+      .team-section{
+        margin-top:42px;
+      }
+      .refined-member-card{
+        min-height:0;
+      }
+      .member-actions{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:9px;
+      }
+      .member-actions a,
+      .member-actions button{
+        width:100%;
+      }
+      .pagination{
+        gap:10px;
+      }
+      .pagination .btn,
+      .pagination button{
+        width:auto;
+        min-width:96px;
+      }
+      .footer{
+        padding:28px 0 38px;
+        display:grid;
+        grid-template-columns:1fr;
+        gap:8px;
+      }
+      .modal-overlay{
+        padding:0;
+        align-items:stretch;
+        place-items:stretch;
+      }
+      .modal{
+        width:100%;
+        max-height:none;
+        height:100dvh;
+        border-radius:0;
+        border:0;
+      }
+      .modal-head{
+        padding:14px 16px;
+      }
+      .modal-head h2{
+        font-size:22px;
+        letter-spacing:0;
+      }
+      .modal-body{
+        padding:14px;
+      }
+      .icon-button{
+        width:38px;
+        height:38px;
+      }
+      .mini-preview{
+        max-height:280px;
+        min-height:180px;
+      }
+      .admin-post-head{
+        display:grid;
+        grid-template-columns:1fr;
+      }
+      .admin-post-summary{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+      }
+      .usage-detail strong{
+        text-align:left;
+        white-space:normal;
+      }
+      .particle-canvas,
+      .cursor-ring,
+      .cursor-glow{
+        display:none!important;
+      }
+    }
+
+    @media(max-width:420px){
+      .shell{
+        width:calc(100% - 18px);
+      }
+      .hero h1,
+      .page-hero h1,
+      .home-page .hero-copy h1{
+        font-size:34px!important;
+      }
+      .section-title h2,
+      .home-summary-card h2{
+        font-size:28px!important;
+      }
+      .admin-post-summary,
+      .page-kpi,
+      .hero-stats{
+        grid-template-columns:1fr!important;
+      }
+      .card,
+      .aside-card,
+      .knowledge-card,
+      .resource-card,
+      .member-card,
+      .visual-card,
+      .tool-card,
+      .login-card,
+      .editor-shell,
+      .article-body{
+        padding:16px;
+        border-radius:18px;
+      }
+      .nav a{
+        min-height:34px;
+        padding-inline:10px;
+        font-size:13px;
+      }
+      .office-map{
+        aspect-ratio:1;
+      }
+    }
