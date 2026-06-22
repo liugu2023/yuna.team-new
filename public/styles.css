@@ -1178,6 +1178,33 @@
     [data-admin-only][hidden]{
       display:none!important;
     }
+    [data-block-editor-tags-group][hidden],
+    [data-block-editor-rows-group][hidden],
+    [data-block-editor-links-group][hidden]{
+      display:none!important;
+    }
+    .editable-block{
+      position:relative;
+    }
+    .editable-block-actions{
+      position:absolute;
+      right:16px;
+      top:16px;
+      z-index:8;
+      display:flex;
+      justify-content:flex-end;
+      pointer-events:auto;
+    }
+    .editable-block-actions .btn{
+      min-height:38px;
+      height:38px;
+      padding:0 14px;
+      font-size:13px;
+      background:rgba(255,255,255,.82);
+    }
+    .aside-list a.active{
+      color:var(--blue);
+    }
     .home-notice-actions .btn{
       min-height:42px;
       padding:0 16px;

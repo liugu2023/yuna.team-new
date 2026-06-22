@@ -36,10 +36,10 @@
       <div class="mist-bottom"></div>
       <div class="grid-overlay"></div>
       <section class="shell hero">
-        <div class="hero-copy reveal">
-          <p class="eyebrow">Yanshan University Network Association</p>
-          <h1>把校园里的技术热情<br />连接成可见的作品</h1>
-          <p class="lead">YUNA.BLOG 是燕山大学大学生网络信息协会的内容与活动入口。这里记录技术文章、训练资料、部门动态、成员故事，也让想加入协会的同学快速了解我们正在做什么。</p>
+        <div class="hero-copy reveal" data-editable-block="home-hero-copy" data-editable-title="首页主视觉文案">
+          <p class="eyebrow" data-block-field="eyebrow">Yanshan University Network Association</p>
+          <h1 data-block-field="title" data-block-multiline="breaks">把校园里的技术热情<br />连接成可见的作品</h1>
+          <p class="lead" data-block-field="lead">YUNA.BLOG 是燕山大学大学生网络信息协会的内容与活动入口。这里记录技术文章、训练资料、部门动态、成员故事，也让想加入协会的同学快速了解我们正在做什么。</p>
           <div class="hero-actions">
             <a class="btn primary magnetic" href="/articles.html">浏览最新文章</a>
             <a class="btn secondary magnetic" href="/knowledge.html#lessons">查看授课资料</a>
@@ -76,9 +76,9 @@
             </div>
           </div>
           <div class="hero-stats reveal">
-            <div class="stat"><strong>文章</strong><span>技术笔记与项目复盘</span></div>
-            <div class="stat"><strong>资料</strong><span>授课课件与学习路线</span></div>
-            <div class="stat"><strong>成员</strong><span>部门介绍与协会故事</span></div>
+            <div class="stat" data-editable-block="home-stat-articles" data-editable-title="首页统计：文章"><strong data-block-field="title">文章</strong><span data-block-field="body">技术笔记与项目复盘</span></div>
+            <div class="stat" data-editable-block="home-stat-knowledge" data-editable-title="首页统计：资料"><strong data-block-field="title">资料</strong><span data-block-field="body">授课课件与学习路线</span></div>
+            <div class="stat" data-editable-block="home-stat-members" data-editable-title="首页统计：成员"><strong data-block-field="title">成员</strong><span data-block-field="body">部门介绍与协会故事</span></div>
           </div>
         </div>
       </section>
@@ -114,25 +114,25 @@
       </div>
 
       <section class="shell home-knowledge-section">
-        <div class="section-title reveal">
-          <p class="eyebrow">Knowledge Base</p>
-          <h2>文章、资料、项目统一沉淀。</h2>
+        <div class="section-title reveal" data-editable-block="home-knowledge-heading" data-editable-title="首页知识库区标题">
+          <p class="eyebrow" data-block-field="eyebrow">Knowledge Base</p>
+          <h2 data-block-field="title">文章、资料、项目统一沉淀。</h2>
         </div>
         <div class="knowledge-grid">
-          <article class="knowledge-card reveal">
+          <article class="knowledge-card reveal" data-editable-block="home-knowledge-devops" data-editable-title="首页知识卡：运维与研发">
             <div class="num">01</div>
-            <h3>运维与研发</h3>
-            <p>服务器部署、Docker、CI/CD、前后端工程化。</p>
+            <h3 data-block-field="title">运维与研发</h3>
+            <p data-block-field="body">服务器部署、Docker、CI/CD、前后端工程化。</p>
           </article>
-          <article class="knowledge-card reveal">
+          <article class="knowledge-card reveal" data-editable-block="home-knowledge-security" data-editable-title="首页知识卡：网络安全">
             <div class="num">02</div>
-            <h3>网络安全</h3>
-            <p>CTF、逆向、渗透基础、校园网安全记录。</p>
+            <h3 data-block-field="title">网络安全</h3>
+            <p data-block-field="body">CTF、逆向、渗透基础、校园网安全记录。</p>
           </article>
-          <article class="knowledge-card reveal">
+          <article class="knowledge-card reveal" data-editable-block="home-knowledge-ai" data-editable-title="首页知识卡：数据与 AI">
             <div class="num">03</div>
-            <h3>数据与 AI</h3>
-            <p>Agent、知识库、多模态应用与团队工具链。</p>
+            <h3 data-block-field="title">数据与 AI</h3>
+            <p data-block-field="body">Agent、知识库、多模态应用与团队工具链。</p>
           </article>
         </div>
       </section>
@@ -148,6 +148,7 @@
       window.blog.renderHomeNotice();
       window.blog.renderPostList();
       window.blog.renderUserNav();
+      window.blog.renderEditableBlocks();
     </script>
     <script src="/yuna-ui.js"></script>
   </body>

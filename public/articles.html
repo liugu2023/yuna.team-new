@@ -33,14 +33,14 @@
       <div class="mist-bottom"></div>
       <div class="grid-overlay"></div>
       <section class="shell page-hero">
-        <div class="reveal">
-          <p class="eyebrow">Articles</p>
-          <h1>协会文章与学习记录。</h1>
-          <p class="lead">集中浏览协会近期文章、训练复盘与活动公告。按方向筛选，快速找到适合继续阅读的内容。</p>
+        <div class="reveal" data-editable-block="articles-hero-copy" data-editable-title="文章列表主视觉文案">
+          <p class="eyebrow" data-block-field="eyebrow">Articles</p>
+          <h1 data-block-field="title">协会文章与学习记录。</h1>
+          <p class="lead" data-block-field="lead">集中浏览协会近期文章、训练复盘与活动公告。按方向筛选，快速找到适合继续阅读的内容。</p>
           <div class="page-kpi">
-            <div><strong>文章</strong><span>技术笔记</span></div>
-            <div><strong>公告</strong><span>活动信息</span></div>
-            <div><strong>资料</strong><span>学习路线</span></div>
+            <div data-editable-block="articles-kpi-posts" data-editable-title="文章列表 KPI：文章"><strong data-block-field="title">文章</strong><span data-block-field="body">技术笔记</span></div>
+            <div data-editable-block="articles-kpi-notice" data-editable-title="文章列表 KPI：公告"><strong data-block-field="title">公告</strong><span data-block-field="body">活动信息</span></div>
+            <div data-editable-block="articles-kpi-knowledge" data-editable-title="文章列表 KPI：资料"><strong data-block-field="title">资料</strong><span data-block-field="body">学习路线</span></div>
           </div>
         </div>
         <div class="page-visual reveal">
@@ -80,16 +80,14 @@
           <p class="empty-state" data-article-empty hidden>没有匹配的文章。</p>
         </div>
         <aside>
-          <section class="aside-card reveal">
-            <h3>浏览建议</h3>
-            <p>先按关键词筛选，再进入详情页阅读完整复盘。</p>
+          <section class="aside-card reveal" data-editable-block="articles-browse-tip" data-editable-title="文章列表：浏览建议">
+            <h3 data-block-field="title">浏览建议</h3>
+            <p data-block-field="body">先按关键词筛选，再进入详情页阅读完整复盘。</p>
           </section>
           <section class="aside-card reveal">
-            <h3>热门专题</h3>
-            <div class="aside-list">
-              <a href="/knowledge.html#lessons">授课资料</a>
-              <a href="/team.html#join">加入方式</a>
-              <a href="/page.html?record=members">协会成员</a>
+            <h3>热门标签</h3>
+            <div class="aside-list" data-post-tag-stats>
+              <a href="/articles.html">正在统计标签 <span>请稍候</span></a>
             </div>
           </section>
         </aside>
@@ -101,6 +99,7 @@
     <script>
       window.blog.renderPostList();
       window.blog.renderUserNav();
+      window.blog.renderEditableBlocks();
     </script>
     <script src="/yuna-ui.js"></script>
   </body>

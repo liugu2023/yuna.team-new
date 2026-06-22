@@ -38,9 +38,9 @@
           <h1 data-page-hero-title>学习资料与加入入口。</h1>
           <p class="lead" data-page-hero-lead>这里整理授课资料、招新流程、联系方式和协会常用服务，方便新成员从一页开始了解方向与路径。</p>
           <div class="page-kpi">
-            <div><strong>授课</strong><span>课件与练习</span></div>
-            <div><strong>招新</strong><span>方向与流程</span></div>
-            <div><strong>联系</strong><span>社群与活动</span></div>
+            <div data-editable-block="page-kpi-lessons" data-editable-title="固定页面 KPI：授课"><strong data-block-field="title">授课</strong><span data-block-field="body">课件与练习</span></div>
+            <div data-editable-block="page-kpi-join" data-editable-title="固定页面 KPI：招新"><strong data-block-field="title">招新</strong><span data-block-field="body">方向与流程</span></div>
+            <div data-editable-block="page-kpi-contact" data-editable-title="固定页面 KPI：联系"><strong data-block-field="title">联系</strong><span data-block-field="body">社群与活动</span></div>
           </div>
         </div>
         <div class="page-visual reveal">
@@ -71,18 +71,18 @@
           </div>
         </article>
         <aside class="toc">
-          <section class="aside-card reveal">
-            <h3>站点导航</h3>
-            <div class="aside-list">
+          <section class="aside-card reveal" data-editable-block="page-nav-card" data-editable-title="固定页面：站点导航">
+            <h3 data-block-field="title">站点导航</h3>
+            <div class="aside-list" data-block-links>
               <a href="/knowledge.html#lessons">授课链接</a>
               <a href="/knowledge.html#join">加入我们</a>
               <a href="/knowledge.html#contact">联系我们</a>
               <a href="/team.html">关于协会</a>
             </div>
           </section>
-          <section class="aside-card reveal">
-            <h3>内容维护</h3>
-            <p>有编辑权限的成员可以在页面正文上方打开编辑器，更新固定页面内容。</p>
+          <section class="aside-card reveal" data-editable-block="page-maintenance-card" data-editable-title="固定页面：内容维护">
+            <h3 data-block-field="title">内容维护</h3>
+            <p data-block-field="body">有编辑权限的成员可以在页面正文上方打开编辑器，更新固定页面内容。</p>
           </section>
         </aside>
       </section>
@@ -93,6 +93,7 @@
     <script>
       window.blog.renderStaticPage();
       window.blog.renderUserNav();
+      window.blog.renderEditableBlocks();
     </script>
     <script src="/yuna-ui.js"></script>
   </body>

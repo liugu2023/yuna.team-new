@@ -1,9 +1,96 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>后台入口 · YUNA.BLOG</title><link rel="icon" href="/logo.svg" type="image/svg+xml" /><link rel="stylesheet" href="/styles.css"/></head>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>后台入口 · YUNA.BLOG</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
 <body>
-<div class="scroll-progress" id="scrollProgress"></div><div class="cursor-ring" id="cursorRing"></div><div class="cursor-glow" id="cursorGlow"></div><canvas class="particle-canvas" id="particleCanvas"></canvas><div class="aurora-layer"></div>
-<header class="topbar"><div class="shell topbar-inner"><a class="brand magnetic" href="/"><span>YUNA.BLOG</span></a><nav class="nav"><a href="/">首页</a><a href="/articles.html">文章列表</a><a href="/knowledge.html">知识库</a><a href="/team.html">关于协会</a><span data-user-nav data-login-label="后台入口"><a class="active" href="/admin-login.html">后台入口</a></span></nav></div></header>
-<div class="page-wrap"><div class="hero-bg" id="heroBg"></div><div class="mist-top"></div><div class="mist-bottom"></div><div class="grid-overlay"></div><section class="shell page-hero"><div class="reveal"><p class="eyebrow">Admin Portal</p><h1>成员登录与后台入口。</h1><p class="lead">协会成员通过统一身份登录进入内容维护工作台。完成身份确认后，可以维护文章、资料、成员信息和首页图片。</p><div class="page-kpi"><div><strong>Auth</strong><span>身份确认</span></div><div><strong>Audit</strong><span>内容维护</span></div><div><strong>Logs</strong><span>操作记录</span></div></div></div><div class="page-visual reveal"><div class="tech-sweep"></div><div class="logo-holo-grid"></div><div class="scanlines"></div><div class="tech-web"></div><div class="visual-lines"></div><span class="pulse-ring p1"></span><span class="pulse-ring p2"></span><span class="pulse-ring p3"></span><span class="ring r1"></span><span class="ring r2"></span><div class="visual-orb"><img src="/images/logo.svg" alt="YUNA"/></div><span class="tech-pill pill-a">Admin</span><span class="tech-pill pill-b">Campus</span><span class="tech-pill pill-c">System</span><div class="data-stream"><span>YUNA · ADMIN PORTAL · IDENTITY CHECK ·</span><span>ARTICLE · KNOWLEDGE · MEMBER · GALLERY ·</span></div></div></section></div>
-<main class="main page-main" id="content"><div class="shell login-wrap"><section class="visual-card reveal"><span class="flash"></span><div class="num">SYS</div><h3>后台维护范围</h3><p>用于文章发布、知识库维护、成员信息、首页图片和活动内容管理。完成身份确认后进入维护工作台。</p><div class="login-status"><div class="login-step"><i>1</i><span>点击右侧按钮打开协会统一登录页面。</span></div><div class="login-step"><i>2</i><span>登录系统确认成员身份与维护权限。</span></div><div class="login-step"><i>3</i><span>验证通过后自动进入后台工作台。</span></div></div></section><section class="login-card reveal"><h2 class="panel-title">管理后台入口</h2><div class="field"><label>登录方式</label><input value="协会统一身份登录" readonly/></div><div class="field"><label>可用权限</label><input value="内容维护成员" readonly/></div><a class="btn primary magnetic" href="/api/auth/login?return_to=%2Fadmin%2F">验证成员身份</a><p class="meta login-message" data-login-message>点击后将跳转到统一登录，验证通过后自动进入后台。</p></section></div></main>
-<footer class="shell footer"><span>YUNA.BLOG · 后台入口</span><span>成员身份校验</span></footer><script src="/app.js"></script><script>window.blog.renderUserNav();</script><script src="/yuna-ui.js"></script></body></html>
+<div class="scroll-progress" id="scrollProgress"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+<canvas class="particle-canvas" id="particleCanvas"></canvas>
+<div class="aurora-layer"></div>
+<header class="topbar">
+  <div class="shell topbar-inner">
+    <a class="brand magnetic" href="/"><span>YUNA.BLOG</span></a>
+    <nav class="nav">
+      <a href="/">首页</a>
+      <a href="/articles.html">文章列表</a>
+      <a href="/knowledge.html">知识库</a>
+      <a href="/team.html">关于协会</a>
+      <span data-user-nav data-login-label="后台入口"><a class="active" href="/admin-login.html">后台入口</a></span>
+    </nav>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="mist-top"></div>
+  <div class="mist-bottom"></div>
+  <div class="grid-overlay"></div>
+  <section class="shell page-hero">
+    <div class="reveal" data-editable-block="admin-login-hero-copy" data-editable-title="后台入口主视觉文案">
+      <p class="eyebrow" data-block-field="eyebrow">Admin Portal</p>
+      <h1 data-block-field="title">成员登录与后台入口。</h1>
+      <p class="lead" data-block-field="lead">协会成员通过统一身份登录进入内容维护工作台。完成身份确认后，可以维护文章、资料、成员信息和首页图片。</p>
+      <div class="page-kpi">
+        <div data-editable-block="admin-login-kpi-auth" data-editable-title="后台入口 KPI：Auth"><strong data-block-field="title">Auth</strong><span data-block-field="body">身份确认</span></div>
+        <div data-editable-block="admin-login-kpi-audit" data-editable-title="后台入口 KPI：Audit"><strong data-block-field="title">Audit</strong><span data-block-field="body">内容维护</span></div>
+        <div data-editable-block="admin-login-kpi-logs" data-editable-title="后台入口 KPI：Logs"><strong data-block-field="title">Logs</strong><span data-block-field="body">操作记录</span></div>
+      </div>
+    </div>
+    <div class="page-visual reveal">
+      <div class="tech-sweep"></div>
+      <div class="logo-holo-grid"></div>
+      <div class="scanlines"></div>
+      <div class="tech-web"></div>
+      <div class="visual-lines"></div>
+      <span class="pulse-ring p1"></span>
+      <span class="pulse-ring p2"></span>
+      <span class="pulse-ring p3"></span>
+      <span class="ring r1"></span>
+      <span class="ring r2"></span>
+      <div class="visual-orb"><img src="/images/logo.svg" alt="YUNA"/></div>
+      <span class="tech-pill pill-a">Admin</span>
+      <span class="tech-pill pill-b">Campus</span>
+      <span class="tech-pill pill-c">System</span>
+      <div class="data-stream"><span>YUNA · ADMIN PORTAL · IDENTITY CHECK ·</span><span>ARTICLE · KNOWLEDGE · MEMBER · GALLERY ·</span></div>
+    </div>
+  </section>
+</div>
+
+<main class="main page-main" id="content">
+  <div class="shell login-wrap">
+    <section class="visual-card reveal" data-editable-block="admin-login-scope-card" data-editable-title="后台入口：维护范围">
+      <span class="flash"></span>
+      <div class="num">SYS</div>
+      <h3 data-block-field="title">后台维护范围</h3>
+      <p data-block-field="body">用于文章发布、知识库维护、成员信息、首页图片和活动内容管理。完成身份确认后进入维护工作台。</p>
+      <div class="login-status">
+        <div class="login-step"><i>1</i><span data-block-field="step1" data-block-label="步骤 1">点击右侧按钮打开协会统一登录页面。</span></div>
+        <div class="login-step"><i>2</i><span data-block-field="step2" data-block-label="步骤 2">登录系统确认成员身份与维护权限。</span></div>
+        <div class="login-step"><i>3</i><span data-block-field="step3" data-block-label="步骤 3">验证通过后自动进入后台工作台。</span></div>
+      </div>
+    </section>
+    <section class="login-card reveal" data-editable-block="admin-login-entry-card" data-editable-title="后台入口：登录卡片">
+      <h2 class="panel-title" data-block-field="title">管理后台入口</h2>
+      <div class="field"><label>登录方式</label><input value="协会统一身份登录" data-block-field="loginMethod" data-block-label="登录方式" readonly/></div>
+      <div class="field"><label>可用权限</label><input value="内容维护成员" data-block-field="permission" data-block-label="可用权限" readonly/></div>
+      <a class="btn primary magnetic" href="/api/auth/login?return_to=%2Fadmin%2F">验证成员身份</a>
+      <p class="meta login-message" data-login-message data-block-field="body">点击后将跳转到统一登录，验证通过后自动进入后台。</p>
+    </section>
+  </div>
+</main>
+
+<footer class="shell footer"><span>YUNA.BLOG · 后台入口</span><span>成员身份校验</span></footer>
+<script src="/app.js"></script>
+<script>
+  window.blog.renderUserNav();
+  window.blog.renderEditableBlocks();
+</script>
+<script src="/yuna-ui.js"></script>
+</body>
+</html>

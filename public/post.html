@@ -64,18 +64,18 @@
           <p class="empty-state">正在加载...</p>
         </article>
         <aside class="toc">
-          <section class="aside-card reveal">
-            <h3>文章信息</h3>
+          <section class="aside-card reveal" data-editable-block="post-info-card" data-editable-title="文章详情：信息卡标题">
+            <h3 data-block-field="title">文章信息</h3>
             <div class="pipeline">
-              <div class="pipeline-row"><strong>分类</strong><span>协会文章</span></div>
-              <div class="pipeline-row"><strong>适合</strong><span>准备继续了解协会内容的同学</span></div>
+              <div class="pipeline-row"><strong>分类</strong><span data-block-field="category" data-block-label="分类">协会文章</span></div>
+              <div class="pipeline-row"><strong>适合</strong><span data-block-field="audience" data-block-label="适合">准备继续了解协会内容的同学</span></div>
               <div class="pipeline-row"><strong>更新</strong><span data-article-updated>加载中</span></div>
               <div class="pipeline-row"><strong>阅读</strong><span data-article-views>加载中</span></div>
             </div>
           </section>
-          <section class="aside-card reveal">
-            <h3>继续浏览</h3>
-            <div class="aside-list">
+          <section class="aside-card reveal" data-editable-block="post-browse-card" data-editable-title="文章详情：继续浏览">
+            <h3 data-block-field="title">继续浏览</h3>
+            <div class="aside-list" data-block-links>
               <a href="/articles.html">返回文章列表</a>
               <a href="/knowledge.html">查看学习资料</a>
               <a href="/team.html#join">了解加入方式</a>
@@ -90,6 +90,7 @@
     <script>
       window.blog.renderPost();
       window.blog.renderUserNav();
+      window.blog.renderEditableBlocks();
     </script>
     <script src="/yuna-ui.js"></script>
   </body>

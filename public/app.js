@@ -65,6 +65,16 @@ function postTags(posts) {
   return tags;
 }
 
+function postTagCounts(posts) {
+  const counts = new Map();
+  for (const post of posts) {
+    const tag = postTag(post);
+    counts.set(tag, (counts.get(tag) || 0) + 1);
+  }
+  return Array.from(counts, ([tag, count]) => ({ tag, count }))
+    .sort((left, right) => right.count - left.count || left.tag.localeCompare(right.tag, "zh-CN"));
+}
+
 function escapeHtml(value) {
   return value.replace(/[&<>"']/g, (char) => {
     const entities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -279,6 +289,7 @@ async function renderPostList({ admin = false } = {}) {
     }
 
     if (!data.posts.length && featureGrid && !admin) featureGrid.innerHTML = "";
+    if (!admin) renderPostTagStats(data.posts);
     lists.forEach((list) => renderPostListInto(list, data.posts, admin));
     bindArticleFilters();
   } catch (error) {
@@ -286,6 +297,7 @@ async function renderPostList({ admin = false } = {}) {
     lists.forEach((list) => {
       list.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
     });
+    renderPostTagStats([]);
   }
 }
 
@@ -318,6 +330,32 @@ function renderHomePostTabs(posts) {
 
 function selectedHomePostTag() {
   return document.querySelector("[data-home-post-tabs]")?.dataset.selectedTag || "all";
+}
+
+function renderPostTagStats(posts) {
+  const lists = document.querySelectorAll("[data-post-tag-stats]");
+  if (!lists.length) return;
+
+  const tagCounts = postTagCounts(posts);
+  lists.forEach((list) => {
+    if (!tagCounts.length) {
+      list.innerHTML = '<p class="empty-state">暂无标签。</p>';
+      return;
+    }
+
+    const selectedTag = new URLSearchParams(location.search).get("tag") || "";
+    list.innerHTML = tagCounts
+      .map(({ tag, count }) => {
+        const active = selectedTag === tag ? ' class="active"' : "";
+        return `
+          <a href="/articles.html?tag=${encodeURIComponent(tag)}"${active}>
+            ${escapeHtml(tag)}
+            <span>${count.toLocaleString("zh-CN")} 篇</span>
+          </a>
+        `;
+      })
+      .join("");
+  });
 }
 
 function renderPostListInto(list, posts, admin) {
@@ -382,7 +420,7 @@ function renderPostListInto(list, posts, admin) {
   list.innerHTML = posts
     .map(
       (post) => `
-        <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-category="all">
+        <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-tag="${escapeHtml(postTag(post))}">
           <span class="flash"></span>
           <div class="article-cover"></div>
           <div class="article-head">
@@ -408,6 +446,7 @@ function bindArticleFilters() {
   const search = document.querySelector("[data-article-search]");
   const status = document.querySelector("[data-article-status]");
   const empty = document.querySelector("[data-article-empty]");
+  const selectedTag = new URLSearchParams(location.search).get("tag") || "";
   const filter = () => {
     const keyword = (search?.value || "").trim().toLowerCase();
     const statusValue = status?.value || "all";
@@ -415,7 +454,8 @@ function bindArticleFilters() {
     cards.forEach((card) => {
       const matchesText = !keyword || card.textContent.toLowerCase().includes(keyword);
       const matchesStatus = statusValue === "all" || card.dataset.status === statusValue;
-      const show = matchesText && matchesStatus;
+      const matchesTag = !selectedTag || card.dataset.tag === selectedTag;
+      const show = matchesText && matchesStatus && matchesTag;
       card.hidden = !show;
       if (show) visible += 1;
     });
@@ -525,6 +565,18 @@ function saveSiteMarkdownRecord(key, title, markdown) {
   });
 }
 
+function saveSiteJsonRecord(key, title, content) {
+  return fetchJson(`/api/admin/site/${encodeURIComponent(key)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      title,
+      kind: "json",
+      content: JSON.stringify(content),
+    }),
+  });
+}
+
 async function renderUserNav() {
   const navs = document.querySelectorAll("[data-user-nav]");
   if (!navs.length) return;
@@ -542,6 +594,310 @@ async function renderUserNav() {
       nav.innerHTML = nav.hasAttribute("data-side-nav") ? decorateSideNav(html) : html;
     });
   }
+}
+
+async function renderEditableBlocks() {
+  const blocks = Array.from(document.querySelectorAll("[data-editable-block]"));
+  if (!blocks.length) return;
+
+  await Promise.all(blocks.map(loadEditableBlockRecord));
+  await attachEditableBlockEditors(blocks);
+}
+
+async function loadEditableBlockRecord(block) {
+  const key = block.dataset.editableBlock;
+  if (!key || block.dataset.editableLoaded) return;
+  block.classList.add("editable-block");
+
+  try {
+    const data = await fetchJson(`/api/site/${encodeURIComponent(key)}`);
+    if (data.record?.kind !== "json") return;
+    const content = JSON.parse(data.record.content || "{}");
+    applyEditableBlockState(block, content);
+  } catch {
+    // Missing records keep the built-in HTML copy until an admin saves them.
+  } finally {
+    block.dataset.editableLoaded = "1";
+  }
+}
+
+async function attachEditableBlockEditors(blocks) {
+  let me;
+  try {
+    me = await currentUser();
+  } catch {
+    return;
+  }
+  if (!me.admin && !me.contentEditor) return;
+
+  blocks.forEach((block) => {
+    if (block.dataset.editableBound) return;
+    block.dataset.editableBound = "1";
+    block.classList.add("editable-block");
+
+    const actions = document.createElement("div");
+    actions.className = "editable-block-actions";
+    actions.innerHTML = '<button type="button" class="btn secondary" data-edit-block>编辑文案</button>';
+    block.append(actions);
+    actions.querySelector("[data-edit-block]").addEventListener("click", () => {
+      openEditableBlockEditor(block);
+    });
+  });
+}
+
+function applyEditableBlockState(block, state) {
+  const fields = state.fields && typeof state.fields === "object" ? state.fields : {};
+  Object.entries(fields).forEach(([name, value]) => {
+    editableBlockNodes(block, `[data-block-field="${name}"]`).forEach((node) => {
+      setEditableText(node, value);
+    });
+  });
+
+  if (Array.isArray(state.tags)) {
+    const tags = editableBlockNodes(block, "[data-block-tags]")[0];
+    if (tags) {
+      tags.innerHTML = state.tags
+        .filter((tag) => String(tag || "").trim())
+        .map((tag) => `<span class="tag">${escapeHtml(String(tag).trim())}</span>`)
+        .join("");
+    }
+  }
+
+  if (Array.isArray(state.rows)) {
+    const rows = editableBlockNodes(block, "[data-block-rows]")[0];
+    if (rows) {
+      rows.innerHTML = state.rows
+        .filter((row) => String(row?.label || row?.value || "").trim())
+        .map(
+          (row) => `
+            <div class="pipeline-row" data-block-row>
+              <strong>${escapeHtml(String(row.label || "").trim())}</strong>
+              <span>${escapeHtml(String(row.value || "").trim())}</span>
+            </div>
+          `,
+        )
+        .join("");
+    }
+  }
+
+  if (Array.isArray(state.links)) {
+    const links = editableBlockNodes(block, "[data-block-links]")[0];
+    if (links) {
+      links.innerHTML = state.links
+        .filter((link) => String(link?.label || link?.href || "").trim())
+        .map((link) => {
+          const href = safeLinkUrl(link.href) || "#";
+          return `<a href="${escapeHtml(href)}">${escapeHtml(String(link.label || href).trim())}</a>`;
+        })
+        .join("");
+    }
+  }
+}
+
+function collectEditableBlockState(block) {
+  const fields = {};
+  const fieldMeta = [];
+  editableBlockNodes(block, "[data-block-field]").forEach((node) => {
+    const name = node.dataset.blockField;
+    if (!name || fields[name] !== undefined) return;
+    fields[name] = getEditableText(node);
+    fieldMeta.push({
+      name,
+      label: node.dataset.blockLabel || editableFieldLabel(name),
+      multiline: node.dataset.blockMultiline === "breaks" || node.tagName === "P",
+    });
+  });
+
+  const tagNode = editableBlockNodes(block, "[data-block-tags]")[0];
+  const tags = tagNode
+    ? Array.from(tagNode.querySelectorAll(".tag")).map((tag) => tag.textContent.trim()).filter(Boolean)
+    : null;
+
+  const rowNode = editableBlockNodes(block, "[data-block-rows]")[0];
+  const rows = rowNode
+    ? Array.from(rowNode.querySelectorAll("[data-block-row]")).map((row) => ({
+        label: row.querySelector("strong")?.textContent.trim() || "",
+        value: row.querySelector("span")?.textContent.trim() || "",
+      }))
+    : null;
+
+  const linkNode = editableBlockNodes(block, "[data-block-links]")[0];
+  const links = linkNode
+    ? Array.from(linkNode.querySelectorAll("a")).map((link) => ({
+        label: link.textContent.trim(),
+        href: link.getAttribute("href") || "",
+      }))
+    : null;
+
+  return { fields, fieldMeta, tags, rows, links };
+}
+
+function editableBlockNodes(block, selector) {
+  return Array.from(block.querySelectorAll(selector)).filter((node) => node.closest("[data-editable-block]") === block);
+}
+
+function editableFieldLabel(name) {
+  const labels = {
+    eyebrow: "眉标",
+    title: "标题",
+    lead: "说明",
+    body: "正文",
+    meta: "补充说明",
+  };
+  return labels[name] || name;
+}
+
+function getEditableText(node) {
+  if ("value" in node && (node.tagName === "INPUT" || node.tagName === "TEXTAREA")) {
+    return String(node.value || "").trim();
+  }
+  const value = node.dataset.blockMultiline === "breaks" ? node.innerText : node.textContent;
+  return value.replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function setEditableText(node, value) {
+  const text = String(value || "");
+  if ("value" in node && (node.tagName === "INPUT" || node.tagName === "TEXTAREA")) {
+    node.value = text;
+    return;
+  }
+  if (node.dataset.blockMultiline === "breaks") {
+    node.innerHTML = text.split("\n").map((line) => escapeHtml(line)).join("<br>");
+    return;
+  }
+  node.textContent = text;
+}
+
+function openEditableBlockEditor(block) {
+  const key = block.dataset.editableBlock;
+  if (!key) return;
+
+  const modal = ensureEditableBlockModal();
+  const heading = modal.querySelector("[data-block-editor-heading]");
+  const fieldsContainer = modal.querySelector("[data-block-editor-fields]");
+  const tagsGroup = modal.querySelector("[data-block-editor-tags-group]");
+  const tagsInput = modal.querySelector("[data-block-editor-tags]");
+  const rowsGroup = modal.querySelector("[data-block-editor-rows-group]");
+  const rowsInput = modal.querySelector("[data-block-editor-rows]");
+  const linksGroup = modal.querySelector("[data-block-editor-links-group]");
+  const linksInput = modal.querySelector("[data-block-editor-links]");
+  const message = modal.querySelector("[data-block-editor-message]");
+  const state = collectEditableBlockState(block);
+
+  heading.textContent = block.dataset.editableTitle || "编辑文案";
+  fieldsContainer.innerHTML = state.fieldMeta
+    .map(
+      (field) => `
+        <label>
+          ${escapeHtml(field.label)}
+          <textarea class="admin-input" data-block-editor-field="${escapeHtml(field.name)}" rows="${field.multiline ? 4 : 2}">${escapeHtml(state.fields[field.name] || "")}</textarea>
+        </label>
+      `,
+    )
+    .join("");
+
+  tagsGroup.hidden = !state.tags;
+  tagsInput.value = state.tags ? state.tags.join("\n") : "";
+  rowsGroup.hidden = !state.rows;
+  rowsInput.value = state.rows ? state.rows.map((row) => `${row.label}：${row.value}`).join("\n") : "";
+  linksGroup.hidden = !state.links;
+  linksInput.value = state.links ? state.links.map((link) => `${link.label}：${link.href}`).join("\n") : "";
+  message.textContent = "";
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+
+  const close = () => {
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+  };
+
+  modal.querySelector("[data-block-editor-close]").onclick = close;
+  modal.querySelector("[data-block-editor-save]").onclick = async () => {
+    const nextState = { fields: {} };
+    fieldsContainer.querySelectorAll("[data-block-editor-field]").forEach((input) => {
+      nextState.fields[input.dataset.blockEditorField] = input.value.trim();
+    });
+    if (!tagsGroup.hidden) {
+      nextState.tags = tagsInput.value.split("\n").map((tag) => tag.trim()).filter(Boolean);
+    }
+    if (!rowsGroup.hidden) {
+      nextState.rows = rowsInput.value
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const parts = line.split(/[：:]/);
+          const label = parts.shift()?.trim() || "";
+          return { label, value: parts.join("：").trim() };
+        });
+    }
+    if (!linksGroup.hidden) {
+      nextState.links = linksInput.value
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const parts = line.split(/[：:]/);
+          const label = parts.shift()?.trim() || "";
+          return { label, href: parts.join(":").trim() };
+        });
+    }
+
+    message.textContent = "正在保存...";
+    try {
+      const title = block.dataset.editableTitle || nextState.fields.title || key;
+      await saveSiteJsonRecord(key, title, nextState);
+      applyEditableBlockState(block, nextState);
+      message.textContent = "已保存";
+      close();
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  };
+}
+
+function ensureEditableBlockModal() {
+  let modal = document.querySelector("[data-block-editor-modal]");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.dataset.blockEditorModal = "";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="文案编辑器">
+      <div class="modal-head">
+        <div>
+          <h2 data-block-editor-heading>编辑文案</h2>
+          <p class="meta">保存后写入 D1 数据库，并保留增量备份。</p>
+        </div>
+        <button type="button" class="icon-button" data-block-editor-close aria-label="关闭编辑器">×</button>
+      </div>
+      <div class="modal-body">
+        <section class="editor-shell admin-form">
+          <div data-block-editor-fields></div>
+          <label data-block-editor-tags-group>
+            标签（每行一个）
+            <textarea class="admin-input" data-block-editor-tags rows="4"></textarea>
+          </label>
+          <label data-block-editor-rows-group>
+            分项内容（每行一个，格式：标题：内容）
+            <textarea class="admin-input" data-block-editor-rows rows="6"></textarea>
+          </label>
+          <label data-block-editor-links-group>
+            链接列表（每行一个，格式：标题：链接）
+            <textarea class="admin-input" data-block-editor-links rows="5"></textarea>
+          </label>
+          <div class="editor-actions">
+            <button type="button" class="btn primary" data-block-editor-save>保存文案</button>
+          </div>
+          <p class="meta" data-block-editor-message></p>
+        </section>
+      </div>
+    </div>
+  `;
+  document.body.append(modal);
+  return modal;
 }
 
 async function renderAdminOnlyActions() {
@@ -1158,5 +1514,6 @@ window.blog = {
   renderPost,
   renderUserNav,
   renderAdminOnlyActions,
+  renderEditableBlocks,
   renderStaticPage,
 };
