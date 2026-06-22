@@ -34,6 +34,78 @@ const root=document.documentElement;const glow=document.getElementById('cursorGl
   activateTabs('[data-resource-tab]','[data-resource-panel]','resourceTab');
   activateTabs('[data-admin-tab]','[data-admin-panel]','adminTab');
 
+  function initOfficeMaps(){
+    const maps=$$('[data-office-map]');
+    if(!maps.length) return;
+    const tileSize=256;
+    const minZoom=15;
+    const maxZoom=19;
+    const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+    const project=(lng,lat,zoom)=>{
+      const scale=Math.pow(2,zoom);
+      const sin=clamp(Math.sin((lat*Math.PI)/180),-.9999,.9999);
+      return {
+        x:((lng+180)/360)*scale,
+        y:(.5-Math.log((1+sin)/(1-sin))/(4*Math.PI))*scale
+      };
+    };
+    const tileUrl=(x,y,zoom)=>{
+      const server=((x+y)%4+4)%4+1;
+      return `https://webrd0${server}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=${x}&y=${y}&z=${zoom}`;
+    };
+    maps.forEach(map=>{
+      const tiles=$('.office-map-tiles',map);
+      if(!tiles) return;
+      const lat=Number(map.dataset.mapLat||map.dataset.lat);
+      const lng=Number(map.dataset.mapLng||map.dataset.lng);
+      if(!Number.isFinite(lat)||!Number.isFinite(lng)) return;
+      const zoomIn=$('[data-map-zoom-in]',map);
+      const zoomOut=$('[data-map-zoom-out]',map);
+      const zoomValue=$('.office-map-zoom-value',map);
+      let zoom=clamp(Number(map.dataset.zoom)||17,minZoom,maxZoom);
+      const render=()=>{
+        const p=project(lng,lat,zoom);
+        const tileX=Math.floor(p.x);
+        const tileY=Math.floor(p.y);
+        const focusX=(1+p.x-tileX)*tileSize;
+        const focusY=(1+p.y-tileY)*tileSize;
+        tiles.style.transform=`translate(${-focusX}px,${-focusY}px)`;
+        const frag=document.createDocumentFragment();
+        for(let dy=-1;dy<=1;dy++){
+          for(let dx=-1;dx<=1;dx++){
+            const img=document.createElement('img');
+            img.src=tileUrl(tileX+dx,tileY+dy,zoom);
+            img.alt='';
+            img.loading='lazy';
+            img.decoding='async';
+            img.referrerPolicy='no-referrer';
+            img.draggable=false;
+            frag.appendChild(img);
+          }
+        }
+        tiles.replaceChildren(frag);
+        map.dataset.zoom=String(zoom);
+        if(zoomValue) zoomValue.textContent=String(zoom);
+        if(zoomIn) zoomIn.disabled=zoom>=maxZoom;
+        if(zoomOut) zoomOut.disabled=zoom<=minZoom;
+      };
+      const setZoom=(next)=>{
+        const value=clamp(next,minZoom,maxZoom);
+        if(value===zoom) return;
+        zoom=value;
+        render();
+      };
+      zoomIn?.addEventListener('click',event=>{event.stopPropagation();setZoom(zoom+1);});
+      zoomOut?.addEventListener('click',event=>{event.stopPropagation();setZoom(zoom-1);});
+      map.addEventListener('wheel',event=>{
+        event.preventDefault();
+        setZoom(zoom+(event.deltaY<0?1:-1));
+      },{passive:false});
+      render();
+    });
+  }
+  initOfficeMaps();
+
   const articleCards=$$('[data-article-card]');
   const articleSearch=$('[data-article-search]');
   const articleCategory=$('[data-article-category]');
