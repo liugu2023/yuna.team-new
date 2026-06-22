@@ -1202,6 +1202,22 @@
       font-size:13px;
       background:rgba(255,255,255,.82);
     }
+    .page-kpi .editable-block-actions,
+    .hero-stats .editable-block-actions{
+      right:8px;
+      top:8px;
+    }
+    .page-kpi .editable-block-actions .btn,
+    .hero-stats .editable-block-actions .btn{
+      min-height:28px;
+      height:28px;
+      padding:0 9px;
+      border-radius:999px;
+      font-size:12px;
+      line-height:1;
+      background:rgba(255,255,255,.72);
+      box-shadow:none;
+    }
     .aside-list a.active{
       color:var(--blue);
     }
