@@ -628,7 +628,7 @@ async function attachEditableBlockEditors(blocks) {
   } catch {
     return;
   }
-  if (!me.admin && !me.contentEditor) return;
+  if (!me.admin) return;
 
   blocks.forEach((block) => {
     if (block.dataset.editableBound) return;
