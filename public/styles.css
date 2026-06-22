@@ -564,6 +564,20 @@
       background:#e8f1f8;
       touch-action:manipulation;
     }
+    #office .service-strip{
+      align-items:stretch;
+    }
+    #office .visual-card{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+    #office .office-map{
+      margin-top:auto;
+    }
+    #office .office-map-caption{
+      min-height:28px;
+    }
     .office-map-tiles{
       position:absolute;
       left:50%;
