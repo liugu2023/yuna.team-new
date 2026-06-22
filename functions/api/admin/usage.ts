@@ -59,27 +59,33 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 };
 
 async function collectDatabaseUsage(env: Env) {
-  const [pageCount, pageSize, tables] = await Promise.all([
+  const [pageCount, pageSize, dbstatBytes, tables] = await Promise.all([
     readPragmaNumber(env, "page_count"),
     readPragmaNumber(env, "page_size"),
+    readDbstatBytes(env),
     Promise.all(TABLES.map((table) => collectTableMetric(env, table))),
   ]);
 
   const estimatedContentBytes = tables.reduce((sum, table) => sum + (table.estimatedBytes || 0), 0);
-  const sqliteBytes = pageCount && pageSize ? pageCount * pageSize : null;
+  const pageBytes = pageCount && pageSize ? pageCount * pageSize : null;
+  const storageBytes = pageBytes ?? dbstatBytes;
 
   return {
-    sqliteBytes,
-    sqliteHuman: sqliteBytes === null ? null : humanSize(sqliteBytes),
+    storageBytes,
+    storageHuman: storageBytes === null ? null : humanSize(storageBytes),
+    sqliteBytes: storageBytes,
+    sqliteHuman: storageBytes === null ? null : humanSize(storageBytes),
     estimatedContentBytes,
     estimatedContentHuman: humanSize(estimatedContentBytes),
     pageCount,
     pageSize,
     tables,
     note:
-      sqliteBytes === null
-        ? "D1 未返回 SQLite 页信息，当前大小为按文本字段估算。"
-        : "SQLite 页大小包含索引、空闲页和表结构，比文本内容估算更接近实际占用。",
+      pageBytes !== null
+        ? "按 SQLite page_count × page_size 统计，包含索引、空闲页和表结构，最接近 D1 控制台占用。"
+        : dbstatBytes !== null
+          ? "按 SQLite dbstat 页大小统计，包含表和索引页面；控制台口径可能还会包含少量元数据。"
+          : "D1 未返回 SQLite 页信息，当前只显示字段内容体积，通常会明显小于控制台实际占用。",
   };
 }
 
@@ -106,9 +112,29 @@ async function collectTableMetric(
 }
 
 async function readPragmaNumber(env: Env, name: "page_count" | "page_size"): Promise<number | null> {
+  const queries = [
+    `PRAGMA ${name}`,
+    `SELECT ${name} FROM pragma_${name}()`,
+  ];
+
+  for (const query of queries) {
+    try {
+      const row = await env.BLOG_DB.prepare(query).first<Record<string, unknown>>();
+      const value = Number(row?.[name] ?? Object.values(row || {})[0]);
+      if (Number.isFinite(value) && value > 0) return value;
+    } catch {
+      // D1 deployments do not consistently expose every SQLite introspection entry.
+    }
+  }
+
+  return null;
+}
+
+async function readDbstatBytes(env: Env): Promise<number | null> {
   try {
-    const row = await env.BLOG_DB.prepare(`PRAGMA ${name}`).first<Record<string, unknown>>();
-    const value = Number(row?.[name] ?? Object.values(row || {})[0]);
+    const row = await env.BLOG_DB.prepare("SELECT COALESCE(SUM(pgsize), 0) AS bytes FROM dbstat")
+      .first<{ bytes: number }>();
+    const value = Number(row?.bytes || 0);
     return Number.isFinite(value) && value > 0 ? value : null;
   } catch {
     return null;
