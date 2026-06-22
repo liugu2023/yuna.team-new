@@ -1384,19 +1384,15 @@ function renderTeamMembers(items) {
   const terms = [...new Set(items.map((item) => item.term || "未填写届数"))];
   const activeTerm = terms[0];
   return `
-    ${
-      terms.length > 1
-        ? `<div class="team-term-switcher" role="group" aria-label="往届成员届数切换">
-            ${terms
-              .map((term) => {
-                const count = items.filter((item) => (item.term || "未填写届数") === term).length;
-                const active = term === activeTerm;
-                return `<button class="team-term-button${active ? " is-active" : ""}" type="button" data-team-term-button="${escapeHtml(term)}" aria-pressed="${active ? "true" : "false"}">${escapeHtml(term)}<span>${count.toLocaleString("zh-CN")} 人</span></button>`;
-              })
-              .join("")}
-          </div>`
-        : ""
-    }
+    <div class="team-term-switcher" role="group" aria-label="往届成员届数切换">
+      ${terms
+        .map((term) => {
+          const count = items.filter((item) => (item.term || "未填写届数") === term).length;
+          const active = term === activeTerm;
+          return `<button class="team-term-button${active ? " is-active" : ""}" type="button" data-team-term-button="${escapeHtml(term)}" aria-pressed="${active ? "true" : "false"}">${escapeHtml(term)}<span>${count.toLocaleString("zh-CN")} 人</span></button>`;
+        })
+        .join("")}
+    </div>
     <div data-team-term-panels>
       ${terms
         .map((term) => {
