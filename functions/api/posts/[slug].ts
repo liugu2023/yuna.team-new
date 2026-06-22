@@ -7,6 +7,7 @@ interface UpdatePostPayload {
   title?: string;
   tag?: string;
   excerpt?: string;
+  cover_url?: string;
   status?: "draft" | "published";
   kind?: "article" | "knowledge";
   markdown?: string;
@@ -65,6 +66,7 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
   const nextStatus = payload.status ?? post.status;
   const nextTitle = payload.title?.trim() ?? post.title;
   const nextTag = payload.tag !== undefined ? normalizeTag(payload.tag) : post.tag;
+  const nextCoverUrl = payload.cover_url !== undefined ? normalizeOptionalText(payload.cover_url) : post.cover_url ?? "";
   const nextKind = payload.kind !== undefined ? normalizeKind(payload.kind) : post.kind ?? "article";
   const publishedAt =
     post.published_at ?? (post.status !== "published" && nextStatus === "published" ? now : null);
@@ -73,13 +75,14 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   await env.BLOG_DB.prepare(
     `UPDATE posts
-     SET title = ?, tag = ?, excerpt = ?, status = ?, kind = ?, markdown_content = ?, updated_at = ?, published_at = ?
+     SET title = ?, tag = ?, excerpt = ?, cover_url = ?, status = ?, kind = ?, markdown_content = ?, updated_at = ?, published_at = ?
      WHERE slug = ?`,
   )
     .bind(
       nextTitle,
       nextTag,
       payload.excerpt ?? post.excerpt,
+      nextCoverUrl,
       nextStatus,
       nextKind,
       nextMarkdown,
@@ -105,6 +108,10 @@ function isValidStatus(value: string): value is "draft" | "published" {
 function normalizeTag(value: unknown): string {
   const tag = typeof value === "string" ? value.trim() : "";
   return tag || "协会动态";
+}
+
+function normalizeOptionalText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function normalizeKind(value: unknown): "article" | "knowledge" {

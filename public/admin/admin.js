@@ -3,6 +3,8 @@ const state = {
   editingKind: "article",
   editingMemberIndex: null,
   editingFameIndex: null,
+  articlePage: 1,
+  knowledgePage: 1,
   posts: [],
   knowledgePosts: [],
   members: [],
@@ -12,6 +14,7 @@ const fields = {
   title: document.querySelector("[data-title]"),
   tag: document.querySelector("[data-post-tag]"),
   excerpt: document.querySelector("[data-excerpt]"),
+  coverUrl: document.querySelector("[data-cover-url]"),
   markdown: document.querySelector("[data-markdown]"),
   message: document.querySelector("[data-message]"),
   preview: document.querySelector("[data-preview]"),
@@ -25,6 +28,7 @@ const fields = {
   knowledgeSummary: document.querySelector("[data-knowledge-summary]"),
   editorHeading: document.querySelector("[data-editor-heading]"),
   editorState: document.querySelector("[data-editor-state]"),
+  coverFile: document.querySelector("[data-cover-file]"),
   postImageFile: document.querySelector("[data-post-image-file]"),
   postFile: document.querySelector("[data-post-file]"),
   memberTerm: document.querySelector("[data-member-term]"),
@@ -51,10 +55,13 @@ const fields = {
   importFile: document.querySelector("[data-import-db-file]"),
   importMessage: document.querySelector("[data-import-message]"),
   syncMessage: document.querySelector("[data-sync-message]"),
+  usageSummary: document.querySelector("[data-usage-summary]"),
+  usageMessage: document.querySelector("[data-usage-message]"),
 };
 
 const editorModal = document.querySelector("[data-editor-modal]");
 const DIRECT_UPLOAD_LIMIT = 8 * 1024 * 1024;
+const ADMIN_PAGE_SIZE = 10;
 
 function statusLabel(status) {
   return status === "published" ? "已发布" : "草稿";
@@ -73,6 +80,7 @@ function editorSnapshot() {
     title: fields.title.value,
     tag: fields.tag.value,
     excerpt: fields.excerpt.value,
+    coverUrl: fields.coverUrl.value,
     markdown: fields.markdown.value,
   });
 }
@@ -144,8 +152,43 @@ function contentConfig(kind) {
     filterStatus: isKnowledge ? fields.knowledgeFilterStatus : fields.filterStatus,
     message: isKnowledge ? fields.knowledgeListMessage : fields.postListMessage,
     summary: isKnowledge ? fields.knowledgeSummary : fields.postSummary,
+    pagination: document.querySelector(isKnowledge ? "[data-knowledge-pagination]" : "[data-post-pagination]"),
+    page: isKnowledge ? state.knowledgePage : state.articlePage,
     emptyText: isKnowledge ? "没有匹配的知识库条目。" : "没有匹配的文章。",
   };
+}
+
+function setContentPage(kind, page) {
+  if (kind === "knowledge") {
+    state.knowledgePage = page;
+  } else {
+    state.articlePage = page;
+  }
+}
+
+function renderContentPagination(kind, total, page) {
+  const config = contentConfig(kind);
+  const container = config.pagination;
+  if (!container) return;
+  const totalPages = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE));
+  if (totalPages <= 1) {
+    container.innerHTML = "";
+    return;
+  }
+
+  container.innerHTML = `
+    <button class="btn secondary compact" type="button" data-admin-prev ${page <= 1 ? "disabled" : ""}>上一页</button>
+    <span class="pagination-info">第 ${page} / ${totalPages} 页</span>
+    <button class="btn secondary compact" type="button" data-admin-next ${page >= totalPages ? "disabled" : ""}>下一页</button>
+  `;
+  container.querySelector("[data-admin-prev]")?.addEventListener("click", () => {
+    setContentPage(kind, Math.max(1, page - 1));
+    renderContentList(kind);
+  });
+  container.querySelector("[data-admin-next]")?.addEventListener("click", () => {
+    setContentPage(kind, Math.min(totalPages, page + 1));
+    renderContentList(kind);
+  });
 }
 
 function renderContentList(kind) {
@@ -159,13 +202,19 @@ function renderContentList(kind) {
     const haystack = `${post.title} ${post.tag || ""} ${post.excerpt || ""} ${post.slug}`.toLowerCase();
     return matchesStatus && (!keyword || haystack.includes(keyword));
   });
+  const totalPages = Math.max(1, Math.ceil(posts.length / ADMIN_PAGE_SIZE));
+  const page = Math.min(config.page, totalPages);
+  if (page !== config.page) setContentPage(kind, page);
+  const pagePosts = posts.slice((page - 1) * ADMIN_PAGE_SIZE, page * ADMIN_PAGE_SIZE);
 
   if (!posts.length) {
     config.list.innerHTML = `<p class="empty-state">${config.emptyText}</p>`;
+    renderContentPagination(kind, 0, 1);
     return;
   }
 
-  config.list.innerHTML = posts
+  renderContentPagination(kind, posts.length, page);
+  config.list.innerHTML = pagePosts
     .map(
       (post) => `
         <article class="admin-item admin-post-card${state.editingSlug === post.slug ? " active is-active" : ""}">
@@ -216,6 +265,7 @@ async function loadPost(slug) {
   fields.title.value = data.post.title;
   fields.tag.value = data.post.tag || defaultTag(state.editingKind);
   fields.excerpt.value = data.post.excerpt || "";
+  fields.coverUrl.value = data.post.cover_url || "";
   fields.markdown.value = data.markdown;
   fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
   fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
@@ -231,6 +281,7 @@ async function savePost(status) {
     title: fields.title.value.trim(),
     tag: fields.tag.value.trim(),
     excerpt: fields.excerpt.value.trim(),
+    cover_url: fields.coverUrl.value.trim(),
     status,
     kind: state.editingKind,
     markdown: fields.markdown.value,
@@ -314,6 +365,29 @@ async function uploadPostImage() {
     return;
   }
   await insertImageFile(file);
+}
+
+async function uploadCoverImage() {
+  const file = fields.coverFile.files[0];
+  if (!file) {
+    fields.message.textContent = "请选择封面图。";
+    return;
+  }
+  if (!file.type.startsWith("image/")) {
+    fields.message.textContent = "封面图必须是图片文件。";
+    return;
+  }
+
+  try {
+    fields.message.textContent = "封面图上传中…";
+    const data = await uploadImage(file, `${contentFolder()}/${state.editingSlug || "drafts"}/cover`);
+    fields.coverUrl.value = data.url;
+    fields.coverFile.value = "";
+    fields.message.textContent = "封面图已设置。";
+    updatePreview();
+  } catch (error) {
+    fields.message.textContent = error.message;
+  }
 }
 
 async function uploadPostFiles() {
@@ -830,12 +904,75 @@ async function syncMarkdownBackup() {
   }
 }
 
+async function loadUsage() {
+  fields.usageMessage.textContent = "正在检测 D1 与 R2 用量...";
+  try {
+    const data = await window.blog.fetchJson("/api/admin/usage");
+    renderUsage(data);
+    fields.usageMessage.textContent = `检测完成：${window.blog.formatDate(data.checkedAt)}${data.bucket.truncated ? "。R2 对象较多，本次只统计了前 100000 个对象。" : ""}`;
+  } catch (error) {
+    fields.usageMessage.textContent = error.message;
+  }
+}
+
+function renderUsage(data) {
+  const database = data.database || {};
+  const bucket = data.bucket || {};
+  const dbSize = database.sqliteHuman || database.estimatedContentHuman || "0 B";
+  const dbLabel = database.sqliteHuman ? "D1 已用空间" : "D1 内容估算";
+  const tableRows = Array.isArray(database.tables)
+    ? database.tables.reduce((sum, table) => sum + Number(table.rows || 0), 0)
+    : 0;
+  const tableList = Array.isArray(database.tables) ? database.tables : [];
+  const prefixList = Array.isArray(bucket.prefixes) ? bucket.prefixes : [];
+
+  fields.usageSummary.innerHTML = `
+    <div class="usage-kpis">
+      <div><strong>${window.blog.escapeHtml(dbSize)}</strong><span>${dbLabel}</span></div>
+      <div><strong>${tableRows.toLocaleString("zh-CN")}</strong><span>D1 总记录</span></div>
+      <div><strong>${window.blog.escapeHtml(bucket.human || "0 B")}</strong><span>R2 已用空间</span></div>
+      <div><strong>${Number(bucket.objects || 0).toLocaleString("zh-CN")}</strong><span>R2 对象</span></div>
+    </div>
+    <div class="usage-detail">
+      <div>
+        <h4>D1 表</h4>
+        ${tableList.map((table) => `
+          <p><span>${window.blog.escapeHtml(table.label || table.name)}</span><strong>${Number(table.rows || 0).toLocaleString("zh-CN")} 条 · ${formatAdminBytes(table.estimatedBytes)}</strong></p>
+        `).join("") || '<p><span>暂无数据</span><strong>0 条</strong></p>'}
+      </div>
+      <div>
+        <h4>R2 前缀</h4>
+        ${prefixList.map((item) => `
+          <p><span>${window.blog.escapeHtml(item.prefix)}</span><strong>${Number(item.objects || 0).toLocaleString("zh-CN")} 个 · ${formatAdminBytes(item.bytes)}</strong></p>
+        `).join("") || '<p><span>暂无对象</span><strong>0 B</strong></p>'}
+      </div>
+    </div>
+    <p class="meta">${window.blog.escapeHtml(database.note || "")}</p>
+  `;
+}
+
+function formatAdminBytes(value) {
+  const bytes = Number(value || 0);
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let size = bytes / 1024;
+  let unit = 0;
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024;
+    unit += 1;
+  }
+  return `${size.toFixed(size >= 10 ? 1 : 2)} ${units[unit]}`;
+}
+
 function resetEditor(kind = "article") {
   state.editingSlug = null;
   state.editingKind = kind === "knowledge" ? "knowledge" : "article";
   fields.title.value = "";
   fields.tag.value = defaultTag(state.editingKind);
   fields.excerpt.value = "";
+  fields.coverUrl.value = "";
+  fields.coverFile.value = "";
   fields.markdown.value = "";
   fields.editorHeading.textContent = state.editingKind === "knowledge" ? "新建知识库" : "新建文章";
   fields.editorState.textContent = "未保存";
@@ -851,10 +988,12 @@ function updatePreview() {
   const title = fields.title.value.trim() || "未命名文章";
   const tag = fields.tag.value.trim() || "协会动态";
   const excerpt = fields.excerpt.value.trim();
+  const coverUrl = window.blog.safeDisplayAssetUrl(fields.coverUrl.value.trim());
   fields.preview.innerHTML = `
     <p class="meta">${window.blog.escapeHtml(tag)}</p>
     <h1>${window.blog.escapeHtml(title)}</h1>
     ${excerpt ? `<p>${window.blog.escapeHtml(excerpt)}</p>` : ""}
+    ${coverUrl ? `<img src="${window.blog.escapeHtml(coverUrl)}" alt="" loading="lazy">` : ""}
     ${window.blog.markdownToHtml(fields.markdown.value || "开始输入 Markdown 内容。")}
   `;
 }
@@ -926,6 +1065,7 @@ bindElement(fields.markdown, "drop", (event) => {
   insertImageFiles(files);
 }, "data-markdown");
 bind("[data-upload-post-image]", "click", uploadPostImage);
+bind("[data-upload-cover]", "click", uploadCoverImage);
 bind("[data-upload-post-file]", "click", uploadPostFiles);
 bindElement(fields.memberImageFile, "change", uploadMemberAvatar, "data-member-image-file");
 bindElement(fields.fameImageFile, "change", uploadFameAvatar, "data-fame-image-file");
@@ -934,6 +1074,7 @@ bind("[data-save-fame-entry]", "click", saveFameEntry);
 bind("[data-export-db]", "click", exportDatabase);
 bind("[data-import-db]", "click", importDatabase);
 bind("[data-sync-markdown]", "click", syncMarkdownBackup);
+bind("[data-refresh-usage]", "click", loadUsage);
 bindElement(fields.memberList, "click", handleFixedListClick, "data-member-list");
 bindElement(fields.fameList, "click", handleFixedListClick, "data-fame-list");
 bindElement(fields.memberContactLabel, "change", () => updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl), "data-member-contact-label");
@@ -946,13 +1087,26 @@ bind("[data-new-knowledge]", "click", () => {
   resetEditor("knowledge");
   openEditor();
 });
-bindElement(fields.search, "input", renderAdminPostList, "data-search");
-bindElement(fields.filterStatus, "change", renderAdminPostList, "data-filter-status");
-bindElement(fields.knowledgeSearch, "input", renderKnowledgePostList, "data-knowledge-search");
-bindElement(fields.knowledgeFilterStatus, "change", renderKnowledgePostList, "data-knowledge-filter-status");
+bindElement(fields.search, "input", () => {
+  state.articlePage = 1;
+  renderAdminPostList();
+}, "data-search");
+bindElement(fields.filterStatus, "change", () => {
+  state.articlePage = 1;
+  renderAdminPostList();
+}, "data-filter-status");
+bindElement(fields.knowledgeSearch, "input", () => {
+  state.knowledgePage = 1;
+  renderKnowledgePostList();
+}, "data-knowledge-search");
+bindElement(fields.knowledgeFilterStatus, "change", () => {
+  state.knowledgePage = 1;
+  renderKnowledgePostList();
+}, "data-knowledge-filter-status");
 bindElement(fields.title, "input", updatePreview, "data-title");
 bindElement(fields.tag, "input", updatePreview, "data-post-tag");
 bindElement(fields.excerpt, "input", updatePreview, "data-excerpt");
+bindElement(fields.coverUrl, "input", updatePreview, "data-cover-url");
 bindElement(fields.markdown, "input", updatePreview, "data-markdown");
 bootAdmin().catch((error) => {
   fields.message.textContent = error.message;

@@ -109,6 +109,7 @@
             </div>
             <p class="meta" data-post-list-message></p>
             <div class="admin-list admin-post-list" data-post-list></div>
+            <div class="pagination" data-post-pagination></div>
           </section>
         </div>
 
@@ -132,6 +133,7 @@
             </div>
             <p class="meta" data-knowledge-list-message></p>
             <div class="admin-list admin-post-list" data-knowledge-list></div>
+            <div class="pagination" data-knowledge-pagination></div>
           </section>
         </div>
 
@@ -233,6 +235,17 @@
         <div class="admin-panel" data-panel="site" data-admin-panel="site" hidden>
           <div class="tool-grid">
             <section class="tool-card reveal">
+              <h3>容量检测</h3>
+              <p>检测 D1 数据表记录数量、数据库占用估算，以及 R2 存储桶对象数量和已用空间。</p>
+              <div class="usage-panel" data-usage-summary>
+                <p class="empty-state">点击检测后显示当前用量。</p>
+              </div>
+              <div class="editor-actions">
+                <button class="btn primary" type="button" data-refresh-usage>检测当前用量</button>
+              </div>
+              <p class="meta" data-usage-message></p>
+            </section>
+            <section class="tool-card reveal">
               <h3>内容备份</h3>
               <p>保存文章、固定页面或导入数据后，可手动生成一份可追踪的内容备份。</p>
               <button class="btn primary" type="button" data-sync-markdown>立即同步到 GitHub</button>
@@ -270,6 +283,11 @@
                 <label>标题<input class="admin-input" data-title placeholder="文章标题" /></label>
                 <label>标签<input class="admin-input" data-post-tag placeholder="协会动态 / 技术笔记 / 活动公告" /></label>
                 <label>摘要<input class="admin-input" data-excerpt placeholder="文章简短摘要" /></label>
+                <label>封面图地址<input class="admin-input" data-cover-url placeholder="/media/posts/example/cover.png" /></label>
+                <div class="inline-uploader">
+                  <label>封面图<input class="admin-input" data-cover-file type="file" accept="image/*" /></label>
+                  <button class="btn secondary" type="button" data-upload-cover>上传并设为封面</button>
+                </div>
                 <label>Markdown 内容（可粘贴或拖拽图片）<textarea class="admin-input" data-markdown placeholder="# Hello"></textarea></label>
                 <div class="inline-uploader">
                   <label>文章图片<input class="admin-input" data-post-image-file type="file" accept="image/*" /></label>

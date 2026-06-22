@@ -25,6 +25,7 @@ export interface PostRecord {
   title: string;
   tag: string;
   excerpt: string;
+  cover_url: string;
   status: "draft" | "published";
   kind: "article" | "knowledge";
   r2_key: string;

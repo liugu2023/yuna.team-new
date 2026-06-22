@@ -8,6 +8,7 @@ interface CreatePostPayload {
   title?: string;
   tag?: string;
   excerpt?: string;
+  cover_url?: string;
   status?: "draft" | "published";
   kind?: "article" | "knowledge";
   markdown?: string;
@@ -17,17 +18,38 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const url = new URL(request.url);
   const includeDrafts = url.searchParams.get("drafts") === "1";
   const kind = normalizeKind(url.searchParams.get("kind"));
+  const usePagination = url.searchParams.has("page") || url.searchParams.has("perPage") || url.searchParams.has("limit");
+  const page = positiveInteger(url.searchParams.get("page"), 1);
+  const perPage = clamp(positiveInteger(url.searchParams.get("perPage") || url.searchParams.get("limit"), 10), 1, 50);
+  const offset = (page - 1) * perPage;
   const session = await getSession(env, request);
   const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
   const includeAll = includeDrafts && canSeeDrafts;
-  const columns = "id, slug, title, tag, excerpt, status, kind, r2_key, author_email, created_at, updated_at, published_at, view_count";
+  const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_email, created_at, updated_at, published_at, view_count";
 
   const query = includeAll
-    ? `SELECT ${columns} FROM posts WHERE kind = ? ORDER BY COALESCE(published_at, updated_at) DESC`
-    : `SELECT ${columns} FROM posts WHERE kind = ? AND status = 'published' ORDER BY published_at DESC`;
+    ? `SELECT ${columns} FROM posts WHERE kind = ? ORDER BY COALESCE(published_at, updated_at) DESC${usePagination ? " LIMIT ? OFFSET ?" : ""}`
+    : `SELECT ${columns} FROM posts WHERE kind = ? AND status = 'published' ORDER BY published_at DESC${usePagination ? " LIMIT ? OFFSET ?" : ""}`;
+  const countQuery = includeAll
+    ? "SELECT COUNT(*) AS total FROM posts WHERE kind = ?"
+    : "SELECT COUNT(*) AS total FROM posts WHERE kind = ? AND status = 'published'";
 
-  const { results } = await env.BLOG_DB.prepare(query).bind(kind).all<PostRecord>();
-  return json({ posts: results ?? [] });
+  const [posts, count] = await Promise.all([
+    usePagination
+      ? env.BLOG_DB.prepare(query).bind(kind, perPage, offset).all<PostRecord>()
+      : env.BLOG_DB.prepare(query).bind(kind).all<PostRecord>(),
+    env.BLOG_DB.prepare(countQuery).bind(kind).first<{ total: number }>(),
+  ]);
+  const total = Number(count?.total || 0);
+  return json({
+    posts: posts.results ?? [],
+    pagination: {
+      page,
+      perPage,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / perPage)),
+    },
+  });
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUntil }) => {
@@ -54,14 +76,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   if (!isValidStatus(status)) return badRequest("文章状态无效");
   const kind = normalizeKind(payload.kind);
   const tag = normalizeTag(payload.tag);
+  const coverUrl = normalizeOptionalText(payload.cover_url);
 
   const publishedAt = status === "published" ? now : null;
   const r2Key = `db/${kind === "knowledge" ? "knowledge" : "posts"}/${slug}.md`;
 
   await env.BLOG_DB.prepare(
     `INSERT INTO posts
-      (id, slug, title, tag, excerpt, status, kind, r2_key, markdown_content, author_email, created_at, updated_at, published_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, created_at, updated_at, published_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -69,6 +92,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
       title,
       tag,
       payload.excerpt ?? "",
+      coverUrl,
       status,
       kind,
       r2Key,
@@ -98,8 +122,21 @@ function normalizeTag(value: unknown): string {
   return tag || "协会动态";
 }
 
+function normalizeOptionalText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function normalizeKind(value: unknown): "article" | "knowledge" {
   return value === "knowledge" ? "knowledge" : "article";
+}
+
+function positiveInteger(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
 }
 
 async function ensureUniqueSlug(env: Env, base: string): Promise<string> {

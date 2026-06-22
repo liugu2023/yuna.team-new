@@ -1349,6 +1349,93 @@
       color:#67809a;
       font-weight:850;
     }
+    .usage-panel{
+      display:grid;
+      gap:14px;
+      margin-top:16px;
+    }
+    .usage-kpis{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    .usage-kpis div{
+      padding:16px;
+      border-radius:20px;
+      background:rgba(255,255,255,.58);
+      border:1px solid rgba(255,255,255,.36);
+      box-shadow:var(--soft);
+    }
+    .usage-kpis strong{
+      display:block;
+      color:var(--deep);
+      font-size:26px;
+      letter-spacing:-.03em;
+      overflow-wrap:anywhere;
+    }
+    .usage-kpis span{
+      display:block;
+      margin-top:4px;
+      color:#67809a;
+      font-weight:850;
+    }
+    .usage-detail{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    .usage-detail>div{
+      padding:16px;
+      border-radius:20px;
+      background:rgba(255,255,255,.46);
+      border:1px solid rgba(177,204,231,.34);
+    }
+    .usage-detail h4{
+      margin:0 0 10px;
+      color:var(--deep);
+      font-size:16px;
+    }
+    .usage-detail p{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      margin:0;
+      padding:10px 0;
+      border-top:1px solid rgba(177,204,231,.38);
+      color:#60728a;
+      font-weight:800;
+    }
+    .usage-detail p:first-of-type{
+      border-top:0;
+    }
+    .usage-detail strong{
+      color:#245b82;
+      text-align:right;
+      white-space:nowrap;
+    }
+    .article-cover img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      border-radius:inherit;
+    }
+    .pagination{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      margin-top:24px;
+      flex-wrap:wrap;
+    }
+    .pagination-info{
+      color:#60728a;
+      font-weight:900;
+    }
+    .pagination button[disabled]{
+      opacity:.45;
+      cursor:not-allowed;
+      transform:none;
+    }
     .admin-post-list{
       grid-template-columns:repeat(2,minmax(0,1fr));
     }
@@ -1493,6 +1580,8 @@
       .grid,
       .site-map,
       .admin-post-summary,
+      .usage-kpis,
+      .usage-detail,
       .admin-post-list{
         grid-template-columns:1fr;
       }

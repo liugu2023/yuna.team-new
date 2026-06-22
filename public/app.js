@@ -7,6 +7,7 @@ async function fetchJson(url, options) {
 
 let currentUserPromise;
 const DIRECT_MEDIA_UPLOAD_LIMIT = 8 * 1024 * 1024;
+const LIST_PAGE_SIZE = 10;
 const HOME_NOTICE_KEY = "homepage-notice";
 const DEFAULT_HOME_NOTICE = {
   title: "协会公告",
@@ -254,6 +255,59 @@ function normalizeAssetUrl(value) {
   return value;
 }
 
+function safeDisplayAssetUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw) || raw.startsWith("/media/") || raw.startsWith("/images/") || raw.startsWith("/logo")) {
+    return normalizeAssetUrl(raw);
+  }
+  return "";
+}
+
+function postCoverUrl(post) {
+  return safeDisplayAssetUrl(post?.cover_url);
+}
+
+function currentPageFromUrl(param = "page") {
+  const parsed = Number(new URLSearchParams(location.search).get(param) || "1");
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function setPageParam(param, page) {
+  const url = new URL(location.href);
+  if (page > 1) {
+    url.searchParams.set(param, String(page));
+  } else {
+    url.searchParams.delete(param);
+  }
+  history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function renderPagination(container, { page, total, pageParam = "page", onPage }) {
+  if (!container) return;
+  const totalPages = Math.max(1, Math.ceil(total / LIST_PAGE_SIZE));
+  if (totalPages <= 1) {
+    container.innerHTML = "";
+    return;
+  }
+
+  container.innerHTML = `
+    <button class="btn secondary compact" type="button" data-page-prev ${page <= 1 ? "disabled" : ""}>上一页</button>
+    <span class="pagination-info">第 ${page} / ${totalPages} 页</span>
+    <button class="btn secondary compact" type="button" data-page-next ${page >= totalPages ? "disabled" : ""}>下一页</button>
+  `;
+  container.querySelector("[data-page-prev]")?.addEventListener("click", () => {
+    const next = Math.max(1, page - 1);
+    setPageParam(pageParam, next);
+    onPage?.(next);
+  });
+  container.querySelector("[data-page-next]")?.addEventListener("click", () => {
+    const next = Math.min(totalPages, page + 1);
+    setPageParam(pageParam, next);
+    onPage?.(next);
+  });
+}
+
 // 只允许安全协议的链接，阻断 javascript:/data: 等点击型 XSS。
 // 后台填入的成员/名人堂联系方式会经过这里再渲染。
 function safeLinkUrl(value) {
@@ -435,9 +489,9 @@ function renderPostListInto(list, posts, admin) {
   list.innerHTML = posts
     .map(
       (post) => `
-        <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-tag="${escapeHtml(postTag(post))}">
+          <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-tag="${escapeHtml(postTag(post))}">
           <span class="flash"></span>
-          <div class="article-cover"></div>
+          ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
           <div class="article-head">
             <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${admin ? (post.status === "published" ? "已发布" : "草稿") : escapeHtml(postTag(post))}</span><span>${formatViews(post.view_count)}</span></div>
             <span class="tag">${admin ? (post.status === "published" ? "已发布" : "草稿") : escapeHtml(postTag(post))}</span>
@@ -461,27 +515,38 @@ function bindArticleFilters() {
   const search = document.querySelector("[data-article-search]");
   const tagSelect = document.querySelector("[data-article-tag]");
   const empty = document.querySelector("[data-article-empty]");
+  const pagination = document.querySelector("[data-article-pagination]");
   const filter = () => {
     const keyword = (search?.value || "").trim().toLowerCase();
     const selectedTag = tagSelect?.value && tagSelect.value !== "all" ? tagSelect.value : "";
-    let visible = 0;
+    const matches = cards.filter((card) => {
+      return (!keyword || card.textContent.toLowerCase().includes(keyword)) && (!selectedTag || card.dataset.tag === selectedTag);
+    });
+    const totalPages = Math.max(1, Math.ceil(matches.length / LIST_PAGE_SIZE));
+    const page = Math.min(currentPageFromUrl(), totalPages);
+    const start = (page - 1) * LIST_PAGE_SIZE;
+    const pageCards = new Set(matches.slice(start, start + LIST_PAGE_SIZE));
     cards.forEach((card) => {
-      const matchesText = !keyword || card.textContent.toLowerCase().includes(keyword);
-      const matchesTag = !selectedTag || card.dataset.tag === selectedTag;
-      const show = matchesText && matchesTag;
-      card.hidden = !show;
-      if (show) visible += 1;
+      card.hidden = !pageCards.has(card);
     });
     document.querySelectorAll("[data-post-tag-stats] a").forEach((link) => {
       const tag = new URL(link.href, location.href).searchParams.get("tag") || "";
       link.classList.toggle("active", Boolean(selectedTag) && tag === selectedTag);
     });
-    if (empty) empty.hidden = visible > 0;
+    if (empty) empty.hidden = matches.length > 0;
+    renderPagination(pagination, {
+      page,
+      total: matches.length,
+      onPage: filter,
+    });
   };
 
   if (search && !search.dataset.boundArticleFilter) {
     search.dataset.boundArticleFilter = "1";
-    search.addEventListener("input", filter);
+    search.addEventListener("input", () => {
+      setPageParam("page", 1);
+      filter();
+    });
   }
   if (tagSelect && !tagSelect.dataset.boundArticleFilter) {
     tagSelect.dataset.boundArticleFilter = "1";
@@ -492,6 +557,7 @@ function bindArticleFilters() {
       } else {
         url.searchParams.delete("tag");
       }
+      url.searchParams.delete("page");
       history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
       filter();
     });
@@ -507,6 +573,7 @@ async function renderKnowledgeBase() {
   const tagSelect = document.querySelector("[data-knowledge-tag]");
   const summary = document.querySelector("[data-knowledge-summary]");
   const empty = document.querySelector("[data-knowledge-empty]");
+  const pagination = document.querySelector("[data-knowledge-pagination]");
   let posts = [];
 
   try {
@@ -535,6 +602,10 @@ async function renderKnowledgeBase() {
       const haystack = `${post.title} ${post.tag || ""} ${post.excerpt || ""}`.toLowerCase();
       return (!keyword || haystack.includes(keyword)) && (!selectedTag || postTag(post) === selectedTag);
     });
+    const totalPages = Math.max(1, Math.ceil(filtered.length / LIST_PAGE_SIZE));
+    const page = Math.min(currentPageFromUrl(), totalPages);
+    const start = (page - 1) * LIST_PAGE_SIZE;
+    const pagePosts = filtered.slice(start, start + LIST_PAGE_SIZE);
 
     if (summary) {
       const tagCount = postTagCounts(posts).length;
@@ -549,15 +620,22 @@ async function renderKnowledgeBase() {
     if (!filtered.length) {
       list.innerHTML = posts.length ? '<p class="empty-state">暂无匹配的知识库条目。</p>' : "";
       if (empty) empty.hidden = posts.length > 0;
+      renderPagination(pagination, { page: 1, total: 0, onPage: render });
       return;
     }
 
     if (empty) empty.hidden = true;
-    list.innerHTML = filtered
+    renderPagination(pagination, {
+      page,
+      total: filtered.length,
+      onPage: render,
+    });
+    list.innerHTML = pagePosts
       .map(
         (post) => `
           <article class="card article-card knowledge-entry reveal visible" data-knowledge-card data-tag="${escapeHtml(postTag(post))}">
             <span class="flash"></span>
+            ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
             <div class="article-head">
               <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${formatViews(post.view_count)}</span></div>
               <span class="tag">${escapeHtml(postTag(post))}</span>
@@ -576,7 +654,10 @@ async function renderKnowledgeBase() {
 
   if (search && !search.dataset.boundKnowledgeFilter) {
     search.dataset.boundKnowledgeFilter = "1";
-    search.addEventListener("input", render);
+    search.addEventListener("input", () => {
+      setPageParam("page", 1);
+      render();
+    });
   }
   if (tagSelect && !tagSelect.dataset.boundKnowledgeFilter) {
     tagSelect.dataset.boundKnowledgeFilter = "1";
@@ -587,6 +668,7 @@ async function renderKnowledgeBase() {
       } else {
         url.searchParams.delete("tag");
       }
+      url.searchParams.delete("page");
       history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
       render();
     });
@@ -1702,6 +1784,7 @@ window.blog = {
   escapeHtml,
   markdownToHtml,
   normalizeAssetUrl,
+  safeDisplayAssetUrl,
   renderPostList,
   renderHomeHero,
   renderHomeNotice,
