@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>加入我们 · YUNA.BLOG</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+<a class="skip-link" href="#content">跳到主要内容</a>
+<div class="scroll-progress" id="scrollProgress"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+<canvas class="particle-canvas" id="particleCanvas"></canvas>
+<div class="aurora-layer"></div>
+<header class="topbar">
+  <div class="shell topbar-inner">
+    <a class="brand magnetic" href="/" aria-label="返回 YUNA.BLOG 首页"><span>YUNA.BLOG</span></a>
+    <nav class="nav" aria-label="站点导航">
+      <a href="/">首页</a>
+      <a href="/articles.html">文章列表</a>
+      <a href="/knowledge.html">知识库</a>
+      <a href="/team.html">关于协会</a>
+      <a class="active" href="/join.html" aria-current="page">加入我们</a>
+      <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
+    </nav>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="mist-top"></div>
+  <div class="mist-bottom"></div>
+  <div class="grid-overlay"></div>
+  <section class="shell page-hero">
+    <div class="reveal" data-editable-block="join-hero-copy" data-editable-title="加入我们主视觉文案">
+      <p class="eyebrow" data-block-field="eyebrow">Join YUNA</p>
+      <h1 data-block-field="title">加入燕山大学大学生网络信息协会。</h1>
+      <p class="lead" data-block-field="lead">这里用于集中维护招新说明、报名入口、方向介绍和答疑安排。当前内容为占位，后续可由管理员直接在页面上编辑。</p>
+      <div class="page-kpi">
+        <div data-editable-block="join-kpi-time" data-editable-title="加入我们 KPI：时间"><strong data-block-field="title">时间</strong><span data-block-field="body">待补充</span></div>
+        <div data-editable-block="join-kpi-target" data-editable-title="加入我们 KPI：对象"><strong data-block-field="title">对象</strong><span data-block-field="body">面向在校同学</span></div>
+        <div data-editable-block="join-kpi-contact" data-editable-title="加入我们 KPI：答疑"><strong data-block-field="title">答疑</strong><span data-block-field="body">待补充</span></div>
+      </div>
+    </div>
+    <div class="page-visual reveal" aria-hidden="true">
+      <div class="tech-sweep"></div>
+      <div class="logo-holo-grid"></div>
+      <div class="scanlines"></div>
+      <div class="tech-web"></div>
+      <span class="pulse-ring p1"></span>
+      <span class="pulse-ring p2"></span>
+      <span class="pulse-ring p3"></span>
+      <span class="ring r1"></span>
+      <span class="ring r2"></span>
+      <div class="visual-orb"><img src="/images/logo.svg" alt=""/></div>
+      <span class="tech-pill pill-a">Join</span>
+      <span class="tech-pill pill-b">YUNA</span>
+      <span class="tech-pill pill-c">Campus</span>
+      <div class="data-stream"><span>YUNA · JOIN US · CAMPUS TECH COMMUNITY ·</span><span>WEB · SECURITY · OPS · PUBLICITY ·</span></div>
+    </div>
+  </section>
+</div>
+
+<main class="main page-main" id="content">
+  <section class="shell team-section">
+    <div class="section-title reveal" data-editable-block="join-process-heading" data-editable-title="加入我们：流程区标题">
+      <p class="eyebrow" data-block-field="eyebrow">Process</p>
+      <h2 data-block-field="title">招新流程。</h2>
+    </div>
+    <div class="service-strip">
+      <article class="visual-card reveal" data-editable-block="join-process-register" data-editable-title="加入流程：报名">
+        <h3 data-block-field="title">报名入口</h3>
+        <p data-block-field="body">这里放置报名方式、报名表链接或群聊入口。当前为占位内容。</p>
+        <div class="contact-row" data-block-tags><span class="tag">待补充</span><span class="tag">报名</span></div>
+      </article>
+      <article class="visual-card reveal" data-editable-block="join-process-briefing" data-editable-title="加入流程：宣讲">
+        <h3 data-block-field="title">宣讲与答疑</h3>
+        <p data-block-field="body">这里填写宣讲时间、地点、线上会议或答疑群信息。</p>
+        <div class="contact-row" data-block-tags><span class="tag">宣讲</span><span class="tag">答疑</span></div>
+      </article>
+      <article class="visual-card reveal" data-editable-block="join-process-result" data-editable-title="加入流程：确认">
+        <h3 data-block-field="title">方向确认</h3>
+        <p data-block-field="body">这里说明加入后的方向选择、后续通知和第一次活动安排。</p>
+        <div class="contact-row" data-block-tags><span class="tag">方向</span><span class="tag">通知</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="shell team-section">
+    <div class="section-title reveal" data-editable-block="join-directions-heading" data-editable-title="加入我们：方向区标题">
+      <p class="eyebrow" data-block-field="eyebrow">Directions</p>
+      <h2 data-block-field="title">可以了解的方向。</h2>
+    </div>
+    <div class="member-grid refined-member-grid">
+      <article class="member-card reveal refined-member-card" data-editable-block="join-direction-dev" data-editable-title="加入方向：开发部">
+        <h3 data-block-field="title">开发部</h3>
+        <p data-block-field="body">前端、后端、数据库、校园工具和协会站点开发。</p>
+        <div class="contact-row" data-block-tags><span class="tag">Web</span><span class="tag">工程协作</span></div>
+      </article>
+      <article class="member-card reveal refined-member-card" data-editable-block="join-direction-security" data-editable-title="加入方向：网络安全部">
+        <h3 data-block-field="title">网络安全部</h3>
+        <p data-block-field="body">CTF、Web 安全、逆向、攻防基础和训练复盘。</p>
+        <div class="contact-row" data-block-tags><span class="tag">CTF</span><span class="tag">安全训练</span></div>
+      </article>
+      <article class="member-card reveal refined-member-card" data-editable-block="join-direction-ops" data-editable-title="加入方向：运维部">
+        <h3 data-block-field="title">运维部</h3>
+        <p data-block-field="body">部署、监控、备份、域名证书和服务稳定性维护。</p>
+        <div class="contact-row" data-block-tags><span class="tag">部署</span><span class="tag">服务维护</span></div>
+      </article>
+      <article class="member-card reveal refined-member-card" data-editable-block="join-direction-publicity" data-editable-title="加入方向：组宣秘书处">
+        <h3 data-block-field="title">组宣秘书处</h3>
+        <p data-block-field="body">活动记录、图文传播、成员资料、会议档案和日常流程。</p>
+        <div class="contact-row" data-block-tags><span class="tag">活动记录</span><span class="tag">档案流程</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="shell team-section">
+    <div class="visual-card reveal" data-editable-block="join-contact-card" data-editable-title="加入我们：联系说明">
+      <h3 data-block-field="title">联系与报名方式</h3>
+      <p data-block-field="body">这里可以填写报名表链接、QQ群、负责人联系方式、截止时间和注意事项。当前为占位内容。</p>
+      <div class="contact-row" data-block-tags><span class="tag">报名入口待补充</span><span class="tag">联系方式待补充</span></div>
+    </div>
+  </section>
+</main>
+
+<footer class="shell footer">
+  <span>YUNA.BLOG · 加入我们</span>
+  <span>招新 · 方向 · 答疑</span>
+</footer>
+<script src="/app.js"></script>
+<script>
+  window.blog.renderUserNav();
+  window.blog.renderEditableBlocks();
+</script>
+<script src="/yuna-ui.js"></script>
+</body>
+</html>
