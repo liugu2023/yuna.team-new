@@ -1467,6 +1467,14 @@
     textarea.admin-input::-webkit-scrollbar-track{
       margin-block:10px;
     }
+    textarea.admin-input::-webkit-scrollbar-button{
+      width:0;
+      height:0;
+      display:none;
+    }
+    textarea.admin-input::-webkit-scrollbar-corner{
+      background:transparent;
+    }
     .modal::-webkit-scrollbar-thumb,
     .modal-body::-webkit-scrollbar-thumb,
     textarea.admin-input::-webkit-scrollbar-thumb,
