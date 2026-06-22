@@ -575,9 +575,6 @@
     #office .office-map{
       margin-top:auto;
     }
-    #office .office-map-caption{
-      min-height:28px;
-    }
     .office-map-tiles{
       position:absolute;
       left:50%;
@@ -641,29 +638,6 @@
       min-width:0;
       overflow-wrap:anywhere;
       text-align:right;
-    }
-    .office-map-caption{
-      display:flex;
-      align-items:center;
-      justify-content:flex-end;
-      gap:12px;
-      margin-top:12px;
-      color:#526a84;
-      font-weight:850;
-      font-size:14px;
-    }
-    .office-map-caption span{
-      min-width:0;
-      overflow-wrap:anywhere;
-    }
-    .office-map-caption a{
-      flex:0 0 auto;
-      color:#008acf;
-      font-weight:950;
-    }
-    .office-map-caption a:hover,
-    .office-map-caption a:focus-visible{
-      color:#075f96;
     }
     @media(max-width:1100px){
       .page-hero{
