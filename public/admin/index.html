@@ -81,7 +81,7 @@
           </button>
           <button type="button" class="admin-tab" data-tab="site" data-admin-tab="site" aria-pressed="false">
             <span class="admin-tab-title">站点维护</span>
-            <span class="admin-tab-desc">图库、备份、更新记录</span>
+            <span class="admin-tab-desc">备份、导入、同步</span>
           </button>
         </nav>
 
@@ -215,32 +215,12 @@
               <h3>站点数据备份</h3>
               <p>导出完整站点数据；导入前会提醒确认，避免误覆盖当前内容。</p>
               <div class="editor-actions">
-                <a class="btn secondary" href="/api/admin/export?download=1" data-export-db>导出站点数据</a>
+                <a class="btn primary" href="/api/admin/export?download=1" data-export-db>导出站点数据</a>
                 <label class="file-button">导入数据库<input data-import-db-file type="file" accept="application/json,.json" /></label>
                 <button class="btn danger" type="button" data-import-db>强制导入</button>
               </div>
               <p class="meta" data-export-message></p>
               <p class="meta" data-import-message></p>
-            </section>
-            <section class="tool-card reveal">
-              <h3>主页背景图库</h3>
-              <p>上传校园活动图，裁剪横幅区域后添加到首页视觉图库。</p>
-              <div class="admin-form">
-                <label>图片标题<input class="admin-input" data-gallery-title placeholder="活动合影 / 授课现场" /></label>
-                <label>背景图片<input class="admin-input" data-gallery-file type="file" accept="image/*" /></label>
-                <label>裁剪缩放<input class="admin-input" data-gallery-scale type="range" min="1" max="2.5" step="0.05" value="1" /><span class="meta" data-gallery-scale-value>1.00x</span></label>
-              </div>
-              <div class="gallery-crop-preview" data-gallery-crop-preview>
-                <img data-gallery-crop-preview-image alt="主页背景裁剪预览" hidden />
-                <span>选择图片后预览横幅裁剪范围</span>
-              </div>
-              <button class="btn secondary" type="button" data-add-gallery-image>添加到图库</button>
-              <p class="meta" data-gallery-message></p>
-            </section>
-            <section class="tool-card reveal">
-              <h3>当前图库</h3>
-              <p>可切换当前展示图片，也可以删除不再使用的背景图。</p>
-              <div class="gallery-grid gallery-list" data-gallery-list></div>
             </section>
           </div>
         </div>
