@@ -582,47 +582,6 @@
       height:256px;
       display:block;
     }
-    .office-map-controls{
-      position:absolute;
-      z-index:4;
-      top:12px;
-      right:12px;
-      display:grid;
-      gap:7px;
-    }
-    .office-map-control,
-    .office-map-zoom-value{
-      width:34px;
-      min-height:34px;
-      border-radius:12px;
-      display:grid;
-      place-items:center;
-      border:1px solid rgba(124,143,166,.20);
-      background:rgba(255,255,255,.84);
-      color:#075f96;
-      box-shadow:0 10px 24px rgba(20,84,150,.12);
-      backdrop-filter:blur(10px);
-      font-weight:950;
-    }
-    .office-map-control{
-      cursor:pointer;
-      font:inherit;
-      line-height:1;
-    }
-    .office-map-control:hover,
-    .office-map-control:focus-visible{
-      background:#0a8ddb;
-      border-color:#0a8ddb;
-      color:#fff;
-    }
-    .office-map-control:disabled{
-      cursor:not-allowed;
-      opacity:.45;
-    }
-    .office-map-zoom-value{
-      font-size:12px;
-      color:#526a84;
-    }
     .office-map-marker{
       position:absolute;
       z-index:2;
@@ -672,7 +631,7 @@
     .office-map-caption{
       display:flex;
       align-items:center;
-      justify-content:space-between;
+      justify-content:flex-end;
       gap:12px;
       margin-top:12px;
       color:#526a84;

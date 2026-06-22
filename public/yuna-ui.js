@@ -38,8 +38,8 @@ const root=document.documentElement;const glow=document.getElementById('cursorGl
     const maps=$$('[data-office-map]');
     if(!maps.length) return;
     const tileSize=256;
-    const minZoom=15;
-    const maxZoom=19;
+    const minZoom=14;
+    const maxZoom=18;
     const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
     const project=(lng,lat,zoom)=>{
       const scale=Math.pow(2,zoom);
@@ -59,10 +59,8 @@ const root=document.documentElement;const glow=document.getElementById('cursorGl
       const lat=Number(map.dataset.mapLat||map.dataset.lat);
       const lng=Number(map.dataset.mapLng||map.dataset.lng);
       if(!Number.isFinite(lat)||!Number.isFinite(lng)) return;
-      const zoomIn=$('[data-map-zoom-in]',map);
-      const zoomOut=$('[data-map-zoom-out]',map);
-      const zoomValue=$('.office-map-zoom-value',map);
       let zoom=clamp(Number(map.dataset.zoom)||17,minZoom,maxZoom);
+      let lastPinchDistance=0;
       const render=()=>{
         const p=project(lng,lat,zoom);
         const tileX=Math.floor(p.x);
@@ -85,9 +83,6 @@ const root=document.documentElement;const glow=document.getElementById('cursorGl
         }
         tiles.replaceChildren(frag);
         map.dataset.zoom=String(zoom);
-        if(zoomValue) zoomValue.textContent=String(zoom);
-        if(zoomIn) zoomIn.disabled=zoom>=maxZoom;
-        if(zoomOut) zoomOut.disabled=zoom<=minZoom;
       };
       const setZoom=(next)=>{
         const value=clamp(next,minZoom,maxZoom);
@@ -95,12 +90,36 @@ const root=document.documentElement;const glow=document.getElementById('cursorGl
         zoom=value;
         render();
       };
-      zoomIn?.addEventListener('click',event=>{event.stopPropagation();setZoom(zoom+1);});
-      zoomOut?.addEventListener('click',event=>{event.stopPropagation();setZoom(zoom-1);});
+      const getTouchDistance=(touches)=>{
+        const a=touches[0];
+        const b=touches[1];
+        return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+      };
       map.addEventListener('wheel',event=>{
         event.preventDefault();
         setZoom(zoom+(event.deltaY<0?1:-1));
       },{passive:false});
+      map.addEventListener('touchstart',event=>{
+        if(event.touches.length!==2) return;
+        lastPinchDistance=getTouchDistance(event.touches);
+      },{passive:true});
+      map.addEventListener('touchmove',event=>{
+        if(event.touches.length!==2||!lastPinchDistance) return;
+        event.preventDefault();
+        const distance=getTouchDistance(event.touches);
+        const ratio=distance/lastPinchDistance;
+        if(ratio>1.18){
+          setZoom(zoom+1);
+          lastPinchDistance=distance;
+        }else if(ratio<.85){
+          setZoom(zoom-1);
+          lastPinchDistance=distance;
+        }
+      },{passive:false});
+      map.addEventListener('touchend',event=>{
+        if(event.touches.length<2) lastPinchDistance=0;
+      });
+      map.addEventListener('touchcancel',()=>{lastPinchDistance=0;});
       render();
     });
   }
