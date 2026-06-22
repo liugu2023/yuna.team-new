@@ -209,16 +209,6 @@ const root=document.documentElement;const glow=document.getElementById('cursorGl
   }));
   filterMembers();
 
-  $('[data-login-sim]')?.addEventListener('click',()=>{
-    const msg=$('[data-login-message]');
-    const bar=$('[data-login-progress]');
-    const steps=['正在打开统一登录页面...','正在校验成员身份...','身份校验通过，可以进入后台。'];
-    let i=0;
-    if(bar) bar.style.width='0%';
-    const tick=()=>{ if(msg) msg.textContent=steps[i]; if(bar) bar.style.width=`${(i+1)*33.34}%`; if(++i<steps.length) setTimeout(tick,520); };
-    tick();
-  });
-
   const markdown=$('[data-post-markdown]');
   const preview=$('[data-markdown-preview]');
   function renderPreview(){
