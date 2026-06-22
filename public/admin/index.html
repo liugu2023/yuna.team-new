@@ -86,33 +86,26 @@
         </nav>
 
         <div class="admin-panel" data-panel="posts" data-admin-panel="posts">
-          <div class="admin-layout">
-            <aside class="aside-card reveal">
-              <h3>文章列表</h3>
-              <div class="control-row">
-                <input class="search-input" data-search placeholder="搜索标题、摘要或链接标识" />
-                <select class="select-input" data-filter-status>
-                  <option value="all">全部状态</option>
-                  <option value="published">已发布</option>
-                  <option value="draft">草稿</option>
-                </select>
+          <section class="editor-shell reveal admin-post-workspace">
+            <div class="admin-post-head">
+              <div>
+                <h2 class="panel-title">文章管理</h2>
+                <p>集中维护文章的发布状态、标签、摘要、正文图片和附件下载链接。编辑会在弹窗中打开。</p>
               </div>
-              <p class="meta" data-post-list-message></p>
-              <div class="admin-list" data-post-list></div>
-              <div class="editor-actions">
-                <button class="btn secondary" type="button" data-new>新建文章</button>
-              </div>
-            </aside>
-            <section class="editor-shell reveal">
-              <h2 class="panel-title">文章编辑器</h2>
-              <p>从左侧选择文章，或创建新文章。编辑器会在弹窗中打开，支持 Markdown、图片上传和附件下载链接插入。</p>
-              <div class="site-map">
-                <a href="/articles.html">查看前台文章列表</a>
-                <a href="/knowledge.html">查看知识库页面</a>
-                <a href="/team.html">查看协会页面</a>
-              </div>
-            </section>
-          </div>
+              <button class="btn primary" type="button" data-new>新建文章</button>
+            </div>
+            <div class="admin-post-summary" data-post-summary aria-label="文章统计"></div>
+            <div class="control-row">
+              <input class="search-input" data-search placeholder="搜索标题、摘要、标签或链接标识" />
+              <select class="select-input" data-filter-status>
+                <option value="all">全部状态</option>
+                <option value="published">已发布</option>
+                <option value="draft">草稿</option>
+              </select>
+            </div>
+            <p class="meta" data-post-list-message></p>
+            <div class="admin-list admin-post-list" data-post-list></div>
+          </section>
         </div>
 
         <div class="admin-panel" data-panel="members" data-admin-panel="members" hidden>

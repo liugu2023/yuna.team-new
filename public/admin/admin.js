@@ -18,6 +18,7 @@ const fields = {
   search: document.querySelector("[data-search]"),
   filterStatus: document.querySelector("[data-filter-status]"),
   postListMessage: document.querySelector("[data-post-list-message]"),
+  postSummary: document.querySelector("[data-post-summary]"),
   editorHeading: document.querySelector("[data-editor-heading]"),
   editorState: document.querySelector("[data-editor-state]"),
   postImageFile: document.querySelector("[data-post-image-file]"),
@@ -121,6 +122,7 @@ function renderAdminPostList() {
   const list = document.querySelector("[data-post-list]");
   const keyword = fields.search.value.trim().toLowerCase();
   const status = fields.filterStatus.value;
+  renderPostSummary();
   const posts = state.posts.filter((post) => {
     const matchesStatus = status === "all" || post.status === status;
     const haystack = `${post.title} ${post.tag || ""} ${post.excerpt || ""} ${post.slug}`.toLowerCase();
@@ -159,6 +161,20 @@ function renderAdminPostList() {
       await deletePost(button.dataset.deletePost);
     });
   });
+}
+
+function renderPostSummary() {
+  if (!fields.postSummary) return;
+  const total = state.posts.length;
+  const published = state.posts.filter((post) => post.status === "published").length;
+  const drafts = state.posts.filter((post) => post.status !== "published").length;
+  const views = state.posts.reduce((sum, post) => sum + Number(post.view_count || 0), 0);
+  fields.postSummary.innerHTML = `
+    <div><strong>${total.toLocaleString("zh-CN")}</strong><span>全部文章</span></div>
+    <div><strong>${published.toLocaleString("zh-CN")}</strong><span>已发布</span></div>
+    <div><strong>${drafts.toLocaleString("zh-CN")}</strong><span>草稿</span></div>
+    <div><strong>${views.toLocaleString("zh-CN")}</strong><span>总阅读</span></div>
+  `;
 }
 
 async function loadPost(slug) {

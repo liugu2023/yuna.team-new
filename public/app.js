@@ -1173,6 +1173,78 @@ function renderMemberTerm(term, items, active) {
   `;
 }
 
+async function renderTeamRecords() {
+  await Promise.all([
+    renderTeamRecord("members", document.querySelector("[data-team-members]")),
+    renderTeamRecord("hall-of-fame", document.querySelector("[data-team-fame]")),
+  ]);
+}
+
+async function renderTeamRecord(key, container) {
+  if (!container) return;
+
+  try {
+    const data = await fetchJson(`/api/site/${key}`);
+    const items = JSON.parse(data.record.content || "[]");
+    if (!Array.isArray(items) || !items.length) {
+      container.innerHTML = '<p class="empty-state">暂无内容。</p>';
+      return;
+    }
+
+    container.innerHTML = key === "members"
+      ? renderTeamMembers(items)
+      : `<div class="member-grid refined-member-grid">${items.map(renderProfileCard).join("")}</div>`;
+    bindTeamMemberTermSwitch(container);
+  } catch (error) {
+    container.innerHTML = error.message === "内容不存在"
+      ? '<p class="empty-state">暂无内容。</p>'
+      : `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function renderTeamMembers(items) {
+  const terms = [...new Set(items.map((item) => item.term || "未填写届数"))];
+  const activeTerm = terms[0];
+  return `
+    ${
+      terms.length > 1
+        ? `<div class="control-row team-record-controls">
+            <label class="field-lite inline-control">
+              <span>届数</span>
+              <select class="select-input" data-team-term-switch>
+                ${terms.map((term) => `<option value="${escapeHtml(term)}">${escapeHtml(term)}</option>`).join("")}
+              </select>
+            </label>
+          </div>`
+        : ""
+    }
+    <div data-team-term-panels>
+      ${terms
+        .map((term) => {
+          const termItems = items.filter((item) => (item.term || "未填写届数") === term);
+          return `
+            <section data-team-term-panel="${escapeHtml(term)}" ${term === activeTerm ? "" : "hidden"}>
+              <div class="member-grid refined-member-grid">
+                ${termItems.map(renderProfileCard).join("")}
+              </div>
+            </section>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function bindTeamMemberTermSwitch(container) {
+  const select = container.querySelector("[data-team-term-switch]");
+  if (!select) return;
+  select.addEventListener("change", () => {
+    container.querySelectorAll("[data-team-term-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.teamTermPanel !== select.value;
+    });
+  });
+}
+
 function renderProfileCard(item) {
   const links = Array.isArray(item.links) ? item.links : [];
   const avatarText = (item.name || item.title || "Y").slice(0, 2).toUpperCase();
@@ -1541,5 +1613,6 @@ window.blog = {
   renderUserNav,
   renderAdminOnlyActions,
   renderEditableBlocks,
+  renderTeamRecords,
   renderStaticPage,
 };
