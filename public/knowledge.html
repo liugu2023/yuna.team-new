@@ -64,89 +64,22 @@
 
 <main class="main page-main">
   <section class="shell">
-    <div class="resource-tabs reveal">
-      <button class="resource-tab active" data-resource-tab="lessons"><strong>授课链接</strong><span>课程资料与 PDF</span></button>
-      <button class="resource-tab" data-resource-tab="join"><strong>加入我们</strong><span>招新流程与方向</span></button>
-      <button class="resource-tab" data-resource-tab="contact"><strong>联系我们</strong><span>社群与账号</span></button>
-      <button class="resource-tab" data-resource-tab="services"><strong>相关服务</strong><span>常用服务入口</span></button>
+    <div class="section-head reveal">
+      <div>
+        <p class="eyebrow">Knowledge Index</p>
+        <h2>知识库条目</h2>
+        <p>教程、资料说明、下载入口和招新文档统一以文章形式维护。</p>
+      </div>
     </div>
-
-    <div class="resource-grid" id="lessons" data-resource-panel="lessons">
-      <article class="resource-card reveal" data-editable-block="knowledge-lessons-web" data-editable-title="知识库授课：Web 入门">
-        <div class="num">01</div>
-        <h3 data-block-field="title">Web 入门授课</h3>
-        <p data-block-field="body">HTML / CSS / JavaScript 基础资料，包含课堂课件与练习仓库。</p>
-        <div class="contact-row" data-block-tags><span class="tag">课件</span><span class="tag">练习整理中</span></div>
-      </article>
-      <article class="resource-card reveal" data-editable-block="knowledge-lessons-linux" data-editable-title="知识库授课：Linux 与服务器">
-        <div class="num">02</div>
-        <h3 data-block-field="title">Linux 与服务器</h3>
-        <p data-block-field="body">SSH、Nginx、Docker、证书续签与站点部署记录。</p>
-        <div class="contact-row" data-block-tags><span class="tag">课件</span><span class="tag">实践笔记</span></div>
-      </article>
-      <article class="resource-card reveal" data-editable-block="knowledge-lessons-ctf" data-editable-title="知识库授课：CTF 逆向训练">
-        <div class="num">03</div>
-        <h3 data-block-field="title">CTF 逆向训练</h3>
-        <p data-block-field="body">工具安装、样题复盘、比赛经验与新成员训练路线。</p>
-        <div class="contact-row" data-block-tags><span class="tag">安全训练</span><span class="tag">复盘记录</span></div>
-      </article>
+    <div class="admin-post-summary knowledge-summary reveal" data-knowledge-summary aria-label="知识库统计"></div>
+    <div class="control-row reveal">
+      <input class="search-input" data-knowledge-search placeholder="搜索标题、摘要或标签" />
+      <select class="select-input" data-knowledge-tag>
+        <option value="all">全部标签</option>
+      </select>
     </div>
-
-    <div class="resource-grid" id="join" data-resource-panel="join" hidden>
-      <article class="resource-card" data-editable-block="knowledge-join-direction" data-editable-title="知识库招新：选择方向">
-        <div class="num">01</div>
-        <h3 data-block-field="title">选择方向</h3>
-        <p data-block-field="body">开发、网络安全、运维、数据与 AI、组宣秘书方向均可报名。</p>
-      </article>
-      <article class="resource-card" data-editable-block="knowledge-join-submit" data-editable-title="知识库招新：提交信息">
-        <div class="num">02</div>
-        <h3 data-block-field="title">提交信息</h3>
-        <p data-block-field="body">通过固定页面表单或群公告入口提交年级、专业、兴趣方向。</p>
-      </article>
-      <article class="resource-card" data-editable-block="knowledge-join-training" data-editable-title="知识库招新：参与训练">
-        <div class="num">03</div>
-        <h3 data-block-field="title">参与训练</h3>
-        <p data-block-field="body">完成基础任务后加入对应小组，进入项目和竞赛协作。</p>
-      </article>
-    </div>
-
-    <div class="resource-grid" id="contact" data-resource-panel="contact" hidden>
-      <article class="resource-card" data-editable-block="knowledge-contact-home" data-editable-title="知识库联系：组织主页">
-        <div class="num">01</div>
-        <h3 data-block-field="title">组织主页</h3>
-        <p data-block-field="body">用于展示开源项目、技术资料与代码沉淀。</p>
-        <div class="contact-row" data-block-tags><span class="tag">github.com/yuna2017</span></div>
-      </article>
-      <article class="resource-card" data-editable-block="knowledge-contact-campus" data-editable-title="知识库联系：校内联系">
-        <div class="num">02</div>
-        <h3 data-block-field="title">校内联系</h3>
-        <p data-block-field="body">合作、反馈和活动沟通信息由协会统一维护。</p>
-        <div class="contact-row" data-block-tags><span class="tag">联系方式整理中</span></div>
-      </article>
-      <article class="resource-card" data-editable-block="knowledge-contact-offline" data-editable-title="知识库联系：线下活动">
-        <div class="num">03</div>
-        <h3 data-block-field="title">线下活动</h3>
-        <p data-block-field="body">招新、授课、分享会和竞赛训练会按公告同步。</p>
-      </article>
-    </div>
-
-    <div class="resource-grid" data-resource-panel="services" hidden>
-      <article class="resource-card" data-editable-block="knowledge-services-archive" data-editable-title="知识库服务：资料归档">
-        <div class="num">01</div>
-        <h3 data-block-field="title">资料归档</h3>
-        <p data-block-field="body">整理授课链接、练习仓库和活动复盘，保证后来者能继续使用。</p>
-      </article>
-      <article class="resource-card" data-editable-block="knowledge-services-gallery" data-editable-title="知识库服务：活动影像">
-        <div class="num">02</div>
-        <h3 data-block-field="title">活动影像</h3>
-        <p data-block-field="body">保留授课、分享会和招新活动的图片资料。</p>
-      </article>
-      <article class="resource-card" data-editable-block="knowledge-services-updates" data-editable-title="知识库服务：更新记录">
-        <div class="num">03</div>
-        <h3 data-block-field="title">更新记录</h3>
-        <p data-block-field="body">重要页面更新会留下记录，方便协会成员协作维护。</p>
-      </article>
-    </div>
+    <p class="empty-state" data-knowledge-empty hidden>暂无知识库内容。</p>
+    <div class="article-list knowledge-list" data-knowledge-list></div>
   </section>
 </main>
 
@@ -155,6 +88,7 @@
 <script>
   window.blog.renderUserNav();
   window.blog.renderEditableBlocks();
+  window.blog.renderKnowledgeBase();
 </script>
 <script src="/yuna-ui.js"></script>
 </body>

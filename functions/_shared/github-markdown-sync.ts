@@ -182,7 +182,7 @@ async function buildMarkdownDocuments(env: Env, prefix: string): Promise<Markdow
   ]);
 
   const postDocuments = (posts.results || []).map((post) => ({
-    path: prefixedPath(prefix, `posts/${safeGitPathSegment(post.slug)}.md`),
+    path: prefixedPath(prefix, `${post.kind === "knowledge" ? "knowledge" : "posts"}/${safeGitPathSegment(post.slug)}.md`),
     source: "post" as const,
     id: post.slug,
     title: post.title,
@@ -193,6 +193,7 @@ async function buildMarkdownDocuments(env: Env, prefix: string): Promise<Markdow
         slug: post.slug,
         title: post.title,
         tag: post.tag || "",
+        kind: post.kind || "article",
         status: post.status,
         excerpt: post.excerpt,
         author_email: post.author_email,

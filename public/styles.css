@@ -1323,6 +1323,13 @@
       grid-template-columns:repeat(4,minmax(0,1fr));
       gap:12px;
     }
+    .admin-tabs{
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    }
+    .knowledge-summary{
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      margin-bottom:22px;
+    }
     .admin-post-summary div{
       padding:16px;
       border-radius:20px;

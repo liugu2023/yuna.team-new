@@ -9,22 +9,24 @@ interface CreatePostPayload {
   tag?: string;
   excerpt?: string;
   status?: "draft" | "published";
+  kind?: "article" | "knowledge";
   markdown?: string;
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const url = new URL(request.url);
   const includeDrafts = url.searchParams.get("drafts") === "1";
+  const kind = normalizeKind(url.searchParams.get("kind"));
   const session = await getSession(env, request);
   const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
   const includeAll = includeDrafts && canSeeDrafts;
-  const columns = "id, slug, title, tag, excerpt, status, r2_key, author_email, created_at, updated_at, published_at, view_count";
+  const columns = "id, slug, title, tag, excerpt, status, kind, r2_key, author_email, created_at, updated_at, published_at, view_count";
 
   const query = includeAll
-    ? `SELECT ${columns} FROM posts ORDER BY COALESCE(published_at, updated_at) DESC`
-    : `SELECT ${columns} FROM posts WHERE status = 'published' ORDER BY published_at DESC`;
+    ? `SELECT ${columns} FROM posts WHERE kind = ? ORDER BY COALESCE(published_at, updated_at) DESC`
+    : `SELECT ${columns} FROM posts WHERE kind = ? AND status = 'published' ORDER BY published_at DESC`;
 
-  const { results } = await env.BLOG_DB.prepare(query).all<PostRecord>();
+  const { results } = await env.BLOG_DB.prepare(query).bind(kind).all<PostRecord>();
   return json({ posts: results ?? [] });
 };
 
@@ -50,15 +52,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   const now = new Date().toISOString();
   const status = payload.status ?? "draft";
   if (!isValidStatus(status)) return badRequest("文章状态无效");
+  const kind = normalizeKind(payload.kind);
   const tag = normalizeTag(payload.tag);
 
   const publishedAt = status === "published" ? now : null;
-  const r2Key = `db/posts/${slug}.md`;
+  const r2Key = `db/${kind === "knowledge" ? "knowledge" : "posts"}/${slug}.md`;
 
   await env.BLOG_DB.prepare(
     `INSERT INTO posts
-      (id, slug, title, tag, excerpt, status, r2_key, markdown_content, author_email, created_at, updated_at, published_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, slug, title, tag, excerpt, status, kind, r2_key, markdown_content, author_email, created_at, updated_at, published_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -67,6 +70,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
       tag,
       payload.excerpt ?? "",
       status,
+      kind,
       r2Key,
       payload.markdown,
       session.user_email,
@@ -92,6 +96,10 @@ function isValidStatus(value: string): value is "draft" | "published" {
 function normalizeTag(value: unknown): string {
   const tag = typeof value === "string" ? value.trim() : "";
   return tag || "协会动态";
+}
+
+function normalizeKind(value: unknown): "article" | "knowledge" {
+  return value === "knowledge" ? "knowledge" : "article";
 }
 
 async function ensureUniqueSlug(env: Env, base: string): Promise<string> {

@@ -499,6 +499,102 @@ function bindArticleFilters() {
   filter();
 }
 
+async function renderKnowledgeBase() {
+  const list = document.querySelector("[data-knowledge-list]");
+  if (!list) return;
+
+  const search = document.querySelector("[data-knowledge-search]");
+  const tagSelect = document.querySelector("[data-knowledge-tag]");
+  const summary = document.querySelector("[data-knowledge-summary]");
+  const empty = document.querySelector("[data-knowledge-empty]");
+  let posts = [];
+
+  try {
+    const data = await fetchJson("/api/posts?kind=knowledge");
+    posts = data.posts || [];
+  } catch (error) {
+    list.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
+    return;
+  }
+
+  const tags = postTags(posts);
+  if (tagSelect) {
+    const urlTag = new URLSearchParams(location.search).get("tag") || "";
+    const selected = tags.includes(urlTag) ? urlTag : "all";
+    tagSelect.innerHTML = [
+      '<option value="all">全部标签</option>',
+      ...tags.map((tag) => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`),
+    ].join("");
+    tagSelect.value = selected;
+  }
+
+  function render() {
+    const keyword = (search?.value || "").trim().toLowerCase();
+    const selectedTag = tagSelect?.value && tagSelect.value !== "all" ? tagSelect.value : "";
+    const filtered = posts.filter((post) => {
+      const haystack = `${post.title} ${post.tag || ""} ${post.excerpt || ""}`.toLowerCase();
+      return (!keyword || haystack.includes(keyword)) && (!selectedTag || postTag(post) === selectedTag);
+    });
+
+    if (summary) {
+      const tagCount = postTagCounts(posts).length;
+      const views = posts.reduce((sum, post) => sum + viewCount(post.view_count), 0);
+      summary.innerHTML = `
+        <div><strong>${posts.length.toLocaleString("zh-CN")}</strong><span>资料条目</span></div>
+        <div><strong>${tagCount.toLocaleString("zh-CN")}</strong><span>标签分类</span></div>
+        <div><strong>${views.toLocaleString("zh-CN")}</strong><span>累计阅读</span></div>
+      `;
+    }
+
+    if (!filtered.length) {
+      list.innerHTML = posts.length ? '<p class="empty-state">暂无匹配的知识库条目。</p>' : "";
+      if (empty) empty.hidden = posts.length > 0;
+      return;
+    }
+
+    if (empty) empty.hidden = true;
+    list.innerHTML = filtered
+      .map(
+        (post) => `
+          <article class="card article-card knowledge-entry reveal visible" data-knowledge-card data-tag="${escapeHtml(postTag(post))}">
+            <span class="flash"></span>
+            <div class="article-head">
+              <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${formatViews(post.view_count)}</span></div>
+              <span class="tag">${escapeHtml(postTag(post))}</span>
+            </div>
+            <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
+            <p>${escapeHtml(post.excerpt || "")}</p>
+            <div class="card-footer">
+              <a class="read-more" href="/post.html?slug=${encodeURIComponent(post.slug)}">查看资料 →</a>
+              <span class="tag">${escapeHtml(postTag(post))}</span>
+            </div>
+          </article>
+        `,
+      )
+      .join("");
+  }
+
+  if (search && !search.dataset.boundKnowledgeFilter) {
+    search.dataset.boundKnowledgeFilter = "1";
+    search.addEventListener("input", render);
+  }
+  if (tagSelect && !tagSelect.dataset.boundKnowledgeFilter) {
+    tagSelect.dataset.boundKnowledgeFilter = "1";
+    tagSelect.addEventListener("change", () => {
+      const url = new URL(location.href);
+      if (tagSelect.value && tagSelect.value !== "all") {
+        url.searchParams.set("tag", tagSelect.value);
+      } else {
+        url.searchParams.delete("tag");
+      }
+      history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+      render();
+    });
+  }
+
+  render();
+}
+
 async function renderHomeHero() {
   const hero = document.querySelector("[data-home-hero]");
   if (!hero) return;
@@ -1609,6 +1705,7 @@ window.blog = {
   renderPostList,
   renderHomeHero,
   renderHomeNotice,
+  renderKnowledgeBase,
   renderPost,
   renderUserNav,
   renderAdminOnlyActions,
