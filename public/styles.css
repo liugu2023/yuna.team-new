@@ -573,7 +573,21 @@
       flex-direction:column;
     }
     #office .office-map{
+      margin-top:28px;
+      min-height:220px;
+    }
+    #office .office-note-card p{
+      padding-bottom:22px;
+    }
+    #office .contact-row{
       margin-top:auto;
+      padding-top:22px;
+      justify-content:flex-start;
+      align-items:flex-end;
+    }
+    #office .pipeline-row{
+      grid-template-columns:1fr;
+      gap:8px;
     }
     .office-map-tiles{
       position:absolute;
@@ -1161,6 +1175,9 @@
     .home-notice-actions[hidden]{
       display:none!important;
     }
+    [data-admin-only][hidden]{
+      display:none!important;
+    }
     .home-notice-actions .btn{
       min-height:42px;
       padding:0 16px;
@@ -1362,6 +1379,51 @@
     }
     .home-page .hero-copy .lead{
       margin-top:clamp(28px,3vw,40px);
+    }
+    .topbar,
+    .hero-wrap,
+    .page-wrap,
+    .hero,
+    .page-hero,
+    .hero-copy,
+    .hero-side,
+    .page-kpi,
+    .hero-stats,
+    .stat,
+    .logo-stage,
+    .page-visual,
+    .tech-pill,
+    .data-stream,
+    .card,
+    .aside-card,
+    .knowledge-card,
+    .resource-card,
+    .member-card,
+    .visual-card,
+    .tool-card,
+    .login-card,
+    .resource-tabs,
+    .admin-tabs,
+    .tabs,
+    .btn,
+    .tag,
+    .office-map,
+    .site-map,
+    .gallery-grid,
+    .quick-action,
+    .home-entry-layout,
+    .footer{
+      -webkit-user-select:none;
+      user-select:none;
+    }
+    .article-body,
+    .article-body *,
+    .mini-preview,
+    .mini-preview *,
+    input,
+    textarea{
+      -webkit-user-select:text;
+      user-select:text;
     }
     @media(max-width:760px){
       .home-page .hero-copy{

@@ -544,6 +544,22 @@ async function renderUserNav() {
   }
 }
 
+async function renderAdminOnlyActions() {
+  const nodes = document.querySelectorAll("[data-admin-only]");
+  if (!nodes.length) return;
+
+  try {
+    const me = await currentUser();
+    nodes.forEach((node) => {
+      node.hidden = !me.admin;
+    });
+  } catch {
+    nodes.forEach((node) => {
+      node.hidden = true;
+    });
+  }
+}
+
 function userNavHtml(nav, me) {
   if (me.admin) {
     return '<a class="nav-link nav-admin" href="/admin/">管理后台</a><a class="nav-link nav-logout" href="#" data-logout>退出登录</a>';
@@ -1141,5 +1157,6 @@ window.blog = {
   renderHomeNotice,
   renderPost,
   renderUserNav,
+  renderAdminOnlyActions,
   renderStaticPage,
 };
