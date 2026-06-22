@@ -246,6 +246,18 @@
               <p class="meta" data-usage-message></p>
             </section>
             <section class="tool-card reveal">
+              <h3>R2 引用清理</h3>
+              <p>对比 R2 对象和数据库引用，找出未被文章、知识库、页面文案或历史备份引用的媒体文件。</p>
+              <div class="usage-panel" data-orphan-summary>
+                <p class="empty-state">点击检测后显示可清理对象。</p>
+              </div>
+              <div class="editor-actions">
+                <button class="btn secondary" type="button" data-scan-orphans>检测引用情况</button>
+                <button class="btn danger" type="button" data-delete-orphans>检测并删除可清理对象</button>
+              </div>
+              <p class="meta" data-orphan-message></p>
+            </section>
+            <section class="tool-card reveal">
               <h3>内容备份</h3>
               <p>保存文章、固定页面或导入数据后，可手动生成一份可追踪的内容备份。</p>
               <button class="btn primary" type="button" data-sync-markdown>立即同步到 GitHub</button>

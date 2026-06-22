@@ -1413,6 +1413,10 @@
       text-align:right;
       white-space:nowrap;
     }
+    .usage-detail span{
+      min-width:0;
+      overflow-wrap:anywhere;
+    }
     .article-cover img{
       width:100%;
       height:100%;

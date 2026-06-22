@@ -57,6 +57,8 @@ const fields = {
   syncMessage: document.querySelector("[data-sync-message]"),
   usageSummary: document.querySelector("[data-usage-summary]"),
   usageMessage: document.querySelector("[data-usage-message]"),
+  orphanSummary: document.querySelector("[data-orphan-summary]"),
+  orphanMessage: document.querySelector("[data-orphan-message]"),
 };
 
 const editorModal = document.querySelector("[data-editor-modal]");
@@ -965,6 +967,72 @@ function formatAdminBytes(value) {
   return `${size.toFixed(size >= 10 ? 1 : 2)} ${units[unit]}`;
 }
 
+async function scanOrphans() {
+  fields.orphanMessage.textContent = "正在检测 R2 引用情况...";
+  try {
+    const data = await window.blog.fetchJson("/api/admin/media-orphans");
+    renderOrphans(data);
+    fields.orphanMessage.textContent = "检测完成，未执行删除。";
+  } catch (error) {
+    fields.orphanMessage.textContent = error.message;
+  }
+}
+
+async function deleteOrphans() {
+  const ok = confirm("将重新检测并删除未被数据库引用的 media/ 文件，以及旧的 db/posts/*.md 残留。db-snapshots/ 和未知前缀不会删除。确定继续吗？");
+  if (!ok) return;
+
+  fields.orphanMessage.textContent = "正在检测并删除可清理对象...";
+  try {
+    const data = await window.blog.fetchJson("/api/admin/media-orphans?confirm=delete", {
+      method: "POST",
+    });
+    renderOrphans(data);
+    fields.orphanMessage.textContent = `已删除 ${Number(data.deletedCount || 0).toLocaleString("zh-CN")} 个对象，释放约 ${window.blog.escapeHtml(data.summary?.reclaimableHuman || "0 B")}。`;
+    await loadUsage();
+  } catch (error) {
+    fields.orphanMessage.textContent = error.message;
+  }
+}
+
+function renderOrphans(data) {
+  const summary = data.summary || {};
+  const orphanMedia = Array.isArray(data.orphanMedia) ? data.orphanMedia : [];
+  const legacyPostMd = Array.isArray(data.legacyPostMd) ? data.legacyPostMd : [];
+  const unknown = Array.isArray(data.unknown) ? data.unknown : [];
+  const reclaimableCount = Number(summary.orphanMedia || 0) + Number(summary.legacyPostMd || 0);
+
+  fields.orphanSummary.innerHTML = `
+    <div class="usage-kpis">
+      <div><strong>${Number(summary.totalObjects || 0).toLocaleString("zh-CN")}</strong><span>R2 对象总数</span></div>
+      <div><strong>${Number(summary.referenced || 0).toLocaleString("zh-CN")}</strong><span>已被引用</span></div>
+      <div><strong>${reclaimableCount.toLocaleString("zh-CN")}</strong><span>可清理对象</span></div>
+      <div><strong>${window.blog.escapeHtml(summary.reclaimableHuman || "0 B")}</strong><span>预计释放</span></div>
+    </div>
+    <div class="usage-detail">
+      <div>
+        <h4>可删除</h4>
+        <p><span>孤儿媒体</span><strong>${Number(summary.orphanMedia || 0).toLocaleString("zh-CN")} 个</strong></p>
+        <p><span>旧文章 Markdown</span><strong>${Number(summary.legacyPostMd || 0).toLocaleString("zh-CN")} 个</strong></p>
+        <p><span>保留快照</span><strong>${Number(summary.snapshotsKept || 0).toLocaleString("zh-CN")} 个</strong></p>
+        <p><span>未知前缀保留</span><strong>${Number(summary.unknownKept || 0).toLocaleString("zh-CN")} 个</strong></p>
+      </div>
+      <div>
+        <h4>对象示例</h4>
+        ${renderObjectSamples([...orphanMedia, ...legacyPostMd], "暂无可清理对象。")}
+      </div>
+    </div>
+    ${unknown.length ? `<p class="meta">未知前缀对象不会自动删除：${window.blog.escapeHtml(unknown.slice(0, 3).map((item) => item.key).join("，"))}${unknown.length > 3 ? " 等" : ""}</p>` : ""}
+  `;
+}
+
+function renderObjectSamples(items, emptyText) {
+  if (!items.length) return `<p><span>${emptyText}</span><strong>0 B</strong></p>`;
+  return items.slice(0, 6).map((item) => `
+    <p><span>${window.blog.escapeHtml(item.key)}</span><strong>${formatAdminBytes(item.size)}</strong></p>
+  `).join("");
+}
+
 function resetEditor(kind = "article") {
   state.editingSlug = null;
   state.editingKind = kind === "knowledge" ? "knowledge" : "article";
@@ -1075,6 +1143,8 @@ bind("[data-export-db]", "click", exportDatabase);
 bind("[data-import-db]", "click", importDatabase);
 bind("[data-sync-markdown]", "click", syncMarkdownBackup);
 bind("[data-refresh-usage]", "click", loadUsage);
+bind("[data-scan-orphans]", "click", scanOrphans);
+bind("[data-delete-orphans]", "click", deleteOrphans);
 bindElement(fields.memberList, "click", handleFixedListClick, "data-member-list");
 bindElement(fields.fameList, "click", handleFixedListClick, "data-fame-list");
 bindElement(fields.memberContactLabel, "change", () => updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl), "data-member-contact-label");
