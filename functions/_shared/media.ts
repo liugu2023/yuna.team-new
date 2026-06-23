@@ -47,11 +47,13 @@ export function isInlineImageType(contentType: string): boolean {
 }
 
 export function normalizeMediaPath(path: string): string {
+  let decoded = path;
   try {
-    return decodeURIComponent(path);
+    decoded = decodeURIComponent(path);
   } catch {
-    return path;
+    decoded = path;
   }
+  return decoded.replace(/^(avatars|hall-of-fame|posts|knowledge|site),/i, "$1/");
 }
 
 export function isSafeMediaPath(path: string): boolean {

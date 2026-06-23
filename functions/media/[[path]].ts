@@ -6,12 +6,12 @@ export const onRequestGet: PagesFunction<Env, "path"> = async ({ env, params }) 
   const segments = params.path as string | string[] | undefined;
   const rawPath = normalizeMediaPath(Array.isArray(segments) ? segments.join("/") : String(segments || ""));
   if (!isSafeMediaPath(rawPath)) {
-    return new Response("资源不存在", { status: 404 });
+    return mediaNotFound();
   }
 
   const key = mediaKey(rawPath);
   const object = await env.BLOG_BUCKET.get(key);
-  if (!object) return new Response("资源不存在", { status: 404 });
+  if (!object) return mediaNotFound();
 
   const headers = new Headers();
   object.writeHttpMetadata(headers);
@@ -29,3 +29,10 @@ export const onRequestGet: PagesFunction<Env, "path"> = async ({ env, params }) 
 
   return new Response(object.body, { headers });
 };
+
+function mediaNotFound(): Response {
+  return new Response("资源不存在", {
+    status: 404,
+    headers: { "content-type": "text/plain; charset=utf-8" },
+  });
+}

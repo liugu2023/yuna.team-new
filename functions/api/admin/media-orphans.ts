@@ -158,9 +158,9 @@ function decodePath(path: string): string {
   // 去掉可能的查询串/锚点，再 decode，使其与 R2 key（存的是解码后的 path）对齐。
   const clean = path.split(/[?#]/, 1)[0];
   try {
-    return decodeURIComponent(clean);
+    return decodeURIComponent(clean).replace(/^(avatars|hall-of-fame|posts|knowledge|site),/i, "$1/");
   } catch {
-    return clean;
+    return clean.replace(/^(avatars|hall-of-fame|posts|knowledge|site),/i, "$1/");
   }
 }
 

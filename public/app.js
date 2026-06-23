@@ -352,18 +352,29 @@ function normalizeInternalHref(href) {
 }
 
 function normalizeAssetUrl(value) {
-  if (value.startsWith("http") || value.startsWith("/media/") || value.startsWith("/logo")) {
-    return value;
+  const normalized = normalizeLegacyMediaUrl(String(value || "").trim());
+  if (normalized.startsWith("http") || normalized.startsWith("/media/") || normalized.startsWith("/logo")) {
+    return normalized;
   }
-  if (value.startsWith("/avatars/")) return value.replace("/avatars/", "/media/avatars/");
-  return value;
+  if (normalized.startsWith("media/")) return `/${normalized}`;
+  if (normalized.startsWith("/avatars/")) return normalized.replace("/avatars/", "/media/avatars/");
+  if (normalized.startsWith("/avatars,")) return normalized.replace("/avatars,", "/media/avatars/");
+  return normalized;
+}
+
+function normalizeLegacyMediaUrl(value) {
+  return value
+    .replace(/^(https?:\/\/[^/]+\/media\/(?:avatars|hall-of-fame|posts|knowledge|site)),/i, "$1/")
+    .replace(/^(\/media\/(?:avatars|hall-of-fame|posts|knowledge|site)),/i, "$1/")
+    .replace(/^media\/(avatars|hall-of-fame|posts|knowledge|site),/i, "media/$1/")
+    .replace(/^\/avatars,/i, "/media/avatars/");
 }
 
 function safeDisplayAssetUrl(value) {
-  const raw = String(value || "").trim();
+  const raw = normalizeAssetUrl(value);
   if (!raw) return "";
   if (/^https?:\/\//i.test(raw) || raw.startsWith("/media/") || raw.startsWith("/images/") || raw.startsWith("/logo")) {
-    return normalizeAssetUrl(raw);
+    return raw;
   }
   return "";
 }
