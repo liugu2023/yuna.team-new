@@ -264,9 +264,10 @@
             </section>
             <section class="tool-card reveal">
               <h3>站点数据备份</h3>
-              <p>导出完整站点数据；导入前会提醒确认，避免误覆盖当前内容。</p>
+              <p>导出当前站点数据；默认不包含历史快照，避免多次编辑产生的大量重复内容。</p>
               <div class="editor-actions">
                 <a class="btn primary" href="/api/admin/export?download=1" data-export-db>导出站点数据</a>
+                <a class="btn secondary" href="/api/admin/export?download=1&history=1" data-export-db>含历史导出</a>
                 <label class="file-button">导入数据库<input data-import-db-file type="file" accept="application/json,.json" /></label>
                 <button class="btn danger" type="button" data-import-db>强制导入</button>
               </div>

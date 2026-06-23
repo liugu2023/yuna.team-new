@@ -18,22 +18,26 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     return json({ error: "需要管理员登录" }, { status: 401 });
   }
 
-  const [posts, siteRecords, siteRecordBackups] = await Promise.all([
+  const url = new URL(request.url);
+  const includeHistory = url.searchParams.get("history") === "1";
+  const [posts, siteRecords] = await Promise.all([
     env.BLOG_DB.prepare("SELECT * FROM posts ORDER BY COALESCE(published_at, updated_at) DESC").all<PostRecord>(),
     env.BLOG_DB.prepare("SELECT * FROM site_records ORDER BY key ASC").all<SiteRecord>(),
-    env.BLOG_DB.prepare("SELECT * FROM site_record_backups ORDER BY changed_at DESC").all<SiteRecordBackup>(),
   ]);
+  const siteRecordBackups = includeHistory
+    ? await env.BLOG_DB.prepare("SELECT * FROM site_record_backups ORDER BY changed_at DESC").all<SiteRecordBackup>()
+    : { results: [] as SiteRecordBackup[] };
 
   const payload = {
     version: 1,
     exportedAt: new Date().toISOString(),
     exportedBy: admin,
+    backupHistory: includeHistory ? "included" : "omitted",
     posts: posts.results ?? [],
     siteRecords: siteRecords.results ?? [],
     siteRecordBackups: siteRecordBackups.results ?? [],
   };
 
-  const url = new URL(request.url);
   if (url.searchParams.get("download") === "1") {
     const filename = `yuna-blog-db-${new Date().toISOString().slice(0, 10)}.json`;
     return new Response(JSON.stringify(payload, null, 2), {
