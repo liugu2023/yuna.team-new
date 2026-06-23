@@ -1171,7 +1171,6 @@
       display:flex;
       gap:10px 12px;
       align-items:center;
-      margin-left:auto;
       min-width:0;
     }
     .footer-friend-head{
@@ -1239,10 +1238,11 @@
       font-size:13px;
       font-weight:850;
     }
-    @media(max-width:760px){
-      .footer-friend-links{
-        margin-left:0;
-      }
+    .footer-edit-button{
+      min-height:30px;
+      height:30px;
+      padding:0 10px;
+      font-size:12px;
     }
     .article-actions{
       display:flex;
