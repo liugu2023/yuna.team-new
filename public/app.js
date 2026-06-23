@@ -1864,7 +1864,7 @@ function renderProfileCard(item) {
       </div>
       <h3>${escapeHtml(item.name || "")}</h3>
       ${item.title ? `<p class="meta">${escapeHtml(item.title)}</p>` : ""}
-      ${item.desc ? `<p>${escapeHtml(item.desc)}</p>` : ""}
+      ${item.desc ? `<p class="profile-desc">${escapeHtml(item.desc)}</p>` : ""}
       ${
         links.length
           ? `<div class="member-actions">${links

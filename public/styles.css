@@ -25,6 +25,7 @@
     /* Cross-page consistency pass: keep every added page inside the approved v9 rhythm. */
     :where(.hero,.page-hero,.content-grid,.article-layout,.login-wrap,.admin-layout,.module-grid,.tool-grid,.service-strip,.site-map,.gallery-grid,.resource-grid,.member-grid,.feature-grid,.resource-tabs,.admin-tabs)>*{min-width:0}
     :where(.card,.aside-card,.knowledge-card,.resource-card,.member-card,.visual-card,.tool-card,.login-card,.editor-shell,.article-body,.pipeline-row,.attach-item,.tag,.btn){overflow-wrap:anywhere}
+    .profile-desc{white-space:pre-line}
     .content-grid{grid-template-columns:minmax(0,1fr) minmax(280px,320px);gap:30px}
     .content-grid>aside{display:grid;gap:22px;align-content:start}
     .content-grid>aside .aside-card{margin-bottom:0}
@@ -1921,6 +1922,56 @@
       .page-visual{
         display:none!important;
       }
+      .home-page .hero-side{
+        display:grid!important;
+        order:-1;
+        width:100%;
+        max-width:100%;
+        justify-self:stretch;
+        gap:0;
+      }
+      .home-page .logo-stage{
+        display:grid!important;
+        height:190px;
+        border-radius:24px;
+      }
+      .home-page .big-logo{
+        width:118px;
+        height:118px;
+      }
+      .home-page .big-logo:hover{
+        transform:translate3d(var(--mag-x,0),var(--mag-y,0),0)!important;
+      }
+      .home-page .p1{
+        width:128px;
+        height:128px;
+      }
+      .home-page .p2,
+      .home-page .r3{
+        width:164px;
+        height:164px;
+      }
+      .home-page .p3,
+      .home-page .r2{
+        width:210px;
+        height:210px;
+      }
+      .home-page .r1{
+        width:250px;
+        height:250px;
+      }
+      .home-page .r4{
+        width:86px;
+        height:86px;
+      }
+      .home-page .orbit-dot{
+        width:10px;
+        height:10px;
+        box-shadow:0 0 0 7px rgba(10,141,219,.10);
+      }
+      .home-page .hero-stats{
+        display:none!important;
+      }
       .hero h1,
       .page-hero h1,
       .home-page .hero-copy h1{
@@ -2260,5 +2311,12 @@
       }
       .office-map{
         aspect-ratio:1;
+      }
+      .home-page .logo-stage{
+        height:168px;
+      }
+      .home-page .big-logo{
+        width:104px;
+        height:104px;
       }
     }

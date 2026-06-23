@@ -692,7 +692,7 @@ function renderFixedList(items, listEl, type) {
           </div>
           <h3>${window.blog.escapeHtml(item.name)}</h3>
           <p class="meta">${window.blog.escapeHtml(item.title || "")}</p>
-          ${item.desc ? `<p>${window.blog.escapeHtml(item.desc)}</p>` : ""}
+          ${item.desc ? `<p class="profile-desc">${window.blog.escapeHtml(item.desc)}</p>` : ""}
           ${renderContactIcons(item.links)}
           <div class="member-actions">
             <button type="button" data-edit-fixed="${type}:${index}">编辑</button>
