@@ -49,6 +49,39 @@ function formatViews(value) {
   return `${viewCount(value).toLocaleString("zh-CN")} 次阅读`;
 }
 
+function timestampValue(value) {
+  if (!value) return 0;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function hasPostEditAfterPublish(post) {
+  const published = timestampValue(post?.published_at);
+  const updated = timestampValue(post?.updated_at);
+  return Boolean(published && updated && updated > published + 1000);
+}
+
+function postTimeParts(post) {
+  const parts = [];
+  if (post?.published_at) {
+    parts.push(`发布 ${formatDate(post.published_at)}`);
+    if (hasPostEditAfterPublish(post)) {
+      parts.push(`更新 ${formatDate(post.updated_at)}`);
+    }
+    return parts;
+  }
+  if (post?.updated_at) return [`更新 ${formatDate(post.updated_at)}`];
+  return ["未发布"];
+}
+
+function postTimeText(post) {
+  return postTimeParts(post).join(" · ");
+}
+
+function postTimeMetaHtml(post) {
+  return postTimeParts(post).map((part) => `<span>${escapeHtml(part)}</span>`).join("");
+}
+
 function postTag(post) {
   const tag = String(post?.tag || "").trim();
   return tag || "未分类";
@@ -333,7 +366,7 @@ async function renderPostList({ admin = false } = {}) {
           (post, index) => `
             <a class="resource-card reveal visible${index === 0 ? " is-lead" : ""}" href="/post.html?slug=${encodeURIComponent(post.slug)}">
               <span class="flash"></span>
-              <p class="meta">${index === 0 ? "最新" : "动态"} · ${formatDate(post.published_at || post.updated_at)} · ${formatViews(post.view_count)}</p>
+              <p class="meta">${index === 0 ? "最新" : "动态"} · ${postTimeText(post)} · ${formatViews(post.view_count)}</p>
               <h2>${escapeHtml(post.title)}</h2>
               <p>${escapeHtml(post.excerpt || "")}</p>
             </a>
@@ -447,7 +480,7 @@ function renderPostListInto(list, posts, admin) {
         (post) => `
           <a href="/post.html?slug=${encodeURIComponent(post.slug)}">
             ${escapeHtml(post.title)}
-            <span>${formatViews(post.view_count)} · ${formatDate(post.published_at || post.updated_at)}</span>
+            <span>${formatViews(post.view_count)} · ${postTimeText(post)}</span>
           </a>
         `,
       )
@@ -472,7 +505,7 @@ function renderPostListInto(list, posts, admin) {
         (post) => `
           <article class="card reveal visible">
             <span class="flash"></span>
-            <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${post.status === "published" ? "已发布" : "草稿"}</span><span>${formatViews(post.view_count)}</span></div>
+            <div class="meta">${postTimeMetaHtml(post)}<span>${post.status === "published" ? "已发布" : "草稿"}</span><span>${formatViews(post.view_count)}</span></div>
             <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
             <div class="card-footer">
@@ -493,7 +526,7 @@ function renderPostListInto(list, posts, admin) {
           <span class="flash"></span>
           ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
           <div class="article-head">
-            <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${admin ? (post.status === "published" ? "已发布" : "草稿") : escapeHtml(postTag(post))}</span><span>${formatViews(post.view_count)}</span></div>
+            <div class="meta">${postTimeMetaHtml(post)}<span>${admin ? (post.status === "published" ? "已发布" : "草稿") : escapeHtml(postTag(post))}</span><span>${formatViews(post.view_count)}</span></div>
             <span class="tag">${admin ? (post.status === "published" ? "已发布" : "草稿") : escapeHtml(postTag(post))}</span>
           </div>
           <h2><a href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">${escapeHtml(post.title)}</a></h2>
@@ -637,7 +670,7 @@ async function renderKnowledgeBase() {
             <span class="flash"></span>
             ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
             <div class="article-head">
-              <div class="meta"><span>${formatDate(post.published_at || post.updated_at)}</span><span>${formatViews(post.view_count)}</span></div>
+              <div class="meta">${postTimeMetaHtml(post)}<span>${formatViews(post.view_count)}</span></div>
               <span class="tag">${escapeHtml(postTag(post))}</span>
             </div>
             <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
@@ -1156,18 +1189,23 @@ async function renderPost() {
   try {
     const data = await fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
     document.title = `${data.post.title} · 燕山大学大学生网络信息协会`;
-    const date = formatDate(data.post.published_at || data.post.updated_at);
+    const publishedDate = data.post.published_at ? formatDate(data.post.published_at) : "未发布";
+    const updatedDate = formatDate(data.post.updated_at || data.post.published_at);
     const views = formatViews(data.post.view_count);
     const heroTitle = document.querySelector("[data-article-hero-title]");
     const heroLead = document.querySelector("[data-article-hero-lead]");
+    const published = document.querySelector("[data-article-published]");
     const updated = document.querySelector("[data-article-updated]");
+    const updatedRow = document.querySelector("[data-article-updated-row]");
     const viewNode = document.querySelector("[data-article-views]");
     if (heroTitle) heroTitle.textContent = data.post.title;
     if (heroLead) heroLead.textContent = data.post.excerpt || "协会文章与学习记录。";
-    if (updated) updated.textContent = date;
+    if (published) published.textContent = publishedDate;
+    if (updated) updated.textContent = updatedDate;
+    if (updatedRow) updatedRow.hidden = !hasPostEditAfterPublish(data.post);
     if (viewNode) viewNode.textContent = views;
     article.innerHTML = `
-      <div class="meta"><span>${date}</span><span>${data.post.status === "published" ? "已发布" : "草稿"}</span><span>${escapeHtml(postTag(data.post))}</span><span>${views}</span></div>
+      <div class="meta">${postTimeMetaHtml(data.post)}<span>${data.post.status === "published" ? "已发布" : "草稿"}</span><span>${escapeHtml(postTag(data.post))}</span><span>${views}</span></div>
       <h2>${escapeHtml(data.post.title)}</h2>
       ${data.post.excerpt ? `<p>${escapeHtml(data.post.excerpt)}</p>` : ""}
       ${markdownToHtml(data.markdown)}
@@ -1786,6 +1824,7 @@ window.blog = {
   fetchJson,
   formatDate,
   formatViews,
+  postTimeText,
   escapeHtml,
   markdownToHtml,
   normalizeAssetUrl,

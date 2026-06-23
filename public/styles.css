@@ -1187,6 +1187,17 @@
     [data-editable-block="post-info-card"] .pipeline-row strong{
       min-width:2.25em;
     }
+    .join-page .visual-card,
+    .join-page .member-card{
+      display:flex;
+      flex-direction:column;
+    }
+    .join-page [data-block-tags]{
+      margin-top:auto;
+      padding-top:18px;
+      align-self:flex-start;
+      justify-content:flex-start;
+    }
     [data-admin-only][hidden]{
       display:none!important;
     }
