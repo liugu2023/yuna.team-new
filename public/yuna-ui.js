@@ -26,7 +26,8 @@ const root=document.documentElement;const glow=document.getElementById('cursorGl
     };
     buttons.forEach(btn=>btn.addEventListener('click',()=>show(btn.dataset[attr])));
     const hash=location.hash.replace('#','');
-    const initial=buttons.find(btn=>btn.dataset[attr]===hash)?.dataset[attr] || buttons[0].dataset[attr];
+    const queryTab=attr==='adminTab'?new URLSearchParams(location.search).get('tab'):'';
+    const initial=buttons.find(btn=>btn.dataset[attr]===hash)?.dataset[attr] || buttons.find(btn=>btn.dataset[attr]===queryTab)?.dataset[attr] || buttons[0].dataset[attr];
     show(initial);
   }
 

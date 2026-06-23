@@ -9,9 +9,16 @@ let currentUserPromise;
 const DIRECT_MEDIA_UPLOAD_LIMIT = 8 * 1024 * 1024;
 const LIST_PAGE_SIZE = 10;
 const HOME_NOTICE_KEY = "homepage-notice";
+const FRIEND_LINKS_KEY = "friend-links";
 const DEFAULT_HOME_NOTICE = {
   title: "协会公告",
   markdown: "招新答疑开放中，欢迎同学了解开发、安全、运维和组宣方向。",
+};
+const DEFAULT_FRIEND_LINKS = {
+  title: "友情链接",
+  links: [
+    { label: "燕山大学", href: "https://www.ysu.edu.cn/", icon: "" },
+  ],
 };
 
 async function currentUser() {
@@ -812,6 +819,190 @@ function saveSiteJsonRecord(key, title, content) {
   });
 }
 
+async function renderFriendLinks() {
+  const footers = Array.from(document.querySelectorAll(".footer"));
+  if (!footers.length) return;
+
+  let state = { ...DEFAULT_FRIEND_LINKS, links: [...DEFAULT_FRIEND_LINKS.links] };
+  try {
+    const data = await fetchJson(`/api/site/${FRIEND_LINKS_KEY}`);
+    if (data.record?.kind === "json") {
+      state = normalizeFriendLinksState(JSON.parse(data.record.content || "{}"));
+    }
+  } catch {
+    // Missing friend-link records keep the default footer links until an admin saves.
+  }
+
+  footers.forEach((footer) => renderFriendLinksInto(footer, state, false));
+
+  try {
+    const me = await currentUser();
+    if (!me.admin) return;
+    footers.forEach((footer) => renderFriendLinksInto(footer, state, true));
+  } catch {
+    // Anonymous visitors just see the links.
+  }
+}
+
+function renderFriendLinksInto(footer, state, editable) {
+  let section = footer.querySelector("[data-friend-links]");
+  if (!section) {
+    section = document.createElement("div");
+    section.className = "footer-friend-links";
+    section.dataset.friendLinks = "";
+    footer.append(section);
+  }
+
+  const links = normalizeFriendLinks(state.links);
+  const title = String(state.title || DEFAULT_FRIEND_LINKS.title).trim() || DEFAULT_FRIEND_LINKS.title;
+  section.innerHTML = `
+    <div class="footer-friend-head">
+      <strong>${escapeHtml(title)}</strong>
+      ${editable ? '<button type="button" class="btn secondary compact" data-edit-friend-links>编辑友链</button>' : ""}
+    </div>
+    <div class="footer-friend-list">
+      ${
+        links.length
+          ? links.map(renderFriendLink).join("")
+          : '<span class="footer-friend-empty">暂无友链</span>'
+      }
+    </div>
+  `;
+
+  section.querySelector("[data-edit-friend-links]")?.addEventListener("click", () => {
+    openFriendLinksEditor({ title, links });
+  });
+}
+
+function renderFriendLink(link) {
+  const href = safeLinkUrl(link.href);
+  if (!href) return "";
+  const icon = safeDisplayAssetUrl(link.icon);
+  const label = String(link.label || href).trim();
+  const target = href.startsWith("http") ? ' target="_blank" rel="noreferrer"' : "";
+  return `
+    <a class="footer-friend-link" href="${escapeHtml(href)}"${target}>
+      ${
+        icon
+          ? `<img class="footer-friend-icon" src="${escapeHtml(icon)}" alt="" loading="lazy">`
+          : `<span class="footer-friend-icon fallback" aria-hidden="true">${escapeHtml(label.slice(0, 1).toUpperCase() || "友")}</span>`
+      }
+      <span>${escapeHtml(label)}</span>
+    </a>
+  `;
+}
+
+function normalizeFriendLinksState(value) {
+  const raw = Array.isArray(value) ? { links: value } : value && typeof value === "object" ? value : {};
+  return {
+    title: String(raw.title || DEFAULT_FRIEND_LINKS.title).trim() || DEFAULT_FRIEND_LINKS.title,
+    links: normalizeFriendLinks(raw.links),
+  };
+}
+
+function normalizeFriendLinks(links) {
+  if (!Array.isArray(links)) return [];
+  return links
+    .map((link) => ({
+      label: String(link?.label || "").trim(),
+      href: String(link?.href || link?.url || "").trim(),
+      icon: String(link?.icon || "").trim(),
+    }))
+    .filter((link) => link.label && safeLinkUrl(link.href));
+}
+
+function openFriendLinksEditor(state) {
+  const modal = ensureFriendLinksModal();
+  const titleInput = modal.querySelector("[data-friend-links-title]");
+  const linksInput = modal.querySelector("[data-friend-links-items]");
+  const message = modal.querySelector("[data-friend-links-message]");
+  titleInput.value = state.title || DEFAULT_FRIEND_LINKS.title;
+  linksInput.value = normalizeFriendLinks(state.links)
+    .map((link) => [link.label, link.href, link.icon].join(" | "))
+    .join("\n");
+  message.textContent = "";
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+
+  const close = () => {
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+  };
+
+  modal.querySelector("[data-friend-links-close]").onclick = close;
+  modal.querySelector("[data-friend-links-save]").onclick = async () => {
+    const nextState = {
+      title: titleInput.value.trim() || DEFAULT_FRIEND_LINKS.title,
+      links: parseFriendLinksInput(linksInput.value),
+    };
+
+    message.textContent = "正在保存...";
+    try {
+      await saveSiteJsonRecord(FRIEND_LINKS_KEY, nextState.title, nextState);
+      document.querySelectorAll(".footer").forEach((footer) => renderFriendLinksInto(footer, nextState, true));
+      message.textContent = "已保存";
+      close();
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  };
+}
+
+function parseFriendLinksInput(value) {
+  return String(value || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split("|").map((part) => part.trim());
+      return {
+        label: parts[0] || "",
+        href: parts[1] || "",
+        icon: parts[2] || "",
+      };
+    })
+    .filter((link) => link.label && safeLinkUrl(link.href));
+}
+
+function ensureFriendLinksModal() {
+  let modal = document.querySelector("[data-friend-links-modal]");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.dataset.friendLinksModal = "";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="友链编辑器">
+      <div class="modal-head">
+        <div>
+          <h2>编辑友链</h2>
+          <p class="meta">保存后写入 D1 数据库，并同步到所有页面页脚。</p>
+        </div>
+        <button type="button" class="icon-button" data-friend-links-close aria-label="关闭编辑器">×</button>
+      </div>
+      <div class="modal-body">
+        <section class="editor-shell admin-form">
+          <label>
+            标题
+            <input class="admin-input" data-friend-links-title placeholder="友情链接" />
+          </label>
+          <label>
+            友链列表（每行一个，格式：名称 | 链接 | 图标地址）
+            <textarea class="admin-input" data-friend-links-items rows="8" placeholder="燕山大学 | https://www.ysu.edu.cn/ | /media/icons/ysu.png"></textarea>
+          </label>
+          <div class="editor-actions">
+            <button type="button" class="btn primary" data-friend-links-save>保存友链</button>
+          </div>
+          <p class="meta" data-friend-links-message></p>
+        </section>
+      </div>
+    </div>
+  `;
+  document.body.append(modal);
+  return modal;
+}
+
 async function renderUserNav() {
   const navs = document.querySelectorAll("[data-user-nav]");
   if (!navs.length) return;
@@ -1368,12 +1559,12 @@ function renderMembersRecord(record, items) {
 }
 
 function renderMemberTerm(term, items, active) {
-  const departments = ["主席团", "开发部", "网络安全部", "运维部", "组宣部", "秘书处"];
+  const departments = ["主席团", "开发部", "网络安全部", "运维部", "组宣秘书处"];
   return `
     <section data-term-panel="${escapeHtml(term)}" ${active ? "" : "hidden"}>
       ${departments
         .map((department) => {
-          const departmentItems = items.filter((item) => (item.department || "未分组") === department);
+          const departmentItems = items.filter((item) => normalizeDepartmentName(item.department || "未分组") === department);
           if (!departmentItems.length) return "";
           return `
             <h2>${escapeHtml(department)}</h2>
@@ -1385,6 +1576,10 @@ function renderMemberTerm(term, items, active) {
         .join("")}
     </section>
   `;
+}
+
+function normalizeDepartmentName(value) {
+  return value === "组宣部" || value === "秘书处" ? "组宣秘书处" : value;
 }
 
 async function renderTeamRecords() {
@@ -1830,6 +2025,7 @@ window.blog = {
   renderPostList,
   renderHomeHero,
   renderHomeNotice,
+  renderFriendLinks,
   renderKnowledgeBase,
   renderPost,
   renderUserNav,
@@ -1838,3 +2034,9 @@ window.blog = {
   renderTeamRecords,
   renderStaticPage,
 };
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", renderFriendLinks);
+} else {
+  renderFriendLinks();
+}

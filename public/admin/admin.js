@@ -575,7 +575,7 @@ async function loadJsonRecord(key, messageEl) {
 async function saveMemberEntry() {
   const item = {
     term: fields.memberTerm.value.trim(),
-    department: fields.memberDepartment.value,
+    department: normalizeMemberDepartment(fields.memberDepartment.value),
     role: fields.memberRole.value,
     name: fields.memberName.value.trim(),
     title: fields.memberRole.value,
@@ -768,7 +768,7 @@ function editFixedItem(type, index) {
   if (type === "members") {
     state.editingMemberIndex = index;
     fields.memberTerm.value = item.term || "";
-    fields.memberDepartment.value = item.department || "主席团";
+    fields.memberDepartment.value = normalizeMemberDepartment(item.department || "主席团");
     fields.memberRole.value = item.role || item.title || "成员";
     fields.memberName.value = item.name || "";
     fields.memberAvatar.value = item.avatar || "";
@@ -858,6 +858,10 @@ function updateContactPlaceholder(select, input) {
     个人主页: "https://example.com",
   };
   input.placeholder = placeholders[select.value] || "";
+}
+
+function normalizeMemberDepartment(value) {
+  return value === "组宣部" || value === "秘书处" ? "组宣秘书处" : value;
 }
 
 async function exportDatabase() {

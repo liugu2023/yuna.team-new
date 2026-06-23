@@ -1162,6 +1162,94 @@
       align-items:center;
       gap:22px;
     }
+    .footer{
+      flex-wrap:wrap;
+      align-items:flex-start;
+    }
+    .footer-friend-links{
+      flex:0 0 100%;
+      display:grid;
+      grid-template-columns:max-content minmax(0,1fr);
+      gap:12px 18px;
+      align-items:center;
+      margin-top:6px;
+      padding-top:16px;
+      border-top:1px solid rgba(177,204,231,.42);
+    }
+    .footer-friend-head{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      color:#526a84;
+      font-size:14px;
+    }
+    .footer-friend-head strong{
+      font-weight:950;
+    }
+    .footer-friend-head .btn{
+      min-height:30px;
+      height:30px;
+      padding:0 10px;
+      font-size:12px;
+    }
+    .footer-friend-list{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+      min-width:0;
+    }
+    .footer-friend-link{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      min-height:30px;
+      max-width:100%;
+      padding:5px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.58);
+      border:1px solid rgba(177,204,231,.42);
+      color:#45617d;
+      font-size:13px;
+      font-weight:900;
+      line-height:1.2;
+    }
+    .footer-friend-link:hover{
+      color:var(--blue);
+      border-color:rgba(10,141,219,.28);
+      background:rgba(230,245,255,.76);
+    }
+    .footer-friend-icon{
+      width:18px;
+      height:18px;
+      flex:0 0 18px;
+      border-radius:5px;
+      object-fit:cover;
+      background:#eff6fb;
+    }
+    .footer-friend-icon.fallback{
+      display:grid;
+      place-items:center;
+      color:#0a8ddb;
+      font-size:11px;
+      font-weight:950;
+    }
+    .footer-friend-empty{
+      color:#7b8da2;
+      font-size:13px;
+      font-weight:850;
+    }
+    @media(max-width:760px){
+      .footer-friend-links{
+        grid-template-columns:1fr;
+        align-items:start;
+      }
+      .footer-friend-list{
+        justify-content:flex-start;
+      }
+    }
     .article-actions{
       display:flex;
       justify-content:flex-end;
