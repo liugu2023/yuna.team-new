@@ -526,14 +526,13 @@ function renderPostListInto(list, posts, admin) {
           <span class="flash"></span>
           ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
           <div class="article-head">
-            <div class="meta">${postTimeMetaHtml(post)}<span>${admin ? (post.status === "published" ? "已发布" : "草稿") : escapeHtml(postTag(post))}</span><span>${formatViews(post.view_count)}</span></div>
-            <span class="tag">${admin ? (post.status === "published" ? "已发布" : "草稿") : escapeHtml(postTag(post))}</span>
+            <div class="meta">${postTimeMetaHtml(post)}${admin ? `<span>${post.status === "published" ? "已发布" : "草稿"}</span>` : ""}<span>${formatViews(post.view_count)}</span></div>
           </div>
           <h2><a href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">${escapeHtml(post.title)}</a></h2>
           <p>${escapeHtml(post.excerpt || "")}</p>
           <div class="card-footer">
-            <a class="read-more" href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">阅读全文 →</a>
             <span class="tag">${escapeHtml(postTag(post))}</span>
+            <a class="read-more" href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">阅读全文 →</a>
           </div>
         </article>
       `,
@@ -671,13 +670,12 @@ async function renderKnowledgeBase() {
             ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
             <div class="article-head">
               <div class="meta">${postTimeMetaHtml(post)}<span>${formatViews(post.view_count)}</span></div>
-              <span class="tag">${escapeHtml(postTag(post))}</span>
             </div>
             <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
             <div class="card-footer">
-              <a class="read-more" href="/post.html?slug=${encodeURIComponent(post.slug)}">查看资料 →</a>
               <span class="tag">${escapeHtml(postTag(post))}</span>
+              <a class="read-more" href="/post.html?slug=${encodeURIComponent(post.slug)}">查看资料 →</a>
             </div>
           </article>
         `,

@@ -106,9 +106,10 @@ function closeEditor(force) {
   if (!force && isEditorDirty() && !confirm("有未保存的修改，确定关闭并丢弃吗？")) {
     return;
   }
+  const kind = state.editingKind;
   editorModal.hidden = true;
   document.body.classList.remove("modal-open");
-  resetEditor();
+  resetEditor(kind);
 }
 
 async function bootAdmin() {
@@ -224,8 +225,8 @@ function renderContentList(kind) {
           <strong>${window.blog.escapeHtml(post.title)}</strong>
           <p>${window.blog.escapeHtml(post.excerpt || "")}</p>
           <div class="editor-actions">
-            <button class="btn secondary" data-edit-post="${window.blog.escapeHtml(post.slug)}">编辑</button>
-            <button class="btn danger" data-delete-post="${window.blog.escapeHtml(post.slug)}">删除</button>
+            <button class="btn secondary" type="button" data-edit-post="${window.blog.escapeHtml(post.slug)}">编辑</button>
+            <button class="btn danger" type="button" data-delete-post="${window.blog.escapeHtml(post.slug)}">删除</button>
           </div>
         </article>
       `,
@@ -276,6 +277,8 @@ async function loadPost(slug) {
   renderAdminPostList();
   renderKnowledgePostList();
   markEditorClean();
+  activateAdminTab(state.editingKind === "knowledge" ? "knowledge" : "posts");
+  updateEditorUrl(data.post.slug || slug, state.editingKind);
 }
 
 async function savePost(status) {
@@ -307,8 +310,7 @@ async function savePost(status) {
     fields.message.textContent = data.post.status === "published" ? "已发布。" : "已保存为草稿。";
     markEditorClean();
     await refreshPosts();
-    const tab = state.editingKind === "knowledge" ? "&tab=knowledge" : "";
-    history.replaceState(null, "", `/admin/?slug=${data.post.slug}${tab}`);
+    updateEditorUrl(data.post.slug, state.editingKind);
   } catch (error) {
     fields.message.textContent = error.message;
   }
@@ -1049,7 +1051,36 @@ function resetEditor(kind = "article") {
   renderAdminPostList();
   renderKnowledgePostList();
   markEditorClean();
-  history.replaceState(null, "", state.editingKind === "knowledge" ? "/admin/?tab=knowledge" : "/admin/");
+  activateAdminTab(state.editingKind === "knowledge" ? "knowledge" : "posts");
+  updateEditorUrl("", state.editingKind);
+}
+
+function updateEditorUrl(slug, kind) {
+  const url = new URL(location.href);
+  url.pathname = "/admin/";
+  if (slug) {
+    url.searchParams.set("slug", slug);
+  } else {
+    url.searchParams.delete("slug");
+  }
+  if (kind === "knowledge") {
+    url.searchParams.set("tab", "knowledge");
+  } else {
+    url.searchParams.delete("tab");
+  }
+  history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function activateAdminTab(name) {
+  document.querySelectorAll("[data-admin-tab]").forEach((tab) => {
+    const active = tab.dataset.adminTab === name;
+    tab.classList.toggle("is-active", active);
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+  document.querySelectorAll("[data-admin-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.adminPanel !== name;
+  });
 }
 
 function updatePreview() {
