@@ -26,6 +26,10 @@
     :where(.hero,.page-hero,.content-grid,.article-layout,.login-wrap,.admin-layout,.module-grid,.tool-grid,.service-strip,.site-map,.gallery-grid,.resource-grid,.member-grid,.feature-grid,.resource-tabs,.admin-tabs)>*{min-width:0}
     :where(.card,.aside-card,.knowledge-card,.resource-card,.member-card,.visual-card,.tool-card,.login-card,.editor-shell,.article-body,.pipeline-row,.attach-item,.tag,.btn){overflow-wrap:anywhere}
     .profile-desc{white-space:pre-line}
+    .admin-panel:not([hidden]) .reveal{
+      opacity:1;
+      transform:none!important;
+    }
     .content-grid{grid-template-columns:minmax(0,1fr) minmax(280px,320px);gap:30px}
     .content-grid>aside{display:grid;gap:22px;align-content:start}
     .content-grid>aside .aside-card{margin-bottom:0}

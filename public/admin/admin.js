@@ -52,8 +52,10 @@ const fields = {
   fameMessage: document.querySelector("[data-fame-message]"),
   fameList: document.querySelector("[data-fame-list]"),
   exportMessage: document.querySelector("[data-export-message]"),
+  importModal: document.querySelector("[data-import-modal]"),
   importFile: document.querySelector("[data-import-db-file]"),
   importMessage: document.querySelector("[data-import-message]"),
+  importModalMessage: document.querySelector("[data-import-modal-message]"),
   syncMessage: document.querySelector("[data-sync-message]"),
   usageSummary: document.querySelector("[data-usage-summary]"),
   usageMessage: document.querySelector("[data-usage-message]"),
@@ -907,18 +909,32 @@ async function exportDatabase() {
   fields.exportMessage.textContent = "正在下载导出文件...";
 }
 
+function openImportModal() {
+  fields.importMessage.textContent = "";
+  fields.importModalMessage.textContent = "";
+  fields.importFile.value = "";
+  fields.importModal.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function closeImportModal() {
+  fields.importModal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+function setImportMessage(message) {
+  fields.importMessage.textContent = message;
+  fields.importModalMessage.textContent = message;
+}
+
 async function importDatabase() {
   const file = fields.importFile.files?.[0];
   if (!file) {
-    fields.importMessage.textContent = "请选择要导入的 JSON 文件。";
+    setImportMessage("请选择要导入的 JSON 文件。");
     return;
   }
 
-  if (!confirm("导入会强制覆盖文章、固定页面和备份记录，确定继续吗？")) {
-    return;
-  }
-
-  fields.importMessage.textContent = "正在导入...";
+  setImportMessage("正在导入...");
   try {
     const payload = JSON.parse(await file.text());
     const data = await window.blog.fetchJson("/api/admin/import?mode=replace-all", {
@@ -928,12 +944,12 @@ async function importDatabase() {
     });
 
     const snapshotNote = data.snapshotKey ? `导入前已备份至 ${data.snapshotKey}。` : "";
-    fields.importMessage.textContent =
-      `导入完成：文章 ${data.counts.posts}，页面 ${data.counts.siteRecords}，备份 ${data.counts.siteRecordBackups}。${snapshotNote}`;
+    setImportMessage(`导入完成：文章 ${data.counts.posts}，页面 ${data.counts.siteRecords}，备份 ${data.counts.siteRecordBackups}。${snapshotNote}`);
     fields.importFile.value = "";
     await refreshAdminData();
+    closeImportModal();
   } catch (error) {
-    fields.importMessage.textContent = error.message;
+    setImportMessage(error.message);
   }
 }
 
@@ -1174,6 +1190,7 @@ bindElement(editorModal, "click", (event) => {
 }, "data-editor-modal");
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && editorModal && !editorModal.hidden) closeEditor();
+  if (event.key === "Escape" && fields.importModal && !fields.importModal.hidden) closeImportModal();
 });
 bindElement(fields.markdown, "keydown", (event) => {
   if (event.key !== "Tab") return;
@@ -1214,7 +1231,13 @@ bindElement(fields.fameImageFile, "change", uploadFameAvatar, "data-fame-image-f
 bind("[data-save-member-entry]", "click", saveMemberEntry);
 bind("[data-save-fame-entry]", "click", saveFameEntry);
 bind("[data-export-db]", "click", exportDatabase);
-bind("[data-import-db]", "click", importDatabase);
+bind("[data-import-db]", "click", openImportModal);
+bind("[data-import-confirm]", "click", importDatabase);
+bind("[data-import-close]", "click", closeImportModal);
+bind("[data-import-cancel]", "click", closeImportModal);
+bindElement(fields.importModal, "click", (event) => {
+  if (event.target === fields.importModal) closeImportModal();
+}, "data-import-modal");
 bind("[data-sync-markdown]", "click", syncMarkdownBackup);
 bind("[data-refresh-usage]", "click", loadUsage);
 bind("[data-scan-orphans]", "click", scanOrphans);
