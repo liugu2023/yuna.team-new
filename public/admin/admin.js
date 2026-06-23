@@ -113,7 +113,7 @@ function closeEditor(force) {
 }
 
 async function bootAdmin() {
-  await Promise.all([refreshPosts(), loadMembers(), loadFame()]);
+  await refreshAdminData();
   updatePreview();
   updateContactPlaceholder(fields.memberContactLabel, fields.memberContactUrl);
   updateContactPlaceholder(fields.fameContactLabel, fields.fameContactUrl);
@@ -126,15 +126,43 @@ async function bootAdmin() {
   }
 }
 
+async function refreshAdminData() {
+  const tasks = [
+    ["文章与知识库", refreshPosts],
+    ["协会成员", loadMembers],
+    ["名人堂", loadFame],
+  ];
+  const results = await Promise.allSettled(tasks.map(([, task]) => task()));
+  results.forEach((result, index) => {
+    if (result.status === "rejected") {
+      console.error(`${tasks[index][0]}加载失败`, result.reason);
+    }
+  });
+}
+
 async function refreshPosts() {
-  const [articleData, knowledgeData] = await Promise.all([
-    window.blog.fetchJson("/api/posts?drafts=1&kind=article"),
-    window.blog.fetchJson("/api/posts?drafts=1&kind=knowledge"),
-  ]);
-  state.posts = articleData.posts;
-  state.knowledgePosts = knowledgeData.posts;
-  renderAdminPostList();
-  renderKnowledgePostList();
+  await Promise.all([refreshContentPosts("article"), refreshContentPosts("knowledge")]);
+}
+
+async function refreshContentPosts(kind) {
+  const config = contentConfig(kind);
+  try {
+    const data = await window.blog.fetchJson(`/api/posts?drafts=1&kind=${kind}`);
+    if (kind === "knowledge") {
+      state.knowledgePosts = Array.isArray(data.posts) ? data.posts : [];
+    } else {
+      state.posts = Array.isArray(data.posts) ? data.posts : [];
+    }
+    if (config.message) config.message.textContent = "";
+    renderContentList(kind);
+  } catch (error) {
+    if (kind === "knowledge") {
+      state.knowledgePosts = [];
+    } else {
+      state.posts = [];
+    }
+    renderContentLoadError(kind, error);
+  }
 }
 
 function renderAdminPostList() {
@@ -192,6 +220,17 @@ function renderContentPagination(kind, total, page) {
     setContentPage(kind, Math.min(totalPages, page + 1));
     renderContentList(kind);
   });
+}
+
+function renderContentLoadError(kind, error) {
+  const config = contentConfig(kind);
+  const message = error?.message || "请求失败";
+  if (config.summary) config.summary.innerHTML = "";
+  if (config.pagination) config.pagination.innerHTML = "";
+  if (config.message) config.message.textContent = `加载失败：${message}`;
+  if (config.list) {
+    config.list.innerHTML = `<p class="empty-state error">${kind === "knowledge" ? "知识库" : "文章"}列表加载失败：${window.blog.escapeHtml(message)}</p>`;
+  }
 }
 
 function renderContentList(kind) {
@@ -892,7 +931,7 @@ async function importDatabase() {
     fields.importMessage.textContent =
       `导入完成：文章 ${data.counts.posts}，页面 ${data.counts.siteRecords}，备份 ${data.counts.siteRecordBackups}。${snapshotNote}`;
     fields.importFile.value = "";
-    await Promise.all([refreshPosts(), loadMembers(), loadFame()]);
+    await refreshAdminData();
   } catch (error) {
     fields.importMessage.textContent = error.message;
   }

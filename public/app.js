@@ -1,8 +1,24 @@
 async function fetchJson(url, options) {
   const response = await fetch(url, options);
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || `请求失败：${response.status}`);
+  const contentType = response.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
+  const data = isJson ? await response.json().catch(() => ({})) : {};
+  const text = isJson ? "" : await response.text().catch(() => "");
+  if (!response.ok) {
+    throw new Error(data.error || readableHttpError(text) || `请求失败：${response.status}`);
+  }
+  if (!isJson) throw new Error(`接口返回了非 JSON 响应：${response.status}`);
   return data;
+}
+
+function readableHttpError(text) {
+  const clean = String(text || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return clean ? clean.slice(0, 160) : "";
 }
 
 let currentUserPromise;
@@ -131,6 +147,7 @@ function markdownToHtml(markdown) {
   let paragraph = [];
   let listTag = "";
   let quote = [];
+  let customBlock = null;
 
   function flushParagraph() {
     if (paragraph.length === 0) return;
@@ -156,7 +173,27 @@ function markdownToHtml(markdown) {
     quote = [];
   }
 
+  function flushCustomBlock() {
+    if (!customBlock) return;
+    const type = customBlock.type;
+    const title = customBlock.title || customBlockTitle(type);
+    const body = markdownToHtml(customBlock.lines.join("\n"));
+    html.push(`<div class="custom-block ${type}"><p class="custom-block-title">${inlineMarkdown(escapeHtml(title))}</p>${body}</div>`);
+    customBlock = null;
+  }
+
   for (const line of lines) {
+    if (customBlock) {
+      const trimmed = line.trim();
+      if (!customBlock.inCode && trimmed === ":::") {
+        flushCustomBlock();
+        continue;
+      }
+      if (trimmed.startsWith("```")) customBlock.inCode = !customBlock.inCode;
+      customBlock.lines.push(line);
+      continue;
+    }
+
     if (line.startsWith("```")) {
       if (inCode) {
         html.push("</code></pre>");
@@ -188,6 +225,20 @@ function markdownToHtml(markdown) {
       closeList();
       flushQuote();
       html.push("<hr>");
+      continue;
+    }
+
+    const customBlockStart = line.trim().match(/^:::\s*(tip|info|note|warning|danger)(?:\s+(.*))?$/i);
+    if (customBlockStart) {
+      flushParagraph();
+      closeList();
+      flushQuote();
+      customBlock = {
+        type: customBlockStart[1].toLowerCase(),
+        title: (customBlockStart[2] || "").trim(),
+        lines: [],
+        inCode: false,
+      };
       continue;
     }
 
@@ -239,8 +290,20 @@ function markdownToHtml(markdown) {
   flushParagraph();
   closeList();
   flushQuote();
+  flushCustomBlock();
   if (inCode) html.push("</code></pre>");
   return html.join("\n");
+}
+
+function customBlockTitle(type) {
+  const titles = {
+    tip: "TIP",
+    info: "INFO",
+    note: "NOTE",
+    warning: "WARNING",
+    danger: "DANGER",
+  };
+  return titles[type] || type.toUpperCase();
 }
 
 function stripFrontmatter(markdown) {

@@ -1660,6 +1660,62 @@
     .error{
       color:#b33b2f!important;
     }
+    .article-body a{
+      color:#0a8ddb;
+      font-weight:850;
+      text-decoration:underline;
+      text-decoration-color:rgba(10,141,219,.28);
+      text-underline-offset:4px;
+      transition:color .18s ease,text-decoration-color .18s ease,background-color .18s ease;
+    }
+    .article-body a:hover,
+    .article-body a:focus-visible{
+      color:#0877be;
+      text-decoration-color:rgba(10,141,219,.68);
+      background:rgba(230,245,255,.62);
+    }
+    .article-body .custom-block{
+      margin:22px 0;
+      padding:15px 18px 16px;
+      border-radius:14px;
+      border:1px solid rgba(10,141,219,.18);
+      border-left:4px solid #0a8ddb;
+      background:rgba(230,245,255,.62);
+      color:#405c73;
+    }
+    .article-body .custom-block-title{
+      margin:0 0 8px!important;
+      color:#0a6fb1!important;
+      font-size:14px!important;
+      line-height:1.4!important;
+      font-weight:950;
+      letter-spacing:.02em;
+    }
+    .article-body .custom-block p{
+      margin:0;
+    }
+    .article-body .custom-block p+p,
+    .article-body .custom-block ul,
+    .article-body .custom-block ol,
+    .article-body .custom-block pre{
+      margin-top:10px;
+    }
+    .article-body .custom-block.warning{
+      border-color:rgba(190,131,20,.22);
+      border-left-color:#c98211;
+      background:rgba(255,247,230,.72);
+    }
+    .article-body .custom-block.warning .custom-block-title{
+      color:#9a620a!important;
+    }
+    .article-body .custom-block.danger{
+      border-color:rgba(197,76,58,.22);
+      border-left-color:#d95f46;
+      background:rgba(255,241,238,.76);
+    }
+    .article-body .custom-block.danger .custom-block-title{
+      color:#b33b2f!important;
+    }
     .preview .article-body{
       background:transparent;
       border:0;
@@ -1672,8 +1728,12 @@
       color:#111827!important;
     }
     .preview .mini-preview a{
+      color:#0a8ddb!important;
       text-decoration:underline;
       text-underline-offset:3px;
+    }
+    .preview .mini-preview .custom-block-title{
+      color:#0a6fb1!important;
     }
     .preview .mini-preview pre{
       background:rgba(255,255,255,.68)!important;
