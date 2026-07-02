@@ -64,7 +64,6 @@ const fields = {
 };
 
 const editorModal = document.querySelector("[data-editor-modal]");
-const DIRECT_UPLOAD_LIMIT = 8 * 1024 * 1024;
 const ADMIN_PAGE_SIZE = 10;
 
 function statusLabel(status) {
@@ -504,82 +503,11 @@ async function uploadImage(file, folder) {
 }
 
 async function uploadMedia(file, path, onProgress) {
-  if (file.size <= DIRECT_UPLOAD_LIMIT) {
-    const data = await window.blog.fetchJson(`/api/admin/media/${encodeMediaPath(path)}`, {
-      method: "PUT",
-      headers: { "content-type": file.type || "application/octet-stream" },
-      body: file,
-    });
-    onProgress?.(file.size, file.size);
-    return data;
-  }
-
-  return uploadMultipartMedia(file, path, onProgress);
-}
-
-async function uploadMultipartMedia(file, path, onProgress) {
-  const init = await window.blog.fetchJson("/api/admin/uploads/init", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      path,
-      contentType: file.type || "application/octet-stream",
-      size: file.size,
-    }),
-  });
-
-  const parts = [];
-  const partSize = init.partSize || DIRECT_UPLOAD_LIMIT;
-  let uploaded = 0;
-
-  try {
-    for (let offset = 0, partNumber = 1; offset < file.size; offset += partSize, partNumber += 1) {
-      const chunk = file.slice(offset, Math.min(file.size, offset + partSize));
-      const response = await fetch(
-        `/api/admin/uploads/part?path=${encodeURIComponent(path)}&uploadId=${encodeURIComponent(init.uploadId)}&partNumber=${partNumber}`,
-        {
-          method: "PUT",
-          headers: { "content-type": file.type || "application/octet-stream" },
-          body: chunk,
-        },
-      );
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || `分片上传失败：${response.status}`);
-
-      parts.push(data);
-      uploaded += chunk.size;
-      onProgress?.(uploaded, file.size);
-    }
-
-    return window.blog.fetchJson("/api/admin/uploads/complete", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        path,
-        uploadId: init.uploadId,
-        parts,
-      }),
-    });
-  } catch (error) {
-    await window.blog.fetchJson("/api/admin/uploads/abort", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        path,
-        uploadId: init.uploadId,
-      }),
-    }).catch(() => {});
-    throw error;
-  }
-}
-
-function encodeMediaPath(path) {
-  return path.split("/").map(encodeURIComponent).join("/");
+  return window.blog.uploadMediaViaApi("/api/admin", file, path, onProgress);
 }
 
 function uploadPercent(loaded, total) {
-  if (!total) return "0%";
-  return `${Math.min(100, Math.round((loaded / total) * 100))}%`;
+  return window.blog.uploadPercent(loaded, total);
 }
 
 function cleanDocumentName(value) {
@@ -604,11 +532,13 @@ async function loadFame() {
 
 async function loadJsonRecord(key, messageEl) {
   try {
-    const data = await window.blog.fetchJson(`/api/site/${key}`);
+    const data = await window.blog.fetchSiteRecord(key);
     messageEl.textContent = "";
     return JSON.parse(data.record.content || "[]");
   } catch (error) {
-    messageEl.textContent = error.message === "内容不存在" ? "暂无内容，保存后会自动创建。" : error.message;
+    messageEl.textContent = error.status === 404 || error.message === "内容不存在"
+      ? "暂无内容，保存后会自动创建。"
+      : error.message;
     return [];
   }
 }
@@ -1230,7 +1160,10 @@ bindElement(fields.memberImageFile, "change", uploadMemberAvatar, "data-member-i
 bindElement(fields.fameImageFile, "change", uploadFameAvatar, "data-fame-image-file");
 bind("[data-save-member-entry]", "click", saveMemberEntry);
 bind("[data-save-fame-entry]", "click", saveFameEntry);
-bind("[data-export-db]", "click", exportDatabase);
+// 两个导出按钮（默认导出 / 含历史导出）都要给出反馈。
+document.querySelectorAll("[data-export-db]").forEach((element) => {
+  element.addEventListener("click", exportDatabase);
+});
 bind("[data-import-db]", "click", openImportModal);
 bind("[data-import-confirm]", "click", importDatabase);
 bind("[data-import-close]", "click", closeImportModal);

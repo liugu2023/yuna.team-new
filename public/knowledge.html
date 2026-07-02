@@ -4,10 +4,20 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>知识库 · YUNA.BLOG</title>
+  <meta name="description" content="燕山大学大学生网络信息协会知识库：授课课件、学习路线、训练资料与下载入口。"/>
+  <meta property="og:site_name" content="YUNA.BLOG"/>
+  <meta property="og:title" content="知识库 · YUNA.BLOG"/>
+  <meta property="og:description" content="燕山大学大学生网络信息协会知识库：授课课件、学习路线、训练资料与下载入口。"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://yuna.liugu.cc/knowledge.html"/>
+  <meta property="og:image" content="https://yuna.liugu.cc/images/og-image.png"/>
+  <link rel="canonical" href="https://yuna.liugu.cc/knowledge.html"/>
+  <link rel="preload" as="image" href="/images/campus-bg.webp"/>
   <link rel="icon" href="/logo.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/styles.css"/>
 </head>
 <body>
+<noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载知识库内容。</p></noscript>
 <div class="scroll-progress" id="scrollProgress"></div>
 <div class="cursor-ring" id="cursorRing"></div>
 <div class="cursor-glow" id="cursorGlow"></div>
@@ -73,8 +83,8 @@
     </div>
     <div class="admin-post-summary knowledge-summary reveal" data-knowledge-summary aria-label="知识库统计"></div>
     <div class="control-row reveal">
-      <input class="search-input" data-knowledge-search placeholder="搜索标题、摘要或标签" />
-      <select class="select-input" data-knowledge-tag>
+      <input class="search-input" data-knowledge-search placeholder="搜索标题、摘要或标签" aria-label="搜索知识库" />
+      <select class="select-input" data-knowledge-tag aria-label="按标签筛选知识库">
         <option value="all">全部标签</option>
       </select>
     </div>

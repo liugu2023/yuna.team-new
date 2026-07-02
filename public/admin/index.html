@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>管理后台 · YUNA.BLOG</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preload" as="image" href="/images/campus-bg.webp" />
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -100,8 +102,8 @@
             </div>
             <div class="admin-post-summary" data-post-summary aria-label="文章统计"></div>
             <div class="control-row">
-              <input class="search-input" data-search placeholder="搜索标题、摘要、标签或链接标识" />
-              <select class="select-input" data-filter-status>
+              <input class="search-input" data-search placeholder="搜索标题、摘要、标签或链接标识" aria-label="搜索文章" />
+              <select class="select-input" data-filter-status aria-label="按状态筛选文章">
                 <option value="all">全部状态</option>
                 <option value="published">已发布</option>
                 <option value="draft">草稿</option>
@@ -124,8 +126,8 @@
             </div>
             <div class="admin-post-summary" data-knowledge-summary aria-label="知识库统计"></div>
             <div class="control-row">
-              <input class="search-input" data-knowledge-search placeholder="搜索标题、摘要、标签或链接标识" />
-              <select class="select-input" data-knowledge-filter-status>
+              <input class="search-input" data-knowledge-search placeholder="搜索标题、摘要、标签或链接标识" aria-label="搜索知识库" />
+              <select class="select-input" data-knowledge-filter-status aria-label="按状态筛选知识库">
                 <option value="all">全部状态</option>
                 <option value="published">已发布</option>
                 <option value="draft">草稿</option>
@@ -352,26 +354,6 @@
     <footer class="shell footer"><span>YUNA.ADMIN · 管理后台</span><span>内容维护工作台</span></footer>
     <script src="/app.js"></script>
     <script src="/admin/admin.js"></script>
-    <script>
-      (function () {
-        const tabs = Array.from(document.querySelectorAll("[data-tab]"));
-        const panels = Array.from(document.querySelectorAll("[data-panel]"));
-        function activate(name) {
-          tabs.forEach((tab) => {
-            const active = tab.dataset.tab === name;
-            tab.classList.toggle("is-active", active);
-            tab.classList.toggle("active", active);
-            tab.setAttribute("aria-pressed", active ? "true" : "false");
-          });
-          panels.forEach((panel) => {
-            panel.hidden = panel.dataset.panel !== name;
-          });
-        }
-        tabs.forEach((tab) => tab.addEventListener("click", () => activate(tab.dataset.tab)));
-        const initialTab = new URLSearchParams(location.search).get("tab");
-        if (initialTab && tabs.some((tab) => tab.dataset.tab === initialTab)) activate(initialTab);
-      })();
-    </script>
     <script src="/yuna-ui.js"></script>
   </body>
 </html>

@@ -5,10 +5,20 @@ async function fetchJson(url, options) {
   const data = isJson ? await response.json().catch(() => ({})) : {};
   const text = isJson ? "" : await response.text().catch(() => "");
   if (!response.ok) {
-    throw new Error(data.error || readableHttpError(text) || `请求失败：${response.status}`);
+    throw httpError(data.error || readableHttpError(text) || `请求失败：${response.status}`, response.status);
   }
-  if (!isJson) throw new Error(`接口返回了非 JSON 响应：${response.status}`);
+  if (!isJson) throw httpError(`接口返回了非 JSON 响应：${response.status}`, response.status);
   return data;
+}
+
+function httpError(message, status) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
+function isNotFoundError(error) {
+  return error?.status === 404 || error?.message === "内容不存在";
 }
 
 function readableHttpError(text) {
@@ -46,6 +56,51 @@ async function currentUser() {
     });
   }
   return currentUserPromise;
+}
+
+// 站点文案读取带批处理：同一轮任务里发起的 key 合并成一次 /api/site?keys=… 请求，
+// 避免每个可编辑块各打一次接口。行为与逐个请求一致：命中返回 { record }，缺失按 404 抛错。
+const siteRecordPending = new Map();
+let siteRecordFlushScheduled = false;
+
+function fetchSiteRecord(key) {
+  let entry = siteRecordPending.get(key);
+  if (entry) return entry.promise;
+
+  entry = {};
+  entry.promise = new Promise((resolve, reject) => {
+    entry.resolve = resolve;
+    entry.reject = reject;
+  });
+  siteRecordPending.set(key, entry);
+
+  if (!siteRecordFlushScheduled) {
+    siteRecordFlushScheduled = true;
+    setTimeout(flushSiteRecordBatch, 0);
+  }
+  return entry.promise;
+}
+
+async function flushSiteRecordBatch() {
+  siteRecordFlushScheduled = false;
+  const batch = new Map(siteRecordPending);
+  siteRecordPending.clear();
+  if (!batch.size) return;
+
+  const keys = Array.from(batch.keys());
+  try {
+    const data = await fetchJson(`/api/site?keys=${encodeURIComponent(keys.join(","))}`);
+    for (const [key, entry] of batch) {
+      const record = data.records?.[key];
+      if (record) {
+        entry.resolve({ record });
+      } else {
+        entry.reject(httpError("内容不存在", 404));
+      }
+    }
+  } catch (error) {
+    for (const entry of batch.values()) entry.reject(error);
+  }
 }
 
 function formatDate(value) {
@@ -311,7 +366,14 @@ function stripFrontmatter(markdown) {
 }
 
 function inlineMarkdown(html) {
-  return html
+  // 先把行内代码抽成占位符，避免代码里的 * [ ] ( ) 被当成强调或链接语法。
+  const codeSpans = [];
+  const withPlaceholders = html.replace(/`([^`]+)`/g, (_match, code) => {
+    codeSpans.push(`<code>${code}</code>`);
+    return `\u0000${codeSpans.length - 1}\u0000`;
+  });
+
+  const rendered = withPlaceholders
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, src) => {
       const safeSrc = normalizeAssetUrl(src);
       return `<img src="${safeSrc}" alt="${alt}" loading="lazy">`;
@@ -319,7 +381,6 @@ function inlineMarkdown(html) {
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/~~(.*?)~~/g, "<del>$1</del>")
     .replace(/\*(.*?)\*/g, "<em>$1</em>")
-    .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(
       /\[([^\]]+)\]\(([^)]+)\)/g,
       (_match, label, href) => {
@@ -331,6 +392,8 @@ function inlineMarkdown(html) {
         return `<a href="${safeHref}"${target}${rel}>${label}</a>`;
       },
     );
+
+  return rendered.replace(/\u0000(\d+)\u0000/g, (_match, index) => codeSpans[Number(index)]);
 }
 
 function normalizeInternalHref(href) {
@@ -431,6 +494,21 @@ function safeLinkUrl(value) {
   if (raw.startsWith("/") || raw.startsWith("#")) return raw;
   if (/^(https?:|mailto:)/i.test(raw)) return raw;
   return "";
+}
+
+// 弹窗通用关闭行为：Esc、点击遮罩。返回清理函数，close 时调用避免监听残留。
+function setupModalDismiss(modal, close) {
+  const onKeydown = (event) => {
+    if (event.key === "Escape") close();
+  };
+  modal.onclick = (event) => {
+    if (event.target === modal) close();
+  };
+  document.addEventListener("keydown", onKeydown);
+  return () => {
+    modal.onclick = null;
+    document.removeEventListener("keydown", onKeydown);
+  };
 }
 
 async function renderPostList({ admin = false } = {}) {
@@ -604,7 +682,7 @@ function renderPostListInto(list, posts, admin) {
   list.innerHTML = posts
     .map(
       (post) => `
-          <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-tag="${escapeHtml(postTag(post))}">
+          <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-tag="${escapeHtml(postTag(post))}" data-search="${escapeHtml(`${post.title} ${postTag(post)} ${post.excerpt || ""}`.toLowerCase())}">
           <span class="flash"></span>
           ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
           <div class="article-head">
@@ -634,7 +712,8 @@ function bindArticleFilters() {
     const keyword = (search?.value || "").trim().toLowerCase();
     const selectedTag = tagSelect?.value && tagSelect.value !== "all" ? tagSelect.value : "";
     const matches = cards.filter((card) => {
-      return (!keyword || card.textContent.toLowerCase().includes(keyword)) && (!selectedTag || card.dataset.tag === selectedTag);
+      const haystack = card.dataset.search || card.textContent.toLowerCase();
+      return (!keyword || haystack.includes(keyword)) && (!selectedTag || card.dataset.tag === selectedTag);
     });
     const totalPages = Math.max(1, Math.ceil(matches.length / LIST_PAGE_SIZE));
     const page = Math.min(currentPageFromUrl(), totalPages);
@@ -795,7 +874,7 @@ async function renderHomeHero() {
   if (!hero) return;
 
   try {
-    const data = await fetchJson("/api/site/homepage-gallery");
+    const data = await fetchSiteRecord("homepage-gallery");
     const items = JSON.parse(data.record.content || "[]");
     if (!Array.isArray(items) || !items.length) return;
 
@@ -816,7 +895,7 @@ async function renderHomeNotice() {
 
   const noticeState = { ...DEFAULT_HOME_NOTICE };
   try {
-    const data = await fetchJson(`/api/site/${HOME_NOTICE_KEY}`);
+    const data = await fetchSiteRecord(HOME_NOTICE_KEY);
     if (data.record?.kind === "markdown") {
       noticeState.title = data.record.title || DEFAULT_HOME_NOTICE.title;
       noticeState.markdown = data.record.content || DEFAULT_HOME_NOTICE.markdown;
@@ -900,17 +979,21 @@ async function renderFriendLinks() {
   const footerDefaults = new Map(footers.map((footer) => [footer, defaultFooterCopyState(footer)]));
 
   let state = { ...DEFAULT_FRIEND_LINKS, links: [...DEFAULT_FRIEND_LINKS.links] };
-  try {
-    const data = await fetchJson(`/api/site/${FRIEND_LINKS_KEY}`);
-    if (data.record?.kind === "json") {
-      state = normalizeFriendLinksState(JSON.parse(data.record.content || "{}"));
+  // 友链与页脚文案同步发起，落在同一个批量请求里。
+  const statePromise = (async () => {
+    try {
+      const data = await fetchSiteRecord(FRIEND_LINKS_KEY);
+      if (data.record?.kind === "json") {
+        state = normalizeFriendLinksState(JSON.parse(data.record.content || "{}"));
+      }
+    } catch {
+      // Missing friend-link records keep the default footer links until an admin saves.
     }
-  } catch {
-    // Missing friend-link records keep the default footer links until an admin saves.
-  }
+  })();
 
   await Promise.all(footers.map(async (footer) => {
     const copyState = await loadFooterCopyState(footerCopyKey(footer), footerDefaults.get(footer));
+    await statePromise;
     renderFooterCopyInto(footer, copyState, false);
     renderFriendLinksInto(footer, state, false);
   }));
@@ -930,7 +1013,7 @@ async function renderFriendLinks() {
 
 async function loadFooterCopyState(key, fallback) {
   try {
-    const data = await fetchJson(`/api/site/${encodeURIComponent(key)}`);
+    const data = await fetchSiteRecord(key);
     if (data.record?.kind === "json") {
       return normalizeFooterCopyState(JSON.parse(data.record.content || "{}"), fallback);
     }
@@ -1042,11 +1125,15 @@ function openFriendLinksEditor(state) {
   message.textContent = "";
   modal.hidden = false;
   document.body.classList.add("modal-open");
+  titleInput.focus();
 
+  let teardownDismiss = () => {};
   const close = () => {
     modal.hidden = true;
     document.body.classList.remove("modal-open");
+    teardownDismiss();
   };
+  teardownDismiss = setupModalDismiss(modal, close);
 
   modal.querySelector("[data-friend-links-close]").onclick = close;
   modal.querySelector("[data-friend-links-save]").onclick = async () => {
@@ -1198,11 +1285,15 @@ function openFooterCopyEditor(footer) {
   message.textContent = "";
   modal.hidden = false;
   document.body.classList.add("modal-open");
+  leftInput.focus();
 
+  let teardownDismiss = () => {};
   const close = () => {
     modal.hidden = true;
     document.body.classList.remove("modal-open");
+    teardownDismiss();
   };
+  teardownDismiss = setupModalDismiss(modal, close);
 
   modal.querySelector("[data-footer-copy-close]").onclick = close;
   modal.querySelector("[data-footer-copy-save]").onclick = async () => {
@@ -1299,7 +1390,7 @@ async function loadEditableBlockRecord(block) {
   block.classList.add("editable-block");
 
   try {
-    const data = await fetchJson(`/api/site/${encodeURIComponent(key)}`);
+    const data = await fetchSiteRecord(key);
     if (data.record?.kind !== "json") return;
     const content = JSON.parse(data.record.content || "{}");
     applyEditableBlockState(block, content);
@@ -1494,11 +1585,15 @@ function openEditableBlockEditor(block) {
   message.textContent = "";
   modal.hidden = false;
   document.body.classList.add("modal-open");
+  fieldsContainer.querySelector("textarea")?.focus();
 
+  let teardownDismiss = () => {};
   const close = () => {
     modal.hidden = true;
     document.body.classList.remove("modal-open");
+    teardownDismiss();
   };
+  teardownDismiss = setupModalDismiss(modal, close);
 
   modal.querySelector("[data-block-editor-close]").onclick = close;
   modal.querySelector("[data-block-editor-save]").onclick = async () => {
@@ -1767,7 +1862,7 @@ async function renderSiteRecord(container, key) {
   }
 
   try {
-    const data = await fetchJson(`/api/site/${key}`);
+    const data = await fetchSiteRecord(key);
     document.title = `${data.record.title} · 燕山大学大学生网络信息协会`;
     updateStaticPageHero(data.record.title, key);
     container.innerHTML =
@@ -1856,7 +1951,7 @@ async function renderTeamRecord(key, container) {
   if (!container) return;
 
   try {
-    const data = await fetchJson(`/api/site/${key}`);
+    const data = await fetchSiteRecord(key);
     const items = JSON.parse(data.record.content || "[]");
     if (!Array.isArray(items) || !items.length) {
       container.innerHTML = '<p class="empty-state">暂无内容。</p>';
@@ -1868,7 +1963,7 @@ async function renderTeamRecord(key, container) {
       : `<div class="member-grid refined-member-grid">${items.map(renderProfileCard).join("")}</div>`;
     bindTeamMemberTermSwitch(container);
   } catch (error) {
-    container.innerHTML = error.message === "内容不存在"
+    container.innerHTML = isNotFoundError(error)
       ? '<p class="empty-state">暂无内容。</p>'
       : `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
   }
@@ -1931,7 +2026,7 @@ function renderProfileCard(item) {
       <div class="member-card-top">
         ${
           item.avatar
-            ? `<img class="avatar image-avatar" src="${normalizeAssetUrl(escapeHtml(item.avatar))}" alt="${escapeHtml(item.name || "")}" loading="lazy">`
+            ? `<img class="avatar image-avatar" src="${escapeHtml(normalizeAssetUrl(item.avatar))}" alt="${escapeHtml(item.name || "")}" loading="lazy">`
             : `<div class="avatar">${escapeHtml(avatarText)}</div>`
         }
         <span class="tag">${escapeHtml(item.department || item.title || "YUNA")}</span>
@@ -2002,10 +2097,13 @@ function openStaticPageEditor(pageState, onSaved) {
   document.body.classList.add("modal-open");
   markdownInput.focus();
 
+  let teardownDismiss = () => {};
   const close = () => {
     modal.hidden = true;
     document.body.classList.remove("modal-open");
+    teardownDismiss();
   };
+  teardownDismiss = setupModalDismiss(modal, close);
 
   modal.querySelector("[data-page-editor-close]").onclick = close;
   modal.querySelector("[data-page-editor-save]").onclick = async () => {
@@ -2140,24 +2238,30 @@ async function insertStaticPageImage(page, textarea, file, message) {
   message.textContent = "图片已上传";
 }
 
-async function uploadContentMedia(file, path, onProgress) {
+function uploadContentMedia(file, path, onProgress) {
+  return uploadMediaViaApi("/api/content", file, path, onProgress);
+}
+
+// 内容编辑与管理后台共用的媒体上传：小文件直传，大文件走分片。
+// apiBase 为 "/api/content" 或 "/api/admin"，两侧接口形状一致。
+async function uploadMediaViaApi(apiBase, file, path, onProgress) {
   if (file.size <= DIRECT_MEDIA_UPLOAD_LIMIT) {
-    const response = await fetch(`/api/content/media/${path.split("/").map(encodeURIComponent).join("/")}`, {
+    const response = await fetch(`${apiBase}/media/${path.split("/").map(encodeURIComponent).join("/")}`, {
       method: "PUT",
       headers: { "content-type": file.type || "application/octet-stream" },
       body: file,
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || `上传失败：${response.status}`);
+    if (!response.ok) throw httpError(data.error || `上传失败：${response.status}`, response.status);
     onProgress?.(file.size, file.size);
     return data;
   }
 
-  return uploadMultipartContentMedia(file, path, onProgress);
+  return uploadMultipartViaApi(apiBase, file, path, onProgress);
 }
 
-async function uploadMultipartContentMedia(file, path, onProgress) {
-  const init = await fetchJson("/api/content/uploads/init", {
+async function uploadMultipartViaApi(apiBase, file, path, onProgress) {
+  const init = await fetchJson(`${apiBase}/uploads/init`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
@@ -2175,7 +2279,7 @@ async function uploadMultipartContentMedia(file, path, onProgress) {
     for (let offset = 0, partNumber = 1; offset < file.size; offset += partSize, partNumber += 1) {
       const chunk = file.slice(offset, Math.min(file.size, offset + partSize));
       const response = await fetch(
-        `/api/content/uploads/part?path=${encodeURIComponent(path)}&uploadId=${encodeURIComponent(init.uploadId)}&partNumber=${partNumber}`,
+        `${apiBase}/uploads/part?path=${encodeURIComponent(path)}&uploadId=${encodeURIComponent(init.uploadId)}&partNumber=${partNumber}`,
         {
           method: "PUT",
           headers: { "content-type": file.type || "application/octet-stream" },
@@ -2183,13 +2287,13 @@ async function uploadMultipartContentMedia(file, path, onProgress) {
         },
       );
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || `分片上传失败：${response.status}`);
+      if (!response.ok) throw httpError(data.error || `分片上传失败：${response.status}`, response.status);
       parts.push(data);
       uploaded += chunk.size;
       onProgress?.(uploaded, file.size);
     }
 
-    return fetchJson("/api/content/uploads/complete", {
+    return fetchJson(`${apiBase}/uploads/complete`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -2199,7 +2303,7 @@ async function uploadMultipartContentMedia(file, path, onProgress) {
       }),
     });
   } catch (error) {
-    await fetchJson("/api/content/uploads/abort", {
+    await fetchJson(`${apiBase}/uploads/abort`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -2278,6 +2382,9 @@ function firstHeading(markdown) {
 
 window.blog = {
   fetchJson,
+  fetchSiteRecord,
+  uploadMediaViaApi,
+  uploadPercent,
   formatDate,
   formatViews,
   postTimeText,

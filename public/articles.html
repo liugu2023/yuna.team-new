@@ -4,10 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>文章列表 · YUNA.BLOG</title>
+    <meta name="description" content="浏览燕山大学大学生网络信息协会的技术文章、训练复盘与活动公告，支持按标签筛选。" />
+    <meta property="og:site_name" content="YUNA.BLOG" />
+    <meta property="og:title" content="文章列表 · YUNA.BLOG" />
+    <meta property="og:description" content="浏览燕山大学大学生网络信息协会的技术文章、训练复盘与活动公告，支持按标签筛选。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://yuna.liugu.cc/articles.html" />
+    <meta property="og:image" content="https://yuna.liugu.cc/images/og-image.png" />
+    <link rel="canonical" href="https://yuna.liugu.cc/articles.html" />
+    <link rel="preload" as="image" href="/images/campus-bg.webp" />
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载文章列表。</p></noscript>
     <div class="scroll-progress" id="scrollProgress"></div>
     <div class="cursor-ring" id="cursorRing"></div>
     <div class="cursor-glow" id="cursorGlow"></div>
@@ -67,8 +77,8 @@
       <section class="shell content-grid">
         <div>
           <div class="control-row reveal">
-            <input class="search-input" data-article-search placeholder="搜索标题、摘要或标签" />
-            <select class="select-input" data-article-tag>
+            <input class="search-input" data-article-search placeholder="搜索标题、摘要或标签" aria-label="搜索文章" />
+            <select class="select-input" data-article-tag aria-label="按标签筛选文章">
               <option value="all">全部标签</option>
             </select>
           </div>
