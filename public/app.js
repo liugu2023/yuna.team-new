@@ -114,8 +114,20 @@ function formatDate(value) {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
     hourCycle: "h23",
+  }).format(date);
+}
+
+// 面向访客的日期只到“天”，具体时刻留给后台展示。
+function formatDay(value) {
+  if (!value) return "未发布";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "时间无效";
+  return new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   }).format(date);
 }
 
@@ -143,13 +155,13 @@ function hasPostEditAfterPublish(post) {
 function postTimeParts(post) {
   const parts = [];
   if (post?.published_at) {
-    parts.push(`发布 ${formatDate(post.published_at)}`);
+    parts.push(`发布 ${formatDay(post.published_at)}`);
     if (hasPostEditAfterPublish(post)) {
-      parts.push(`更新 ${formatDate(post.updated_at)}`);
+      parts.push(`更新 ${formatDay(post.updated_at)}`);
     }
     return parts;
   }
-  if (post?.updated_at) return [`更新 ${formatDate(post.updated_at)}`];
+  if (post?.updated_at) return [`更新 ${formatDay(post.updated_at)}`];
   return ["未发布"];
 }
 
@@ -628,11 +640,21 @@ function renderPostListInto(list, posts, admin) {
   }
 
   if (mode === "compact") {
-    const hotPosts = [...posts].sort((left, right) => {
-      const views = viewCount(right.view_count) - viewCount(left.view_count);
-      if (views) return views;
-      return new Date(right.published_at || right.updated_at || 0) - new Date(left.published_at || left.updated_at || 0);
-    });
+    // 首页主列表默认展示最新 3 篇；热门栏排除它们，避免文章少时两栏内容完全重复。
+    const homeList = document.querySelector('[data-post-list][data-post-list-mode="home"]');
+    const shownSlugs = new Set(homeList ? posts.slice(0, 3).map((post) => post.slug) : []);
+    const hotPosts = [...posts]
+      .sort((left, right) => {
+        const views = viewCount(right.view_count) - viewCount(left.view_count);
+        if (views) return views;
+        return new Date(right.published_at || right.updated_at || 0) - new Date(left.published_at || left.updated_at || 0);
+      })
+      .filter((post) => !shownSlugs.has(post.slug));
+
+    if (!hotPosts.length) {
+      list.innerHTML = '<p class="empty-state">更多文章正在整理中。</p>';
+      return;
+    }
 
     list.innerHTML = hotPosts
       .slice(0, 3)
@@ -665,7 +687,7 @@ function renderPostListInto(list, posts, admin) {
         (post) => `
           <article class="card reveal visible">
             <span class="flash"></span>
-            <div class="meta">${postTimeMetaHtml(post)}<span>${post.status === "published" ? "已发布" : "草稿"}</span><span>${formatViews(post.view_count)}</span></div>
+            <div class="meta">${postTimeMetaHtml(post)}${post.status === "published" ? "" : "<span>草稿</span>"}<span>${formatViews(post.view_count)}</span></div>
             <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
             <div class="card-footer">
@@ -1736,8 +1758,8 @@ async function renderPost() {
   try {
     const data = await fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
     document.title = `${data.post.title} · 燕山大学大学生网络信息协会`;
-    const publishedDate = data.post.published_at ? formatDate(data.post.published_at) : "未发布";
-    const updatedDate = formatDate(data.post.updated_at || data.post.published_at);
+    const publishedDate = data.post.published_at ? formatDay(data.post.published_at) : "未发布";
+    const updatedDate = formatDay(data.post.updated_at || data.post.published_at);
     const views = formatViews(data.post.view_count);
     const heroTitle = document.querySelector("[data-article-hero-title]");
     const heroLead = document.querySelector("[data-article-hero-lead]");
@@ -1752,9 +1774,7 @@ async function renderPost() {
     if (updatedRow) updatedRow.hidden = !hasPostEditAfterPublish(data.post);
     if (viewNode) viewNode.textContent = views;
     article.innerHTML = `
-      <div class="meta">${postTimeMetaHtml(data.post)}<span>${data.post.status === "published" ? "已发布" : "草稿"}</span><span>${escapeHtml(postTag(data.post))}</span><span>${views}</span></div>
-      <h2>${escapeHtml(data.post.title)}</h2>
-      ${data.post.excerpt ? `<p>${escapeHtml(data.post.excerpt)}</p>` : ""}
+      <div class="meta">${postTimeMetaHtml(data.post)}${data.post.status === "published" ? "" : "<span>草稿</span>"}<span>${escapeHtml(postTag(data.post))}</span><span>${views}</span></div>
       ${markdownToHtml(data.markdown)}
     `;
   } catch (error) {
@@ -2386,6 +2406,7 @@ window.blog = {
   uploadMediaViaApi,
   uploadPercent,
   formatDate,
+  formatDay,
   formatViews,
   postTimeText,
   escapeHtml,

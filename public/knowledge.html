@@ -18,6 +18,7 @@
 </head>
 <body>
 <noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载知识库内容。</p></noscript>
+<a class="skip-link" href="#content">跳到主要内容</a>
 <div class="scroll-progress" id="scrollProgress"></div>
 <div class="cursor-ring" id="cursorRing"></div>
 <div class="cursor-glow" id="cursorGlow"></div>
@@ -31,6 +32,7 @@
       <a href="/articles.html">文章列表</a>
       <a class="active" href="/knowledge.html">知识库</a>
       <a href="/team.html">关于协会</a>
+      <a href="/join.html">加入我们</a>
       <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
     </nav>
   </div>
@@ -52,7 +54,7 @@
         <div data-editable-block="knowledge-kpi-contact" data-editable-title="知识库 KPI：联系"><strong data-block-field="title">联系</strong><span data-block-field="body">社群与活动</span></div>
       </div>
     </div>
-    <div class="page-visual reveal">
+    <div class="page-visual reveal" aria-hidden="true">
       <div class="tech-sweep"></div>
       <div class="logo-holo-grid"></div>
       <div class="scanlines"></div>
@@ -72,14 +74,12 @@
   </section>
 </div>
 
-<main class="main page-main">
-  <section class="shell">
-    <div class="section-head reveal">
-      <div>
-        <p class="eyebrow">Knowledge Index</p>
-        <h2>知识库条目</h2>
-        <p>教程、资料说明、下载入口和招新文档统一以文章形式维护。</p>
-      </div>
+<main class="main page-main" id="content">
+  <section class="shell" id="lessons">
+    <div class="section-title reveal">
+      <p class="eyebrow">Knowledge Index</p>
+      <h2>知识库条目</h2>
+      <p class="section-desc">教程、资料说明、下载入口和招新文档统一以文章形式维护。</p>
     </div>
     <div class="admin-post-summary knowledge-summary reveal" data-knowledge-summary aria-label="知识库统计"></div>
     <div class="control-row reveal">

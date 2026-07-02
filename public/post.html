@@ -17,6 +17,7 @@
   </head>
   <body>
     <noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载文章内容。</p></noscript>
+    <a class="skip-link" href="#content">跳到主要内容</a>
     <div class="scroll-progress" id="scrollProgress"></div>
     <div class="cursor-ring" id="cursorRing"></div>
     <div class="cursor-glow" id="cursorGlow"></div>
@@ -31,6 +32,7 @@
           <a href="/articles.html">文章列表</a>
           <a href="/knowledge.html">知识库</a>
           <a href="/team.html">关于协会</a>
+          <a href="/join.html">加入我们</a>
           <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
         </nav>
       </div>
@@ -47,7 +49,7 @@
           <h1 data-article-hero-title>文章详情。</h1>
           <p class="lead" data-article-hero-lead>一篇面向协会成员的实践记录，把学习、项目与活动经验整理成可以继续复用的内容。</p>
         </div>
-        <div class="page-visual reveal">
+        <div class="page-visual reveal" aria-hidden="true">
           <div class="tech-sweep"></div>
           <div class="logo-holo-grid"></div>
           <div class="scanlines"></div>
@@ -67,7 +69,7 @@
       </section>
     </div>
 
-    <main class="main page-main">
+    <main class="main page-main" id="content">
       <section class="shell article-layout">
         <article class="article-body reveal" data-article>
           <p class="empty-state">正在加载...</p>

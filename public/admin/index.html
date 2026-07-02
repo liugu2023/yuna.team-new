@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#content">跳到主要内容</a>
     <div class="scroll-progress" id="scrollProgress"></div>
     <div class="cursor-ring" id="cursorRing"></div>
     <div class="cursor-glow" id="cursorGlow"></div>
@@ -46,7 +47,7 @@
             <div><strong>资料</strong><span>备份 / 导入 / 上传</span></div>
           </div>
         </div>
-        <div class="page-visual reveal">
+        <div class="page-visual reveal" aria-hidden="true">
           <div class="tech-sweep"></div>
           <div class="logo-holo-grid"></div>
           <div class="scanlines"></div>
@@ -66,7 +67,7 @@
       </section>
     </div>
 
-    <main class="main page-main">
+    <main class="main page-main" id="content">
       <section class="shell">
         <nav class="admin-tabs reveal" aria-label="管理功能">
           <button type="button" class="admin-tab is-active" data-tab="posts" data-admin-tab="posts" aria-pressed="true">

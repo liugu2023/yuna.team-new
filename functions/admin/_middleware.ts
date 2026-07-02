@@ -33,6 +33,7 @@ function forbiddenPage(): string {
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#content">跳到主要内容</a>
     <div class="scroll-progress" id="scrollProgress"></div>
     <div class="cursor-ring" id="cursorRing"></div>
     <div class="cursor-glow" id="cursorGlow"></div>
@@ -41,7 +42,7 @@ function forbiddenPage(): string {
     <header class="topbar">
       <div class="shell topbar-inner">
         <a class="brand magnetic" href="/"><span>YUNA.ADMIN</span></a>
-        <nav class="nav">
+        <nav class="nav" aria-label="站点导航">
           <a href="/">首页</a>
           <a href="/articles.html">文章列表</a>
           <a href="/knowledge.html">知识库</a>
@@ -65,7 +66,7 @@ function forbiddenPage(): string {
             <a class="btn secondary magnetic" href="/admin-login.html">后台入口</a>
           </div>
         </div>
-        <div class="page-visual reveal">
+        <div class="page-visual reveal" aria-hidden="true">
           <div class="tech-sweep"></div>
           <div class="logo-holo-grid"></div>
           <div class="scanlines"></div>
@@ -84,7 +85,7 @@ function forbiddenPage(): string {
         </div>
       </section>
     </div>
-    <main class="main page-main">
+    <main class="main page-main" id="content">
       <section class="shell">
         <article class="article-body reveal">
           <h2>权限说明</h2>
