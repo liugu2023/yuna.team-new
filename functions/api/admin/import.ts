@@ -67,8 +67,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
     statements.push(
       env.BLOG_DB.prepare(
         `INSERT INTO posts
-          (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, created_at, updated_at, published_at, view_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, editor_name, created_at, updated_at, published_at, view_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         post.id,
         post.slug,
@@ -81,6 +81,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
         post.r2_key,
         post.markdown_content,
         post.author_email,
+        post.author_name,
+        post.editor_name,
         post.created_at,
         post.updated_at,
         post.published_at,
@@ -177,6 +179,8 @@ function normalizePost(input: Partial<PostRecord>): PostRecord {
     r2_key: text(input.r2_key) || `db/${kind === "knowledge" ? "knowledge" : "posts"}/${slug}.md`,
     markdown_content: text(input.markdown_content),
     author_email: text(input.author_email),
+    author_name: text(input.author_name),
+    editor_name: text(input.editor_name),
     created_at: text(input.created_at) || now,
     updated_at: text(input.updated_at) || now,
     published_at: input.published_at ? text(input.published_at) : null,

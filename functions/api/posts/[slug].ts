@@ -8,6 +8,7 @@ interface UpdatePostPayload {
   tag?: string;
   excerpt?: string;
   cover_url?: string;
+  author_name?: string;
   status?: "draft" | "published";
   kind?: "article" | "knowledge";
   markdown?: string;
@@ -67,15 +68,18 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
   const nextTitle = payload.title?.trim() ?? post.title;
   const nextTag = payload.tag !== undefined ? normalizeTag(payload.tag) : post.tag;
   const nextCoverUrl = payload.cover_url !== undefined ? normalizeOptionalText(payload.cover_url) : post.cover_url ?? "";
+  const nextAuthorName = payload.author_name !== undefined ? normalizeOptionalText(payload.author_name) : post.author_name ?? "";
   const nextKind = payload.kind !== undefined ? normalizeKind(payload.kind) : post.kind ?? "article";
   const publishedAt =
     post.published_at ?? (post.status !== "published" && nextStatus === "published" ? now : null);
 
   const nextMarkdown = payload.markdown ?? post.markdown_content ?? "";
+  // 每次后台保存都记录操作人显示名，前台在文章被二次编辑后展示。
+  const editorName = (session.user_name || "").trim();
 
   await env.BLOG_DB.prepare(
     `UPDATE posts
-     SET title = ?, tag = ?, excerpt = ?, cover_url = ?, status = ?, kind = ?, markdown_content = ?, updated_at = ?, published_at = ?
+     SET title = ?, tag = ?, excerpt = ?, cover_url = ?, author_name = ?, editor_name = ?, status = ?, kind = ?, markdown_content = ?, updated_at = ?, published_at = ?
      WHERE slug = ?`,
   )
     .bind(
@@ -83,6 +87,8 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
       nextTag,
       payload.excerpt ?? post.excerpt,
       nextCoverUrl,
+      nextAuthorName,
+      editorName,
       nextStatus,
       nextKind,
       nextMarkdown,

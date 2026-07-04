@@ -1761,20 +1761,27 @@ async function renderPost() {
     const publishedDate = data.post.published_at ? formatDay(data.post.published_at) : "未发布";
     const updatedDate = formatDay(data.post.updated_at || data.post.published_at);
     const views = formatViews(data.post.view_count);
+    const authorName = String(data.post.author_name || "").trim();
+    const editorName = String(data.post.editor_name || "").trim();
+    const editedAfterPublish = hasPostEditAfterPublish(data.post);
     const heroTitle = document.querySelector("[data-article-hero-title]");
     const heroLead = document.querySelector("[data-article-hero-lead]");
     const published = document.querySelector("[data-article-published]");
     const updated = document.querySelector("[data-article-updated]");
     const updatedRow = document.querySelector("[data-article-updated-row]");
     const viewNode = document.querySelector("[data-article-views]");
+    const authorNode = document.querySelector("[data-article-author]");
+    const authorRow = document.querySelector("[data-article-author-row]");
     if (heroTitle) heroTitle.textContent = data.post.title;
     if (heroLead) heroLead.textContent = data.post.excerpt || "协会文章与学习记录。";
     if (published) published.textContent = publishedDate;
-    if (updated) updated.textContent = updatedDate;
-    if (updatedRow) updatedRow.hidden = !hasPostEditAfterPublish(data.post);
+    if (updated) updated.textContent = editedAfterPublish && editorName ? `${updatedDate} · ${editorName}` : updatedDate;
+    if (updatedRow) updatedRow.hidden = !editedAfterPublish;
     if (viewNode) viewNode.textContent = views;
+    if (authorNode) authorNode.textContent = authorName;
+    if (authorRow) authorRow.hidden = !authorName;
     article.innerHTML = `
-      <div class="meta">${postTimeMetaHtml(data.post)}${data.post.status === "published" ? "" : "<span>草稿</span>"}<span>${escapeHtml(postTag(data.post))}</span><span>${views}</span></div>
+      <div class="meta">${authorName ? `<span>作者 ${escapeHtml(authorName)}</span>` : ""}${postTimeMetaHtml(data.post)}${editedAfterPublish && editorName ? `<span>编辑 ${escapeHtml(editorName)}</span>` : ""}${data.post.status === "published" ? "" : "<span>草稿</span>"}<span>${escapeHtml(postTag(data.post))}</span><span>${views}</span></div>
       ${markdownToHtml(data.markdown)}
     `;
   } catch (error) {

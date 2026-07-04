@@ -9,6 +9,7 @@ interface CreatePostPayload {
   tag?: string;
   excerpt?: string;
   cover_url?: string;
+  author_name?: string;
   status?: "draft" | "published";
   kind?: "article" | "knowledge";
   markdown?: string;
@@ -25,7 +26,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const session = await getSession(env, request);
   const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
   const includeAll = includeDrafts && canSeeDrafts;
-  const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_email, created_at, updated_at, published_at, view_count";
+  const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_email, author_name, editor_name, created_at, updated_at, published_at, view_count";
 
   const query = includeAll
     ? `SELECT ${columns} FROM posts WHERE kind = ? ORDER BY COALESCE(published_at, updated_at) DESC${usePagination ? " LIMIT ? OFFSET ?" : ""}`
@@ -77,14 +78,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   const kind = normalizeKind(payload.kind);
   const tag = normalizeTag(payload.tag);
   const coverUrl = normalizeOptionalText(payload.cover_url);
+  // 作者名默认取当前登录用户的显示名，后台填写时可覆盖。
+  const authorName = normalizeOptionalText(payload.author_name) || session.user_name || "";
 
   const publishedAt = status === "published" ? now : null;
   const r2Key = `db/${kind === "knowledge" ? "knowledge" : "posts"}/${slug}.md`;
 
   await env.BLOG_DB.prepare(
     `INSERT INTO posts
-      (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, created_at, updated_at, published_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, created_at, updated_at, published_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -98,6 +101,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
       r2Key,
       payload.markdown,
       session.user_email,
+      authorName,
       now,
       now,
       publishedAt,

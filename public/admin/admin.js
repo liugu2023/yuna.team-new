@@ -13,6 +13,7 @@ const state = {
 const fields = {
   title: document.querySelector("[data-title]"),
   tag: document.querySelector("[data-post-tag]"),
+  authorName: document.querySelector("[data-author-name]"),
   excerpt: document.querySelector("[data-excerpt]"),
   coverUrl: document.querySelector("[data-cover-url]"),
   markdown: document.querySelector("[data-markdown]"),
@@ -82,6 +83,7 @@ function editorSnapshot() {
   return JSON.stringify({
     title: fields.title.value,
     tag: fields.tag.value,
+    authorName: fields.authorName.value,
     excerpt: fields.excerpt.value,
     coverUrl: fields.coverUrl.value,
     markdown: fields.markdown.value,
@@ -242,7 +244,7 @@ function renderContentList(kind) {
   renderPostSummary(kind);
   const posts = config.items.filter((post) => {
     const matchesStatus = status === "all" || post.status === status;
-    const haystack = `${post.title} ${post.tag || ""} ${post.excerpt || ""} ${post.slug}`.toLowerCase();
+    const haystack = `${post.title} ${post.tag || ""} ${post.author_name || ""} ${post.excerpt || ""} ${post.slug}`.toLowerCase();
     return matchesStatus && (!keyword || haystack.includes(keyword));
   });
   const totalPages = Math.max(1, Math.ceil(posts.length / ADMIN_PAGE_SIZE));
@@ -261,7 +263,7 @@ function renderContentList(kind) {
     .map(
       (post) => `
         <article class="admin-item admin-post-card${state.editingSlug === post.slug ? " active is-active" : ""}">
-          <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${window.blog.escapeHtml(post.tag || "未分类")} · ${window.blog.postTimeText(post)} · ${window.blog.formatViews(post.view_count)}</p>
+          <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${window.blog.escapeHtml(post.tag || "未分类")}${post.author_name ? ` · ${window.blog.escapeHtml(post.author_name)}` : ""} · ${window.blog.postTimeText(post)} · ${window.blog.formatViews(post.view_count)}</p>
           <strong>${window.blog.escapeHtml(post.title)}</strong>
           <p>${window.blog.escapeHtml(post.excerpt || "")}</p>
           <div class="editor-actions">
@@ -307,6 +309,7 @@ async function loadPost(slug) {
   state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
   fields.title.value = data.post.title;
   fields.tag.value = data.post.tag || defaultTag(state.editingKind);
+  fields.authorName.value = data.post.author_name || "";
   fields.excerpt.value = data.post.excerpt || "";
   fields.coverUrl.value = data.post.cover_url || "";
   fields.markdown.value = data.markdown;
@@ -325,6 +328,7 @@ async function savePost(status) {
   const payload = {
     title: fields.title.value.trim(),
     tag: fields.tag.value.trim(),
+    author_name: fields.authorName.value.trim(),
     excerpt: fields.excerpt.value.trim(),
     cover_url: fields.coverUrl.value.trim(),
     status,
@@ -1029,6 +1033,7 @@ function resetEditor(kind = "article") {
   state.editingKind = kind === "knowledge" ? "knowledge" : "article";
   fields.title.value = "";
   fields.tag.value = defaultTag(state.editingKind);
+  fields.authorName.value = "";
   fields.excerpt.value = "";
   fields.coverUrl.value = "";
   fields.coverFile.value = "";
@@ -1075,10 +1080,11 @@ function activateAdminTab(name) {
 function updatePreview() {
   const title = fields.title.value.trim() || "未命名文章";
   const tag = fields.tag.value.trim() || "协会动态";
+  const authorName = fields.authorName.value.trim();
   const excerpt = fields.excerpt.value.trim();
   const coverUrl = window.blog.safeDisplayAssetUrl(fields.coverUrl.value.trim());
   fields.preview.innerHTML = `
-    <p class="meta">${window.blog.escapeHtml(tag)}</p>
+    <p class="meta">${window.blog.escapeHtml(tag)}${authorName ? ` · ${window.blog.escapeHtml(authorName)}` : ""}</p>
     <h1>${window.blog.escapeHtml(title)}</h1>
     ${excerpt ? `<p>${window.blog.escapeHtml(excerpt)}</p>` : ""}
     ${coverUrl ? `<img src="${window.blog.escapeHtml(coverUrl)}" alt="" loading="lazy">` : ""}
@@ -1205,6 +1211,7 @@ bindElement(fields.knowledgeFilterStatus, "change", () => {
 }, "data-knowledge-filter-status");
 bindElement(fields.title, "input", updatePreview, "data-title");
 bindElement(fields.tag, "input", updatePreview, "data-post-tag");
+bindElement(fields.authorName, "input", updatePreview, "data-author-name");
 bindElement(fields.excerpt, "input", updatePreview, "data-excerpt");
 bindElement(fields.coverUrl, "input", updatePreview, "data-cover-url");
 bindElement(fields.markdown, "input", updatePreview, "data-markdown");
