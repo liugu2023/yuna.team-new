@@ -640,21 +640,13 @@ function renderPostListInto(list, posts, admin) {
   }
 
   if (mode === "compact") {
-    // 首页主列表默认展示最新 3 篇；热门栏排除它们，避免文章少时两栏内容完全重复。
-    const homeList = document.querySelector('[data-post-list][data-post-list-mode="home"]');
-    const shownSlugs = new Set(homeList ? posts.slice(0, 3).map((post) => post.slug) : []);
+    // 热门栏严格按阅读量取前 3，阅读量相同按发布时间靠新优先；与主列表重复也照常展示。
     const hotPosts = [...posts]
       .sort((left, right) => {
         const views = viewCount(right.view_count) - viewCount(left.view_count);
         if (views) return views;
         return new Date(right.published_at || right.updated_at || 0) - new Date(left.published_at || left.updated_at || 0);
-      })
-      .filter((post) => !shownSlugs.has(post.slug));
-
-    if (!hotPosts.length) {
-      list.innerHTML = '<p class="empty-state">更多文章正在整理中。</p>';
-      return;
-    }
+      });
 
     list.innerHTML = hotPosts
       .slice(0, 3)
