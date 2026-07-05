@@ -131,8 +131,32 @@ const root=document.documentElement;const finePointer=matchMedia('(hover:hover) 
         if(event.touches.length<2) lastPinchDistance=0;
       });
       map.addEventListener('touchcancel',()=>{lastPinchDistance=0;});
+      // 可见的缩放按钮：不依赖 Ctrl+滚轮/双指手势，键盘也可操作。
+      const controls=document.createElement('div');
+      controls.className='office-map-zoom';
+      const zoomIn=document.createElement('button');
+      zoomIn.type='button';
+      zoomIn.textContent='+';
+      zoomIn.setAttribute('aria-label','放大地图');
+      const zoomOut=document.createElement('button');
+      zoomOut.type='button';
+      zoomOut.textContent='−';
+      zoomOut.setAttribute('aria-label','缩小地图');
+      zoomIn.addEventListener('click',()=>setZoom(zoom+1));
+      zoomOut.addEventListener('click',()=>setZoom(zoom-1));
+      controls.append(zoomIn,zoomOut);
+      map.appendChild(controls);
       render();
     });
   }
   initOfficeMaps();
+
+  // 装饰动画容器滚出视口后暂停，减少常驻 GPU/CPU 占用。
+  const animRoots=$$('.logo-stage,.page-visual');
+  if(animRoots.length&&'IntersectionObserver' in window){
+    const animIo=new IntersectionObserver(entries=>{
+      entries.forEach(entry=>entry.target.classList.toggle('anim-offscreen',!entry.isIntersecting));
+    },{rootMargin:'80px'});
+    animRoots.forEach(el=>animIo.observe(el));
+  }
 })();

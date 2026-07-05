@@ -119,6 +119,7 @@ function isEditorDirty() {
 function openEditor() {
   editorModal.hidden = false;
   document.body.classList.add("modal-open");
+  fields.title.focus();
 }
 
 function closeEditor(force) {

@@ -1731,9 +1731,9 @@ async function renderAdminOnlyActions() {
 
 function userNavHtml(nav, me) {
   if (me.admin) {
-    return '<a class="nav-link nav-admin" href="/admin/">管理后台</a><a class="nav-link nav-logout" href="#" data-logout>退出登录</a>';
+    return '<a class="nav-link nav-admin" href="/admin/">管理后台</a><button type="button" class="nav-link nav-logout" data-logout>退出登录</button>';
   }
-  if (me.authenticated) return '<a class="nav-link nav-logout" href="#" data-logout>退出登录</a>';
+  if (me.authenticated) return '<button type="button" class="nav-link nav-logout" data-logout>退出登录</button>';
   return guestNavHtml(nav);
 }
 
@@ -1750,6 +1750,19 @@ function loginHref() {
 
 function decorateSideNav(html) {
   return html.replaceAll('class="nav-link ', 'class="side-link ');
+}
+
+// 文章 hero 已展示标题；正文若以同名一级标题开头则去掉，避免页面出现两个相同 h1。
+function stripDuplicateLeadingTitle(markdown, title) {
+  const cleanTitle = String(title || "").trim();
+  if (!cleanTitle) return markdown;
+  const lines = stripFrontmatter(markdown).replace(/\r\n/g, "\n").split("\n");
+  let index = 0;
+  while (index < lines.length && !lines[index].trim()) index += 1;
+  const heading = lines[index]?.match(/^#\s+(.+?)\s*$/);
+  if (!heading || heading[1].trim() !== cleanTitle) return markdown;
+  lines.splice(index, 1);
+  return lines.join("\n");
 }
 
 async function renderPost() {
@@ -1789,7 +1802,7 @@ async function renderPost() {
     if (authorRow) authorRow.hidden = !authorName;
     article.innerHTML = `
       <div class="meta">${authorName ? `<span>作者 ${escapeHtml(authorName)}</span>` : ""}${postTimeMetaHtml(data.post)}${editedAfterPublish && editorName ? `<span>编辑 ${escapeHtml(editorName)}</span>` : ""}${data.post.status === "published" ? "" : "<span>草稿</span>"}<span>${escapeHtml(postTag(data.post))}</span><span>${views}</span></div>
-      ${markdownToHtml(data.markdown)}
+      ${markdownToHtml(stripDuplicateLeadingTitle(data.markdown, data.post.title))}
     `;
   } catch (error) {
     article.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
