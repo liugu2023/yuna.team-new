@@ -67,6 +67,22 @@ const fields = {
 const editorModal = document.querySelector("[data-editor-modal]");
 const ADMIN_PAGE_SIZE = 10;
 
+// 异步操作期间锁住触发按钮：双击「发布」会创建两篇文章，导入/同步重复触发同理。
+async function withLockedButtons(selector, task) {
+  const buttons = Array.from(document.querySelectorAll(selector));
+  if (buttons.some((button) => button.disabled)) return;
+  buttons.forEach((button) => {
+    button.disabled = true;
+  });
+  try {
+    await task();
+  } finally {
+    buttons.forEach((button) => {
+      button.disabled = false;
+    });
+  }
+}
+
 function statusLabel(status) {
   return status === "published" ? "已发布" : "草稿";
 }
@@ -325,39 +341,42 @@ async function loadPost(slug) {
 }
 
 async function savePost(status) {
-  const payload = {
-    title: fields.title.value.trim(),
-    tag: fields.tag.value.trim(),
-    author_name: fields.authorName.value.trim(),
-    excerpt: fields.excerpt.value.trim(),
-    cover_url: fields.coverUrl.value.trim(),
-    status,
-    kind: state.editingKind,
-    markdown: fields.markdown.value,
-  };
+  await withLockedButtons("[data-publish],[data-save-draft]", async () => {
+    fields.message.textContent = status === "published" ? "发布中…" : "保存中…";
+    const payload = {
+      title: fields.title.value.trim(),
+      tag: fields.tag.value.trim(),
+      author_name: fields.authorName.value.trim(),
+      excerpt: fields.excerpt.value.trim(),
+      cover_url: fields.coverUrl.value.trim(),
+      status,
+      kind: state.editingKind,
+      markdown: fields.markdown.value,
+    };
 
-  const url = state.editingSlug
-    ? `/api/posts/${encodeURIComponent(state.editingSlug)}`
-    : "/api/posts";
-  const method = state.editingSlug ? "PUT" : "POST";
+    const url = state.editingSlug
+      ? `/api/posts/${encodeURIComponent(state.editingSlug)}`
+      : "/api/posts";
+    const method = state.editingSlug ? "PUT" : "POST";
 
-  try {
-    const data = await window.blog.fetchJson(url, {
-      method,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    state.editingSlug = data.post.slug;
-    state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
-    fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
-    fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
-    fields.message.textContent = data.post.status === "published" ? "已发布。" : "已保存为草稿。";
-    markEditorClean();
-    await refreshPosts();
-    updateEditorUrl(data.post.slug, state.editingKind);
-  } catch (error) {
-    fields.message.textContent = error.message;
-  }
+    try {
+      const data = await window.blog.fetchJson(url, {
+        method,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      state.editingSlug = data.post.slug;
+      state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
+      fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
+      fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
+      fields.message.textContent = data.post.status === "published" ? "已发布。" : "已保存为草稿。";
+      markEditorClean();
+      await refreshPosts();
+      updateEditorUrl(data.post.slug, state.editingKind);
+    } catch (error) {
+      fields.message.textContent = error.message;
+    }
+  });
 }
 
 async function deletePost(slug) {
@@ -862,43 +881,47 @@ function setImportMessage(message) {
 }
 
 async function importDatabase() {
-  const file = fields.importFile.files?.[0];
-  if (!file) {
-    setImportMessage("请选择要导入的 JSON 文件。");
-    return;
-  }
+  await withLockedButtons("[data-import-confirm]", async () => {
+    const file = fields.importFile.files?.[0];
+    if (!file) {
+      setImportMessage("请选择要导入的 JSON 文件。");
+      return;
+    }
 
-  setImportMessage("正在导入...");
-  try {
-    const payload = JSON.parse(await file.text());
-    const data = await window.blog.fetchJson("/api/admin/import?mode=replace-all", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    setImportMessage("正在导入...");
+    try {
+      const payload = JSON.parse(await file.text());
+      const data = await window.blog.fetchJson("/api/admin/import?mode=replace-all", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    const snapshotNote = data.snapshotKey ? `导入前已备份至 ${data.snapshotKey}。` : "";
-    setImportMessage(`导入完成：文章 ${data.counts.posts}，页面 ${data.counts.siteRecords}，备份 ${data.counts.siteRecordBackups}。${snapshotNote}`);
-    fields.importFile.value = "";
-    await refreshAdminData();
-    closeImportModal();
-  } catch (error) {
-    setImportMessage(error.message);
-  }
+      const snapshotNote = data.snapshotKey ? `导入前已备份至 ${data.snapshotKey}。` : "";
+      setImportMessage(`导入完成：文章 ${data.counts.posts}，页面 ${data.counts.siteRecords}，备份 ${data.counts.siteRecordBackups}。${snapshotNote}`);
+      fields.importFile.value = "";
+      await refreshAdminData();
+      closeImportModal();
+    } catch (error) {
+      setImportMessage(error.message);
+    }
+  });
 }
 
 async function syncMarkdownBackup() {
-  fields.syncMessage.textContent = "正在同步 Markdown 到 GitHub...";
-  try {
-    const data = await window.blog.fetchJson("/api/admin/github-sync", {
-      method: "POST",
-    });
-    fields.syncMessage.textContent = data.skipped
-      ? data.reason || "未配置 GitHub 同步，已跳过。"
-      : `同步完成：${data.files} 个 Markdown 文件。`;
-  } catch (error) {
-    fields.syncMessage.textContent = error.message;
-  }
+  await withLockedButtons("[data-sync-markdown]", async () => {
+    fields.syncMessage.textContent = "正在同步 Markdown 到 GitHub...";
+    try {
+      const data = await window.blog.fetchJson("/api/admin/github-sync", {
+        method: "POST",
+      });
+      fields.syncMessage.textContent = data.skipped
+        ? data.reason || "未配置 GitHub 同步，已跳过。"
+        : `同步完成：${data.files} 个 Markdown 文件。`;
+    } catch (error) {
+      fields.syncMessage.textContent = error.message;
+    }
+  });
 }
 
 async function loadUsage() {

@@ -8,6 +8,7 @@
     <link rel="preload" as="image" href="/images/campus-bg.webp" />
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
+    <script>document.documentElement.classList.add("js");</script>
   </head>
   <body>
     <a class="skip-link" href="#content">跳到主要内容</a>
@@ -110,7 +111,7 @@
                 <option value="draft">草稿</option>
               </select>
             </div>
-            <p class="meta" data-post-list-message></p>
+            <p class="meta" aria-live="polite" data-post-list-message></p>
             <div class="admin-list admin-post-list" data-post-list></div>
             <div class="pagination" data-post-pagination></div>
           </section>
@@ -134,7 +135,7 @@
                 <option value="draft">草稿</option>
               </select>
             </div>
-            <p class="meta" data-knowledge-list-message></p>
+            <p class="meta" aria-live="polite" data-knowledge-list-message></p>
             <div class="admin-list admin-post-list" data-knowledge-list></div>
             <div class="pagination" data-knowledge-pagination></div>
           </section>
@@ -188,7 +189,7 @@
                   <label>联系方式<input class="admin-input" data-member-contact-url placeholder="https://github.com/yuna2017" /></label>
                 </div>
                 <div class="editor-actions"><button class="btn primary" type="button" data-save-member-entry>保存成员</button></div>
-                <p class="meta" data-member-message></p>
+                <p class="meta" aria-live="polite" data-member-message></p>
               </div>
             </section>
             <aside class="aside-card reveal">
@@ -224,7 +225,7 @@
                   <label>联系方式<input class="admin-input" data-fame-contact-url placeholder="https://github.com/yuna2017" /></label>
                 </div>
                 <div class="editor-actions"><button class="btn primary" type="button" data-save-fame-entry>保存条目</button></div>
-                <p class="meta" data-fame-message></p>
+                <p class="meta" aria-live="polite" data-fame-message></p>
               </div>
             </section>
             <aside class="aside-card reveal">
@@ -245,7 +246,7 @@
               <div class="editor-actions">
                 <button class="btn primary" type="button" data-refresh-usage>检测当前用量</button>
               </div>
-              <p class="meta" data-usage-message></p>
+              <p class="meta" aria-live="polite" data-usage-message></p>
             </section>
             <section class="tool-card reveal">
               <h3>R2 引用清理</h3>
@@ -257,13 +258,13 @@
                 <button class="btn secondary" type="button" data-scan-orphans>检测引用情况</button>
                 <button class="btn danger" type="button" data-delete-orphans>检测并删除可清理对象</button>
               </div>
-              <p class="meta" data-orphan-message></p>
+              <p class="meta" aria-live="polite" data-orphan-message></p>
             </section>
             <section class="tool-card reveal">
               <h3>内容备份</h3>
               <p>保存文章、固定页面或导入数据后，可手动生成一份可追踪的内容备份。</p>
               <button class="btn primary" type="button" data-sync-markdown>立即同步到 GitHub</button>
-              <p class="meta" data-sync-message></p>
+              <p class="meta" aria-live="polite" data-sync-message></p>
             </section>
             <section class="tool-card reveal">
               <h3>站点数据备份</h3>
@@ -273,8 +274,8 @@
                 <a class="btn secondary" href="/api/admin/export?download=1&history=1" data-export-db>含历史导出</a>
                 <button class="btn danger" type="button" data-import-db>强制导入</button>
               </div>
-              <p class="meta" data-export-message></p>
-              <p class="meta" data-import-message></p>
+              <p class="meta" aria-live="polite" data-export-message></p>
+              <p class="meta" aria-live="polite" data-import-message></p>
             </section>
           </div>
         </div>
@@ -300,7 +301,7 @@
               <button class="btn secondary" type="button" data-import-cancel>取消</button>
               <button class="btn danger" type="button" data-import-confirm>确认覆盖导入</button>
             </div>
-            <p class="meta" data-import-modal-message></p>
+            <p class="meta" aria-live="polite" data-import-modal-message></p>
           </section>
         </div>
       </div>
@@ -341,7 +342,7 @@
                   <button class="btn primary" type="button" data-publish>发布</button>
                   <button class="btn secondary" type="button" data-save-draft>保存为草稿</button>
                 </div>
-                <p class="meta" data-message></p>
+                <p class="meta" aria-live="polite" data-message></p>
               </div>
             </section>
             <aside class="editor-shell preview">

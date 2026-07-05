@@ -2304,3 +2304,14 @@
       .nav{gap:2px 18px}
       .nav a,.nav .nav-link,.nav [data-user-nav]{display:inline-flex;align-items:center;min-height:44px}
     }
+
+    /* 入场动效只在 JS 就绪（<head> 里加 js 类）后启用：
+       脚本加载失败或被禁用时内容保持可见，不再整页空白。 */
+    .reveal{opacity:1;transform:none}
+    .js .reveal{opacity:0;transform:translateY(24px)}
+    .js .reveal.visible{opacity:1;transform:none}
+    /* 异步提交期间按钮的禁用态：置灰并冻结悬停位移 */
+    .btn:disabled,button:disabled{opacity:.55;cursor:not-allowed}
+    .btn:disabled{transform:none}
+    /* 正文与预览里的 Markdown 图片贴合整站圆角 */
+    .article-body img,.mini-preview img{border-radius:18px;height:auto}

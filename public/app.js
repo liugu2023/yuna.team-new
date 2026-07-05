@@ -1620,7 +1620,9 @@ function openEditableBlockEditor(block) {
   teardownDismiss = setupModalDismiss(modal, close);
 
   modal.querySelector("[data-block-editor-close]").onclick = close;
-  modal.querySelector("[data-block-editor-save]").onclick = async () => {
+  const blockSaveButton = modal.querySelector("[data-block-editor-save]");
+  blockSaveButton.onclick = async () => {
+    if (blockSaveButton.disabled) return;
     const nextState = { fields: {} };
     fieldsContainer.querySelectorAll("[data-block-editor-field]").forEach((input) => {
       nextState.fields[input.dataset.blockEditorField] = input.value.trim();
@@ -1652,6 +1654,7 @@ function openEditableBlockEditor(block) {
     }
 
     message.textContent = "正在保存...";
+    blockSaveButton.disabled = true;
     try {
       const title = block.dataset.editableTitle || nextState.fields.title || key;
       await saveSiteJsonRecord(key, title, nextState);
@@ -1660,6 +1663,8 @@ function openEditableBlockEditor(block) {
       close();
     } catch (error) {
       message.textContent = error.message;
+    } finally {
+      blockSaveButton.disabled = false;
     }
   };
 }
@@ -1699,7 +1704,7 @@ function ensureEditableBlockModal() {
           <div class="editor-actions">
             <button type="button" class="btn primary" data-block-editor-save>保存文案</button>
           </div>
-          <p class="meta" data-block-editor-message></p>
+          <p class="meta" aria-live="polite" data-block-editor-message></p>
         </section>
       </div>
     </div>
@@ -2135,10 +2140,13 @@ function openStaticPageEditor(pageState, onSaved) {
   teardownDismiss = setupModalDismiss(modal, close);
 
   modal.querySelector("[data-page-editor-close]").onclick = close;
-  modal.querySelector("[data-page-editor-save]").onclick = async () => {
+  const pageSaveButton = modal.querySelector("[data-page-editor-save]");
+  pageSaveButton.onclick = async () => {
+    if (pageSaveButton.disabled) return;
     const markdown = markdownInput.value;
     const title = titleInput.value.trim() || firstHeading(markdown) || "页面";
     message.textContent = "正在保存...";
+    pageSaveButton.disabled = true;
 
     try {
       if (pageState.save) {
@@ -2158,6 +2166,8 @@ function openStaticPageEditor(pageState, onSaved) {
       close();
     } catch (error) {
       message.textContent = error.message;
+    } finally {
+      pageSaveButton.disabled = false;
     }
   };
 
@@ -2246,7 +2256,7 @@ function ensureStaticPageEditorModal() {
           <div class="editor-actions">
             <button type="button" class="btn primary" data-page-editor-save>保存页面</button>
           </div>
-          <p class="meta" data-page-editor-message></p>
+          <p class="meta" aria-live="polite" data-page-editor-message></p>
         </section>
       </div>
     </div>
