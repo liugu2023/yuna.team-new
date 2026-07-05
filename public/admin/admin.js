@@ -14,6 +14,7 @@ const fields = {
   title: document.querySelector("[data-title]"),
   tag: document.querySelector("[data-post-tag]"),
   authorName: document.querySelector("[data-author-name]"),
+  lastEditor: document.querySelector("[data-last-editor]"),
   excerpt: document.querySelector("[data-excerpt]"),
   coverUrl: document.querySelector("[data-cover-url]"),
   markdown: document.querySelector("[data-markdown]"),
@@ -327,6 +328,7 @@ async function loadPost(slug) {
   fields.title.value = data.post.title;
   fields.tag.value = data.post.tag || defaultTag(state.editingKind);
   fields.authorName.value = data.post.author_name || "";
+  fields.lastEditor.value = data.post.editor_name || "";
   fields.excerpt.value = data.post.excerpt || "";
   fields.coverUrl.value = data.post.cover_url || "";
   fields.markdown.value = data.markdown;
@@ -368,6 +370,7 @@ async function savePost(status) {
       });
       state.editingSlug = data.post.slug;
       state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
+      fields.lastEditor.value = data.post.editor_name || "";
       fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
       fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
       fields.message.textContent = data.post.status === "published" ? "已发布。" : "已保存为草稿。";
@@ -1058,6 +1061,7 @@ function resetEditor(kind = "article") {
   fields.title.value = "";
   fields.tag.value = defaultTag(state.editingKind);
   fields.authorName.value = "";
+  fields.lastEditor.value = "";
   fields.excerpt.value = "";
   fields.coverUrl.value = "";
   fields.coverFile.value = "";

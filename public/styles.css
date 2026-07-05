@@ -1154,16 +1154,16 @@
     .home-notice-actions[hidden]{
       display:none!important;
     }
-    [data-editable-block="post-info-card"] .pipeline{
+    .post-info-card .pipeline{
       gap:10px;
     }
-    [data-editable-block="post-info-card"] .pipeline-row{
+    .post-info-card .pipeline-row{
       grid-template-columns:max-content minmax(0,1fr);
       gap:10px;
       align-items:start;
       padding:12px 14px;
     }
-    [data-editable-block="post-info-card"] .pipeline-row strong{
+    .post-info-card .pipeline-row strong{
       min-width:2.25em;
     }
     .join-page .visual-card,

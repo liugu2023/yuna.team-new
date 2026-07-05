@@ -1784,6 +1784,7 @@ async function renderPost() {
     const viewNode = document.querySelector("[data-article-views]");
     const authorNode = document.querySelector("[data-article-author]");
     const authorRow = document.querySelector("[data-article-author-row]");
+    const tagNode = document.querySelector("[data-article-tag]");
     if (heroTitle) heroTitle.textContent = data.post.title;
     if (heroLead) heroLead.textContent = data.post.excerpt || "协会文章与学习记录。";
     if (published) published.textContent = publishedDate;
@@ -1792,6 +1793,7 @@ async function renderPost() {
     if (viewNode) viewNode.textContent = views;
     if (authorNode) authorNode.textContent = authorName;
     if (authorRow) authorRow.hidden = !authorName;
+    if (tagNode) tagNode.textContent = postTag(data.post);
     article.innerHTML = `
       <div class="meta">${authorName ? `<span>作者 ${escapeHtml(authorName)}</span>` : ""}${postTimeMetaHtml(data.post)}${editedAfterPublish && editorName ? `<span>编辑 ${escapeHtml(editorName)}</span>` : ""}${data.post.status === "published" ? "" : "<span>草稿</span>"}<span>${escapeHtml(postTag(data.post))}</span><span>${views}</span></div>
       ${markdownToHtml(stripDuplicateLeadingTitle(data.markdown, data.post.title))}
