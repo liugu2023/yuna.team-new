@@ -1,4 +1,4 @@
-import { getCookie, serializeCookie, signValue, verifySignedValue } from "./cookies";
+import { getCookie, serializeCookie, signValue, timingSafeStringEqual, verifySignedValue } from "./cookies";
 import type { Env, UserSession } from "./types";
 
 export const SESSION_COOKIE = "yuna_session";
@@ -100,7 +100,7 @@ export async function getContentEditorIdentity(env: Env, request: Request): Prom
 
 export function getR2MigrationIdentity(env: Env, request: Request): string | null {
   const token = bearerToken(request);
-  if (env.R2_MIGRATION_TOKEN && token && token === env.R2_MIGRATION_TOKEN) {
+  if (env.R2_MIGRATION_TOKEN && token && timingSafeStringEqual(token, env.R2_MIGRATION_TOKEN)) {
     return "r2-migration";
   }
 

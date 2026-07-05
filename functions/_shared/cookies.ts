@@ -72,3 +72,8 @@ function timingSafeEqual(a: string, b: string): boolean {
   }
   return result === 0;
 }
+
+// 供 Bearer token 等明文凭据比较使用，避免逐字符短路暴露时序信息。
+export function timingSafeStringEqual(a: string, b: string): boolean {
+  return timingSafeEqual(a, b);
+}

@@ -1,5 +1,7 @@
 import { badRequest, json, notFound, readJson } from "../../_shared/http";
+import { getCookie, serializeCookie } from "../../_shared/cookies";
 import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
+import { toPublicPost } from "../../_shared/sanitize";
 import { getSession, isAllowedAdmin } from "../../_shared/session";
 import type { Env, PostRecord } from "../../_shared/types";
 
@@ -14,7 +16,7 @@ interface UpdatePostPayload {
   markdown?: string;
 }
 
-export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, request }) => {
+export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, request, waitUntil }) => {
   const slug = routeSlug(params.slug);
   const session = await getSession(env, request);
   const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
@@ -24,21 +26,34 @@ export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   if (!post || (post.status !== "published" && !canSeeDrafts)) return notFound("文章不存在");
 
+  const headers = new Headers();
   if (post.status === "published" && !canSeeDrafts) {
-    await env.BLOG_DB.prepare(
-      "UPDATE posts SET view_count = COALESCE(view_count, 0) + 1 WHERE slug = ?",
-    )
-      .bind(slug)
-      .run();
-
-    const updated = await env.BLOG_DB.prepare("SELECT * FROM posts WHERE slug = ?")
-      .bind(slug)
-      .first<PostRecord>();
-    if (updated) return json({ post: updated, markdown: updated.markdown_content ?? "" });
+    // 同一浏览器 30 分钟内重复打开同一篇不再累计，Cookie 按接口路径隔离；
+    // 计数写入放到响应之后异步执行，正常阅读只花一次 D1 读。
+    const viewCookie = `yuna_v_${await slugHash(slug)}`;
+    if (getCookie(request, viewCookie) !== "1") {
+      post.view_count = Number(post.view_count || 0) + 1;
+      waitUntil(
+        env.BLOG_DB.prepare("UPDATE posts SET view_count = COALESCE(view_count, 0) + 1 WHERE slug = ?")
+          .bind(slug)
+          .run(),
+      );
+      headers.set(
+        "set-cookie",
+        serializeCookie(viewCookie, "1", { maxAge: 1800, path: new URL(request.url).pathname }),
+      );
+    }
   }
 
-  return json({ post, markdown: post.markdown_content ?? "" });
+  return json({ post: toPublicPost(post), markdown: post.markdown_content ?? "" }, { headers });
 };
+
+async function slugHash(slug: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(slug));
+  return Array.from(new Uint8Array(digest).slice(0, 5))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, request, waitUntil }) => {
   const session = await getSession(env, request);
@@ -104,7 +119,7 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   queueMarkdownGithubSync(env, waitUntil, "post:update", session.user_email);
 
-  return json({ post: updated });
+  return json({ post: updated ? toPublicPost(updated) : null });
 };
 
 function isValidStatus(value: string): value is "draft" | "published" {

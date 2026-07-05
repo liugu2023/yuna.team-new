@@ -1,5 +1,6 @@
 import { badRequest, json, readJson } from "../../_shared/http";
 import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
+import { toPublicPost } from "../../_shared/sanitize";
 import { getSession, isAllowedAdmin } from "../../_shared/session";
 import type { Env, PostRecord } from "../../_shared/types";
 
@@ -26,7 +27,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const session = await getSession(env, request);
   const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
   const includeAll = includeDrafts && canSeeDrafts;
-  const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_email, author_name, editor_name, created_at, updated_at, published_at, view_count";
+  // 列表不输出 author_email：公开接口不暴露成员登录邮箱，展示用 author_name。
+  const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_name, editor_name, created_at, updated_at, published_at, view_count";
 
   const query = includeAll
     ? `SELECT ${columns} FROM posts WHERE kind = ? ORDER BY COALESCE(published_at, updated_at) DESC${usePagination ? " LIMIT ? OFFSET ?" : ""}`
@@ -114,7 +116,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
 
   queueMarkdownGithubSync(env, waitUntil, "post:create", session.user_email);
 
-  return json({ post }, { status: 201 });
+  return json({ post: post ? toPublicPost(post) : null }, { status: 201 });
 };
 
 function isValidStatus(value: string): value is "draft" | "published" {

@@ -901,10 +901,12 @@ async function renderHomeHero() {
     if (!Array.isArray(items) || !items.length) return;
 
     const active = items.find((item) => item.active) || items[0];
-    if (!active?.url) return;
+    // 走展示白名单并转义引号/反斜杠，避免 URL 打破 CSS url("...") 上下文。
+    const background = safeDisplayAssetUrl(active?.url).replace(/\\/g, "%5C").replace(/"/g, "%22");
+    if (!background) return;
 
     const target = hero.querySelector(".hero-bg") || hero;
-    target.style.backgroundImage = `url("${normalizeAssetUrl(active.url)}")`;
+    target.style.backgroundImage = `url("${background}")`;
     hero.classList.add("has-background");
   } catch {
     hero.classList.remove("has-background");

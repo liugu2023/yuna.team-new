@@ -82,13 +82,14 @@ export async function uploadMultipartMediaPart(
   }
   if (!request.body) return badRequest("缺少上传内容");
 
-  const declaredLength = Number(request.headers.get("content-length") || "0");
-  if (declaredLength > MULTIPART_UPLOAD_MAX_PART_BYTES) {
+  // content-length 头可以伪造或缺失（chunked），这里按实际字节校验上限。
+  const buffer = await request.arrayBuffer();
+  if (buffer.byteLength > MULTIPART_UPLOAD_MAX_PART_BYTES) {
     return badRequest("单个分片不能超过 16MB");
   }
 
   const upload = env.BLOG_BUCKET.resumeMultipartUpload(mediaKey(path), uploadId);
-  const part = await upload.uploadPart(partNumber, request.body);
+  const part = await upload.uploadPart(partNumber, buffer);
   return json(part);
 }
 

@@ -1,4 +1,5 @@
 import { badRequest, json } from "../../_shared/http";
+import { toPublicSiteRecord, type PublicSiteRecord } from "../../_shared/sanitize";
 import type { Env, SiteRecord } from "../../_shared/types";
 
 // 批量读取站点文案：GET /api/site?keys=a,b,c
@@ -26,9 +27,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     .bind(...keys)
     .all<SiteRecord>();
 
-  const records: Record<string, SiteRecord | null> = {};
+  const records: Record<string, PublicSiteRecord | null> = {};
   for (const key of keys) records[key] = null;
-  for (const record of results || []) records[record.key] = record;
+  for (const record of results || []) records[record.key] = toPublicSiteRecord(record);
 
   return json({ records });
 };

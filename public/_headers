@@ -1,0 +1,11 @@
+# 全站安全响应头。只作用于静态资源；Functions 响应（/api/*、/media/*）
+# 在代码里单独设置需要的头。页面存在少量内联启动脚本和内联样式，
+# 因此 script/style 保留 'unsafe-inline'，CSP 主要用于阻断外部脚本注入、
+# 插件内容、嵌套劫持和表单外发。
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests

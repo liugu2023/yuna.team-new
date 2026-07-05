@@ -75,6 +75,12 @@ export function isAllowedMediaMigrationPath(env: Env, path: string): boolean {
   return prefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 }
 
+// 内容编辑入口（/api/content/*）只允许写固定页面编辑器使用的 pages/ 前缀，
+// 文章、头像、站点资源等其余前缀只能走管理端上传。
+export function isContentEditorMediaPath(path: string): boolean {
+  return path.startsWith("pages/");
+}
+
 function mediaMigrationPrefixes(env: Env): string[] {
   const raw = (env.R2_MIGRATION_PREFIXES || "activates").trim();
   return raw

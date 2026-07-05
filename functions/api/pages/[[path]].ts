@@ -1,5 +1,6 @@
 import { badRequest, json, notFound, readJson } from "../../_shared/http";
 import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
+import { toPublicSiteRecord } from "../../_shared/sanitize";
 import { getContentEditorIdentity } from "../../_shared/session";
 import { getSiteRecord, upsertSiteRecord } from "../../_shared/site-records";
 import type { Env } from "../../_shared/types";
@@ -16,7 +17,7 @@ export const onRequestGet: PagesFunction<Env, "path"> = async ({ env, params }) 
   const record = await getSiteRecord(env, recordKey(page));
   if (!record || record.kind !== "markdown") return notFound("页面编辑记录不存在");
 
-  return json({ page: record });
+  return json({ page: toPublicSiteRecord(record) });
 };
 
 export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, request, waitUntil }) => {
@@ -45,7 +46,7 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
 
   queueMarkdownGithubSync(env, waitUntil, "page:update", editor);
 
-  return json({ page: record });
+  return json({ page: record ? toPublicSiteRecord(record) : null });
 };
 
 function pagePath(value: string | string[] | undefined): string {

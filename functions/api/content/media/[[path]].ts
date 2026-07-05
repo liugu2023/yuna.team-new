@@ -1,6 +1,7 @@
-import { badRequest, json } from "../../../_shared/http";
+import { badRequest, forbidden, json } from "../../../_shared/http";
 import {
   DIRECT_MEDIA_UPLOAD_MAX_BYTES,
+  isContentEditorMediaPath,
   isSafeMediaPath,
   mediaKey,
   mediaUrl,
@@ -20,6 +21,9 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
   const rawPath = normalizeMediaPath(Array.isArray(segments) ? segments.join("/") : String(segments || ""));
   if (!isSafeMediaPath(rawPath)) {
     return badRequest("媒体路径无效");
+  }
+  if (!isContentEditorMediaPath(rawPath)) {
+    return forbidden();
   }
 
   const declaredLength = Number(request.headers.get("content-length") || "0");
