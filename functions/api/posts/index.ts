@@ -4,6 +4,9 @@ import { toPublicPost } from "../../_shared/sanitize";
 import { getSession, isAllowedAdmin } from "../../_shared/session";
 import type { Env, PostRecord } from "../../_shared/types";
 
+// 署名与登录账号解绑：作者、最后编辑人都由后台手动维护，留空时统一落到协会名。
+const DEFAULT_CREDIT_NAME = "网络信息协会";
+
 interface CreatePostPayload {
   slug?: string;
   title?: string;
@@ -11,6 +14,7 @@ interface CreatePostPayload {
   excerpt?: string;
   cover_url?: string;
   author_name?: string;
+  editor_name?: string;
   status?: "draft" | "published";
   kind?: "article" | "knowledge";
   markdown?: string;
@@ -80,16 +84,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   const kind = normalizeKind(payload.kind);
   const tag = normalizeTag(payload.tag);
   const coverUrl = normalizeOptionalText(payload.cover_url);
-  // 作者名默认取当前登录用户的显示名，后台填写时可覆盖。
-  const authorName = normalizeOptionalText(payload.author_name) || session.user_name || "";
+  const authorName = normalizeOptionalText(payload.author_name) || DEFAULT_CREDIT_NAME;
+  const editorName = normalizeOptionalText(payload.editor_name) || DEFAULT_CREDIT_NAME;
 
   const publishedAt = status === "published" ? now : null;
   const r2Key = `db/${kind === "knowledge" ? "knowledge" : "posts"}/${slug}.md`;
 
   await env.BLOG_DB.prepare(
     `INSERT INTO posts
-      (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, created_at, updated_at, published_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, editor_name, created_at, updated_at, published_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -104,6 +108,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
       payload.markdown,
       session.user_email,
       authorName,
+      editorName,
       now,
       now,
       publishedAt,

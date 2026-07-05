@@ -67,6 +67,8 @@ const fields = {
 
 const editorModal = document.querySelector("[data-editor-modal]");
 const ADMIN_PAGE_SIZE = 10;
+// 作者与最后编辑人默认署协会名，不再取登录账号；两个字段都可手动改。
+const DEFAULT_CREDIT_NAME = "网络信息协会";
 
 // 异步操作期间锁住触发按钮：双击「发布」会创建两篇文章，导入/同步重复触发同理。
 async function withLockedButtons(selector, task) {
@@ -101,6 +103,7 @@ function editorSnapshot() {
     title: fields.title.value,
     tag: fields.tag.value,
     authorName: fields.authorName.value,
+    lastEditor: fields.lastEditor.value,
     excerpt: fields.excerpt.value,
     coverUrl: fields.coverUrl.value,
     markdown: fields.markdown.value,
@@ -327,8 +330,8 @@ async function loadPost(slug) {
   state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
   fields.title.value = data.post.title;
   fields.tag.value = data.post.tag || defaultTag(state.editingKind);
-  fields.authorName.value = data.post.author_name || "";
-  fields.lastEditor.value = data.post.editor_name || "";
+  fields.authorName.value = data.post.author_name || DEFAULT_CREDIT_NAME;
+  fields.lastEditor.value = data.post.editor_name || DEFAULT_CREDIT_NAME;
   fields.excerpt.value = data.post.excerpt || "";
   fields.coverUrl.value = data.post.cover_url || "";
   fields.markdown.value = data.markdown;
@@ -350,6 +353,7 @@ async function savePost(status) {
       title: fields.title.value.trim(),
       tag: fields.tag.value.trim(),
       author_name: fields.authorName.value.trim(),
+      editor_name: fields.lastEditor.value.trim(),
       excerpt: fields.excerpt.value.trim(),
       cover_url: fields.coverUrl.value.trim(),
       status,
@@ -370,7 +374,7 @@ async function savePost(status) {
       });
       state.editingSlug = data.post.slug;
       state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
-      fields.lastEditor.value = data.post.editor_name || "";
+      fields.lastEditor.value = data.post.editor_name || DEFAULT_CREDIT_NAME;
       fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
       fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
       fields.message.textContent = data.post.status === "published" ? "已发布。" : "已保存为草稿。";
@@ -1060,8 +1064,8 @@ function resetEditor(kind = "article") {
   state.editingKind = kind === "knowledge" ? "knowledge" : "article";
   fields.title.value = "";
   fields.tag.value = defaultTag(state.editingKind);
-  fields.authorName.value = "";
-  fields.lastEditor.value = "";
+  fields.authorName.value = DEFAULT_CREDIT_NAME;
+  fields.lastEditor.value = DEFAULT_CREDIT_NAME;
   fields.excerpt.value = "";
   fields.coverUrl.value = "";
   fields.coverFile.value = "";
