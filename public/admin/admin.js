@@ -1,6 +1,8 @@
 const state = {
   editingSlug: null,
   editingKind: "article",
+  // 打开编辑器时的 updated_at 快照，保存时回传做乐观锁校验。
+  editingUpdatedAt: null,
   editingMemberIndex: null,
   editingFameIndex: null,
   articlePage: 1,
@@ -145,8 +147,14 @@ async function bootAdmin() {
 
   const slug = new URLSearchParams(location.search).get("slug");
   if (slug) {
-    await loadPost(slug);
-    openEditor();
+    try {
+      await loadPost(slug);
+      openEditor();
+    } catch (error) {
+      // 错误要落在页面可见处；编辑器还没打开，fields.message 在隐藏的弹窗里看不见。
+      fields.postListMessage.textContent = `打开文章「${slug}」失败：${adminErrorText(error)}`;
+      updateEditorUrl("", state.editingKind);
+    }
   }
 }
 
@@ -248,7 +256,7 @@ function renderContentPagination(kind, total, page) {
 
 function renderContentLoadError(kind, error) {
   const config = contentConfig(kind);
-  const message = error?.message || "请求失败";
+  const message = adminErrorText(error);
   if (config.summary) config.summary.innerHTML = "";
   if (config.pagination) config.pagination.innerHTML = "";
   if (config.message) config.message.textContent = `加载失败：${message}`;
@@ -298,8 +306,13 @@ function renderContentList(kind) {
 
   config.list.querySelectorAll("[data-edit-post]").forEach((button) => {
     button.addEventListener("click", async () => {
-      await loadPost(button.dataset.editPost);
-      openEditor();
+      // loadPost 失败（会话过期、草稿被删等）时要把原因写到列表消息栏，而不是无声无息。
+      try {
+        await loadPost(button.dataset.editPost);
+        openEditor();
+      } catch (error) {
+        if (config.message) config.message.textContent = `加载文章失败：${adminErrorText(error)}`;
+      }
     });
   });
   config.list.querySelectorAll("[data-delete-post]").forEach((button) => {
@@ -328,6 +341,7 @@ async function loadPost(slug) {
   const data = await window.blog.fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
   state.editingSlug = slug;
   state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
+  state.editingUpdatedAt = data.post.updated_at || null;
   fields.title.value = data.post.title;
   fields.tag.value = data.post.tag || defaultTag(state.editingKind);
   fields.authorName.value = data.post.author_name || DEFAULT_CREDIT_NAME;
@@ -365,6 +379,9 @@ async function savePost(status) {
       ? `/api/posts/${encodeURIComponent(state.editingSlug)}`
       : "/api/posts";
     const method = state.editingSlug ? "PUT" : "POST";
+    if (state.editingSlug && state.editingUpdatedAt) {
+      payload.expected_updated_at = state.editingUpdatedAt;
+    }
 
     try {
       const data = await window.blog.fetchJson(url, {
@@ -374,6 +391,7 @@ async function savePost(status) {
       });
       state.editingSlug = data.post.slug;
       state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
+      state.editingUpdatedAt = data.post.updated_at || null;
       fields.lastEditor.value = data.post.editor_name || DEFAULT_CREDIT_NAME;
       fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
       fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
@@ -568,14 +586,30 @@ async function loadJsonRecord(key, messageEl) {
     messageEl.textContent = "";
     return JSON.parse(data.record.content || "[]");
   } catch (error) {
-    messageEl.textContent = error.status === 404 || error.message === "内容不存在"
-      ? "暂无内容，保存后会自动创建。"
-      : error.message;
-    return [];
+    if (error.status === 404 || error.message === "内容不存在") {
+      messageEl.textContent = "暂无内容，保存后会自动创建。";
+      return [];
+    }
+    // 其他错误返回 null 并禁止保存：整表读-改-写模式下，把空列表存回去会清空线上数据。
+    messageEl.textContent = `加载失败：${adminErrorText(error)}。为防止覆盖线上数据，已禁止保存，请刷新重试。`;
+    return null;
   }
 }
 
+function adminErrorText(error) {
+  if (error?.status === 401) return "登录已过期，请刷新页面重新登录";
+  return error?.message || "请求失败";
+}
+
+function ensureFixedListLoaded(items, messageEl) {
+  if (Array.isArray(items)) return true;
+  messageEl.textContent = "列表尚未加载成功，不能保存。请刷新页面重试。";
+  return false;
+}
+
 async function saveMemberEntry() {
+  if (!ensureFixedListLoaded(state.members, fields.memberMessage)) return;
+
   const item = {
     term: fields.memberTerm.value.trim(),
     department: normalizeMemberDepartment(fields.memberDepartment.value),
@@ -599,18 +633,26 @@ async function saveMemberEntry() {
     return;
   }
 
+  // 保存失败时回滚本地列表，同时保留表单内容供重试。
+  const previous = [...state.members];
   if (Number.isInteger(state.editingMemberIndex) && state.members[state.editingMemberIndex]) {
     state.members[state.editingMemberIndex] = item;
   } else {
     state.members.push(item);
   }
-
-  clearMemberForm();
   renderFixedList(state.members, fields.memberList, "members");
-  await saveMembers();
+
+  if (await saveMembers()) {
+    clearMemberForm();
+  } else {
+    state.members = previous;
+  }
+  renderFixedList(state.members, fields.memberList, "members");
 }
 
 async function saveFameEntry() {
+  if (!ensureFixedListLoaded(state.fameItems, fields.fameMessage)) return;
+
   const item = {
     term: "",
     department: "",
@@ -634,23 +676,28 @@ async function saveFameEntry() {
     return;
   }
 
+  const previous = [...state.fameItems];
   if (Number.isInteger(state.editingFameIndex) && state.fameItems[state.editingFameIndex]) {
     state.fameItems[state.editingFameIndex] = item;
   } else {
     state.fameItems.push(item);
   }
-
-  clearFameForm();
   renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
-  await saveFame();
+
+  if (await saveFame()) {
+    clearFameForm();
+  } else {
+    state.fameItems = previous;
+  }
+  renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
 }
 
 async function saveMembers() {
-  await saveFixedRecord("members", "协会成员", state.members, fields.memberMessage);
+  return saveFixedRecord("members", "协会成员", state.members, fields.memberMessage);
 }
 
 async function saveFame() {
-  await saveFixedRecord("hall-of-fame", "网协名人堂", state.fameItems, fields.fameMessage);
+  return saveFixedRecord("hall-of-fame", "网协名人堂", state.fameItems, fields.fameMessage);
 }
 
 async function saveFixedRecord(key, title, items, messageEl) {
@@ -665,12 +712,18 @@ async function saveFixedRecord(key, title, items, messageEl) {
       }),
     });
     messageEl.textContent = "已保存，并写入增量备份。";
+    return true;
   } catch (error) {
-    messageEl.textContent = error.message;
+    messageEl.textContent = `保存失败：${adminErrorText(error)}`;
+    return false;
   }
 }
 
 function renderFixedList(items, listEl, type) {
+  if (!Array.isArray(items)) {
+    listEl.innerHTML = '<p class="empty-state error">列表加载失败，暂不能编辑。请刷新页面重试。</p>';
+    return;
+  }
   if (!items.length) {
     listEl.innerHTML = '<p class="empty-state">当前暂无条目。</p>';
     return;
@@ -765,6 +818,7 @@ async function handleFixedListClick(event) {
 
 function editFixedItem(type, index) {
   const target = type === "members" ? state.members : state.fameItems;
+  if (!Array.isArray(target)) return;
   const item = target[index];
   if (!item) return;
 
@@ -801,12 +855,15 @@ function editFixedItem(type, index) {
 async function removeFixedItem(type, index) {
   const isMembers = type === "members";
   const target = isMembers ? state.members : state.fameItems;
+  if (!Array.isArray(target) || !target[index]) return;
   const item = target[index];
-  if (!item) return;
 
   // 删除按钮紧挨着编辑按钮，误触即整表落库，必须先确认。
   const noun = isMembers ? "成员" : "名人堂条目";
   if (!confirm(`确定删除${noun}「${item.name || "未命名"}」吗？删除后立即保存并在前台生效。`)) return;
+
+  // 保存失败时回滚列表并复位编辑状态，保证本地与线上一致。
+  const previous = [...target];
 
   target.splice(index, 1);
 
@@ -816,7 +873,11 @@ async function removeFixedItem(type, index) {
       state.editingMemberIndex -= 1;
     }
     renderFixedList(state.members, fields.memberList, "members");
-    await saveMembers();
+    if (!(await saveMembers())) {
+      state.members = previous;
+      clearMemberForm();
+      renderFixedList(state.members, fields.memberList, "members");
+    }
     return;
   }
 
@@ -825,7 +886,11 @@ async function removeFixedItem(type, index) {
     state.editingFameIndex -= 1;
   }
   renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
-  await saveFame();
+  if (!(await saveFame())) {
+    state.fameItems = previous;
+    clearFameForm();
+    renderFixedList(state.fameItems, fields.fameList, "hall-of-fame");
+  }
 }
 
 function clearMemberForm() {
@@ -1068,6 +1133,7 @@ function renderObjectSamples(items, emptyText) {
 function resetEditor(kind = "article") {
   state.editingSlug = null;
   state.editingKind = kind === "knowledge" ? "knowledge" : "article";
+  state.editingUpdatedAt = null;
   fields.title.value = "";
   fields.tag.value = defaultTag(state.editingKind);
   fields.authorName.value = DEFAULT_CREDIT_NAME;
@@ -1166,6 +1232,13 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && editorModal && !editorModal.hidden) closeEditor();
   if (event.key === "Escape" && fields.importModal && !fields.importModal.hidden) closeImportModal();
 });
+// 编辑器开着且有未保存修改时，拦一下刷新/关标签/后退，避免整篇稿子无声丢失。
+window.addEventListener("beforeunload", (event) => {
+  if (editorModal && !editorModal.hidden && isEditorDirty()) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+});
 bindElement(fields.markdown, "keydown", (event) => {
   if (event.key !== "Tab") return;
   event.preventDefault();
@@ -1254,5 +1327,9 @@ bindElement(fields.excerpt, "input", updatePreview, "data-excerpt");
 bindElement(fields.coverUrl, "input", updatePreview, "data-cover-url");
 bindElement(fields.markdown, "input", updatePreview, "data-markdown");
 bootAdmin().catch((error) => {
-  fields.message.textContent = error.message;
+  console.error("后台初始化失败", error);
+  // fields.message 在隐藏的编辑器弹窗里，初始化错误必须写到页面可见的列表消息栏。
+  if (fields.postListMessage) {
+    fields.postListMessage.textContent = `后台初始化失败：${adminErrorText(error)}`;
+  }
 });

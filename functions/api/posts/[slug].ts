@@ -18,6 +18,8 @@ interface UpdatePostPayload {
   status?: "draft" | "published";
   kind?: "article" | "knowledge";
   markdown?: string;
+  // 乐观锁：客户端回传打开编辑器时的 updated_at，服务端不一致即拒绝，防止双开互相覆盖。
+  expected_updated_at?: string;
 }
 
 export const onRequestGet: PagesFunction<Env, "slug"> = async ({ env, params, request, waitUntil }) => {
@@ -80,6 +82,14 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   if (payload.status !== undefined && !isValidStatus(payload.status)) {
     return badRequest("文章状态无效");
+  }
+
+  // 旧客户端不带 expected_updated_at 时跳过校验，保持兼容。
+  if (payload.expected_updated_at !== undefined && payload.expected_updated_at !== post.updated_at) {
+    return json(
+      { error: "文章已被其他人修改过，为避免覆盖已拒绝保存。请先复制当前编辑内容，刷新后再合并保存。" },
+      { status: 409 },
+    );
   }
 
   const now = new Date().toISOString();
