@@ -30,6 +30,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const offset = (page - 1) * perPage;
   const session = await getSession(env, request);
   const canSeeDrafts = Boolean(session && isAllowedAdmin(env, session));
+  // 显式要草稿但没有权限时直接 401，而不是静默降级成已发布列表——
+  // 否则后台会话过期后草稿会"凭空消失"，看起来像数据被删了。
+  if (includeDrafts && !canSeeDrafts) {
+    return json({ error: "需要管理员登录" }, { status: 401 });
+  }
   const includeAll = includeDrafts && canSeeDrafts;
   // 列表不输出 author_email：公开接口不暴露成员登录邮箱，展示用 author_name。
   const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_name, editor_name, created_at, updated_at, published_at, view_count";

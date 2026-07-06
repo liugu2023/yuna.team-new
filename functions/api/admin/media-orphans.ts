@@ -85,7 +85,7 @@ async function classifyObjects(env: Env): Promise<Classification> {
 
     if (object.key.startsWith("media/")) {
       const path = object.key.slice("media/".length);
-      if (referencedMediaPaths.has(path)) {
+      if (isReferencedMediaPath(path, referencedMediaPaths)) {
         result.referencedCount += 1;
       } else {
         result.orphanMedia.push(object);
@@ -120,7 +120,7 @@ async function listAllObjects(env: Env): Promise<ObjectEntry[]> {
 }
 
 // 从数据库所有可能含媒体链接的文本里，提取出被引用的媒体 path（去掉 /media/ 前缀、解码）。
-async function collectReferencedMediaPaths(env: Env): Promise<Set<string>> {
+async function collectReferencedMediaPaths(env: Env): Promise<ReferencedMediaPaths> {
   const [posts, siteRecords, backups] = await Promise.all([
     env.BLOG_DB.prepare("SELECT markdown_content, excerpt, cover_url FROM posts").all<
       Pick<PostRecord, "markdown_content" | "excerpt" | "cover_url">
@@ -151,7 +151,20 @@ async function collectReferencedMediaPaths(env: Env): Promise<Set<string>> {
     referenced.add(decodePath(`avatars/${match[0].slice("/avatars/".length)}`));
   }
 
-  return referenced;
+  // 提取正则在 ) 处截断：历史内容里未编码的 "file (1).pdf" 链接只会提取到 "file (1"。
+  // 含 "(" 的引用（无论截断还是编码后解码得到）额外按前缀保守匹配，宁可少删不误删。
+  const truncatedPrefixes = [...referenced].filter((path) => path.includes("("));
+  return { exact: referenced, truncatedPrefixes };
+}
+
+interface ReferencedMediaPaths {
+  exact: Set<string>;
+  truncatedPrefixes: string[];
+}
+
+function isReferencedMediaPath(path: string, referenced: ReferencedMediaPaths): boolean {
+  if (referenced.exact.has(path)) return true;
+  return referenced.truncatedPrefixes.some((prefix) => path.startsWith(prefix));
 }
 
 function decodePath(path: string): string {

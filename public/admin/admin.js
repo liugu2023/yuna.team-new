@@ -419,7 +419,7 @@ async function insertImageFile(file) {
   try {
     fields.message.textContent = "图片上传中…";
     const data = await uploadImage(file, `${contentFolder()}/${state.editingSlug || "drafts"}`);
-    insertAtCursor(fields.markdown, `\n![${file.name}](${data.url})\n`);
+    insertAtCursor(fields.markdown, `\n![${cleanDocumentName(file.name)}](${data.url})\n`);
     fields.message.textContent = `图片已上传：${data.url}`;
     updatePreview();
   } catch (error) {
@@ -542,8 +542,9 @@ function uploadPercent(loaded, total) {
 }
 
 function cleanDocumentName(value) {
+  // ()[] 会破坏 Markdown 链接语法和孤儿检测的 URL 提取（Windows 副本文件名常带括号），一并替换。
   return (value || "file")
-    .replace(/[\\/:*?"<>|#%&{}$!`'@+=]/g, "-")
+    .replace(/[\\/:*?"<>|#%&{}$!`'@+=()[\]]/g, "-")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 120) || "file";
@@ -800,7 +801,12 @@ function editFixedItem(type, index) {
 async function removeFixedItem(type, index) {
   const isMembers = type === "members";
   const target = isMembers ? state.members : state.fameItems;
-  if (!target[index]) return;
+  const item = target[index];
+  if (!item) return;
+
+  // 删除按钮紧挨着编辑按钮，误触即整表落库，必须先确认。
+  const noun = isMembers ? "成员" : "名人堂条目";
+  if (!confirm(`确定删除${noun}「${item.name || "未命名"}」吗？删除后立即保存并在前台生效。`)) return;
 
   target.splice(index, 1);
 

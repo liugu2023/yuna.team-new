@@ -385,8 +385,9 @@ function inlineMarkdown(html) {
     return `\u0000${codeSpans.length - 1}\u0000`;
   });
 
+  // URL 部分允许一层成对括号，兼容历史内容里未编码的 "file (1).pdf" 类链接。
   const rendered = withPlaceholders
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, src) => {
+    .replace(/!\[([^\]]*)\]\(((?:[^()]|\([^()]*\))+)\)/g, (_match, alt, src) => {
       const safeSrc = normalizeAssetUrl(src);
       return `<img src="${safeSrc}" alt="${alt}" loading="lazy">`;
     })
@@ -394,7 +395,7 @@ function inlineMarkdown(html) {
     .replace(/~~(.*?)~~/g, "<del>$1</del>")
     .replace(/\*(.*?)\*/g, "<em>$1</em>")
     .replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g,
+      /\[([^\]]+)\]\(((?:[^()]|\([^()]*\))+)\)/g,
       (_match, label, href) => {
         const safeHref = href.startsWith("http") || href.startsWith("/") || href.startsWith("mailto:")
           ? normalizeInternalHref(href)
@@ -2379,9 +2380,10 @@ function insertAtCursor(textarea, text) {
 }
 
 function uploadFilename(name) {
+  // ()[] 会破坏 Markdown 链接语法和孤儿检测的 URL 提取，与非法字符一并替换。
   const fallback = "image.png";
   return (name || fallback)
-    .replace(/[\\/:*?"<>|#%&{}$!`'@+=]/g, "-")
+    .replace(/[\\/:*?"<>|#%&{}$!`'@+=()[\]]/g, "-")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .slice(0, 96) || fallback;

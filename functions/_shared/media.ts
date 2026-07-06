@@ -67,7 +67,16 @@ export function mediaKey(path: string): string {
 }
 
 export function mediaUrl(path: string): string {
-  return `/media/${path.split("/").map(encodeURIComponent).join("/")}`;
+  return `/media/${path.split("/").map(encodeMediaSegment).join("/")}`;
+}
+
+// encodeURIComponent 会放过 ()!'*，其中括号会截断 Markdown 链接和孤儿检测的 URL 提取，
+// 这里补齐编码，保证生成的 /media/ 链接不含裸括号等歧义字符。
+function encodeMediaSegment(segment: string): string {
+  return encodeURIComponent(segment).replace(
+    /[()!'*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")}`,
+  );
 }
 
 export function isAllowedMediaMigrationPath(env: Env, path: string): boolean {
