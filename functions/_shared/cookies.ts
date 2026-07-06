@@ -6,7 +6,14 @@ export function getCookie(request: Request, name: string): string | null {
 
   for (const part of header.split(";")) {
     const [rawKey, ...rawValue] = part.trim().split("=");
-    if (rawKey === name) return decodeURIComponent(rawValue.join("="));
+    if (rawKey !== name) continue;
+    const joined = rawValue.join("=");
+    try {
+      return decodeURIComponent(joined);
+    } catch {
+      // 百分号编码损坏的 Cookie 按原样返回，让签名校验去拒绝，而不是整条请求 500。
+      return joined;
+    }
   }
 
   return null;

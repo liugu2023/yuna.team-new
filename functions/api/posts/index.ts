@@ -80,7 +80,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
 
   // 链接标识由后台自动分配：优先用传入值（兼容旧调用），否则从标题生成，并保证唯一。
   const base = normalizeSlug(payload.slug || title) || "post";
-  const slug = await ensureUniqueSlug(env, base);
+  let slug = await ensureUniqueSlug(env, base);
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -93,32 +93,41 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   const editorName = normalizeOptionalText(payload.editor_name) || DEFAULT_CREDIT_NAME;
 
   const publishedAt = status === "published" ? now : null;
-  const r2Key = `db/${kind === "knowledge" ? "knowledge" : "posts"}/${slug}.md`;
 
-  await env.BLOG_DB.prepare(
-    `INSERT INTO posts
-      (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, editor_name, created_at, updated_at, published_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  )
-    .bind(
-      id,
-      slug,
-      title,
-      tag,
-      payload.excerpt ?? "",
-      coverUrl,
-      status,
-      kind,
-      r2Key,
-      payload.markdown,
-      session.user_email,
-      authorName,
-      editorName,
-      now,
-      now,
-      publishedAt,
+  const insertPost = (slugValue: string) =>
+    env.BLOG_DB.prepare(
+      `INSERT INTO posts
+        (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, editor_name, created_at, updated_at, published_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .run();
+      .bind(
+        id,
+        slugValue,
+        title,
+        tag,
+        payload.excerpt ?? "",
+        coverUrl,
+        status,
+        kind,
+        `db/${kind === "knowledge" ? "knowledge" : "posts"}/${slugValue}.md`,
+        payload.markdown,
+        session.user_email,
+        authorName,
+        editorName,
+        now,
+        now,
+        publishedAt,
+      )
+      .run();
+
+  try {
+    await insertPost(slug);
+  } catch (error) {
+    // 查重与写入非原子，并发创建同名文章可能撞唯一约束；换随机后缀重试一次。
+    if (!isUniqueConstraintError(error)) throw error;
+    slug = `${base}-${crypto.randomUUID().slice(0, 8)}`;
+    await insertPost(slug);
+  }
 
   const post = await env.BLOG_DB.prepare("SELECT * FROM posts WHERE id = ?")
     .bind(id)
@@ -131,6 +140,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
 
 function isValidStatus(value: string): value is "draft" | "published" {
   return value === "draft" || value === "published";
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /UNIQUE constraint failed/i.test(message);
 }
 
 function normalizeTag(value: unknown): string {

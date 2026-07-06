@@ -392,10 +392,14 @@ async function savePost(status) {
       state.editingSlug = data.post.slug;
       state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
       state.editingUpdatedAt = data.post.updated_at || null;
+      // 服务端会把留空的署名/标签归一成默认值，回填保持表单与实际数据一致。
+      fields.authorName.value = data.post.author_name || DEFAULT_CREDIT_NAME;
       fields.lastEditor.value = data.post.editor_name || DEFAULT_CREDIT_NAME;
+      fields.tag.value = data.post.tag || defaultTag(state.editingKind);
       fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
       fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
       fields.message.textContent = data.post.status === "published" ? "已发布。" : "已保存为草稿。";
+      updatePreview();
       markEditorClean();
       await refreshPosts();
       updateEditorUrl(data.post.slug, state.editingKind);
@@ -405,14 +409,18 @@ async function savePost(status) {
   });
 }
 
+// 请求在途时忽略重复删除：双击会触发两次 confirm，第二次 DELETE 只会得到误导性的 404。
+const deletingSlugs = new Set();
+
 async function deletePost(slug) {
-  if (!slug) return;
+  if (!slug || deletingSlugs.has(slug)) return;
   const post = [...state.posts, ...state.knowledgePosts].find((item) => item.slug === slug);
   const title = post?.title || slug;
   const noun = post?.kind === "knowledge" ? "知识库条目" : "文章";
   if (!confirm(`确定删除${noun}「${title}」吗？此操作不可恢复。`)) return;
   const messageEl = post?.kind === "knowledge" ? fields.knowledgeListMessage : fields.postListMessage;
 
+  deletingSlugs.add(slug);
   try {
     messageEl.textContent = `正在删除${noun}...`;
     await window.blog.fetchJson(`/api/posts/${encodeURIComponent(slug)}`, {
@@ -424,7 +432,9 @@ async function deletePost(slug) {
     await refreshPosts();
     messageEl.textContent = `${noun}已删除。`;
   } catch (error) {
-    messageEl.textContent = error.message;
+    messageEl.textContent = adminErrorText(error);
+  } finally {
+    deletingSlugs.delete(slug);
   }
 }
 
@@ -452,65 +462,74 @@ async function insertImageFiles(files) {
 }
 
 async function uploadPostImage() {
-  const file = fields.postImageFile.files[0];
-  if (!file) {
-    fields.message.textContent = "请选择文章图片。";
-    return;
-  }
-  await insertImageFile(file);
+  await withLockedButtons("[data-upload-post-image]", async () => {
+    const file = fields.postImageFile.files[0];
+    if (!file) {
+      fields.message.textContent = "请选择文章图片。";
+      return;
+    }
+    await insertImageFile(file);
+  });
 }
 
 async function uploadCoverImage() {
-  const file = fields.coverFile.files[0];
-  if (!file) {
-    fields.message.textContent = "请选择封面图。";
-    return;
-  }
-  if (!file.type.startsWith("image/")) {
-    fields.message.textContent = "封面图必须是图片文件。";
-    return;
-  }
+  await withLockedButtons("[data-upload-cover]", async () => {
+    const file = fields.coverFile.files[0];
+    if (!file) {
+      fields.message.textContent = "请选择封面图。";
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      fields.message.textContent = "封面图必须是图片文件。";
+      return;
+    }
 
-  try {
-    fields.message.textContent = "封面图上传中…";
-    const data = await uploadImage(file, `${contentFolder()}/${state.editingSlug || "drafts"}/cover`);
-    fields.coverUrl.value = data.url;
-    fields.coverFile.value = "";
-    fields.message.textContent = "封面图已设置。";
-    updatePreview();
-  } catch (error) {
-    fields.message.textContent = error.message;
-  }
+    try {
+      fields.message.textContent = "封面图上传中…";
+      const data = await uploadImage(file, `${contentFolder()}/${state.editingSlug || "drafts"}/cover`);
+      fields.coverUrl.value = data.url;
+      fields.coverFile.value = "";
+      fields.message.textContent = "封面图已设置。";
+      updatePreview();
+    } catch (error) {
+      fields.message.textContent = adminErrorText(error);
+    }
+  });
 }
 
 async function uploadPostFiles() {
-  const files = Array.from(fields.postFile.files || []);
-  if (!files.length) {
-    fields.message.textContent = "请选择要上传的附件资料。";
-    return;
-  }
-
-  const urls = [];
-  const folder = `${contentFolder()}/${state.editingSlug || "drafts"}/files`;
-  fields.message.textContent = "准备上传附件...";
-
-  try {
-    for (const [index, file] of files.entries()) {
-      const name = `${Date.now()}-${cleanDocumentName(file.name)}`;
-      const path = `${folder}/${name}`;
-      const data = await uploadMedia(file, path, (loaded, total) => {
-        fields.message.textContent = `正在上传附件 ${index + 1}/${files.length}：${file.name} ${uploadPercent(loaded, total)}`;
-      });
-      urls.push(data.url);
-      insertAtCursor(fields.markdown, `\n[点击下载](${data.url})\n`);
+  await withLockedButtons("[data-upload-post-file]", async () => {
+    const files = Array.from(fields.postFile.files || []);
+    if (!files.length) {
+      fields.message.textContent = "请选择要上传的附件资料。";
+      return;
     }
 
-    fields.postFile.value = "";
-    fields.message.textContent = `附件已上传：${urls.join(" ")}`;
-    updatePreview();
-  } catch (error) {
-    fields.message.textContent = error.message;
-  }
+    const urls = [];
+    const folder = `${contentFolder()}/${state.editingSlug || "drafts"}/files`;
+    fields.message.textContent = "准备上传附件...";
+
+    try {
+      for (const [index, file] of files.entries()) {
+        const name = `${Date.now()}-${cleanDocumentName(file.name)}`;
+        const path = `${folder}/${name}`;
+        const data = await uploadMedia(file, path, (loaded, total) => {
+          fields.message.textContent = `正在上传附件 ${index + 1}/${files.length}：${file.name} ${uploadPercent(loaded, total)}`;
+        });
+        urls.push(data.url);
+        insertAtCursor(fields.markdown, `\n[点击下载](${data.url})\n`);
+      }
+
+      fields.postFile.value = "";
+      fields.message.textContent = `附件已上传：${urls.join(" ")}`;
+      updatePreview();
+    } catch (error) {
+      // 清空选择，避免重试时把已成功的文件再传一遍、插入重复链接。
+      fields.postFile.value = "";
+      fields.message.textContent = `第 ${urls.length + 1} 个附件上传失败：${adminErrorText(error)}。前 ${urls.length} 个已插入正文，请重新选择未上传的文件。`;
+      updatePreview();
+    }
+  });
 }
 
 async function uploadMemberAvatar() {
@@ -937,8 +956,45 @@ function normalizeMemberDepartment(value) {
   return value === "组宣部" || value === "秘书处" ? "组宣秘书处" : value;
 }
 
-async function exportDatabase() {
-  fields.exportMessage.textContent = "正在下载导出文件...";
+// 导出走 fetch + blob 下载：直接 <a href> 在会话过期时会把整个后台导航到 401 JSON，
+// 且无法反馈失败原因；这里拦截点击，成功才触发下载。
+let exportingDatabase = false;
+
+async function exportDatabase(event) {
+  const link = event.target instanceof Element ? event.target.closest("a[data-export-db]") : null;
+  const href = link?.getAttribute("href");
+  if (!href) return;
+  event.preventDefault();
+  if (exportingDatabase) return;
+  exportingDatabase = true;
+
+  fields.exportMessage.textContent = "正在导出...";
+  try {
+    const response = await fetch(href);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      const error = new Error(data.error || `请求失败：${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
+    const blob = await response.blob();
+    const disposition = response.headers.get("content-disposition") || "";
+    const filename = disposition.match(/filename="([^"]+)"/)?.[1]
+      || `yuna-blog-db-${new Date().toISOString().slice(0, 10)}.json`;
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    fields.exportMessage.textContent = `导出完成：${filename}`;
+  } catch (error) {
+    fields.exportMessage.textContent = `导出失败：${adminErrorText(error)}`;
+  } finally {
+    exportingDatabase = false;
+  }
 }
 
 function openImportModal() {
