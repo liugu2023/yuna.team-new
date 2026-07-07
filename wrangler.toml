@@ -29,7 +29,7 @@ CONTROL_GROUP = "yuna-docs-edit"
 R2_MIGRATION_PREFIXES = "activates"
 
 # Markdown 自动备份到私有 GitHub 仓库；token 用 Pages secret GITHUB_BACKUP_TOKEN。
-GITHUB_BACKUP_REPO = "liugu2023/yuna-docs-backup"
+GITHUB_BACKUP_REPO = "yuna2017/yuna-docs-backup"
 GITHUB_BACKUP_BRANCH = "main"
 GITHUB_BACKUP_PATH = "yuna-blog"
 GITHUB_BACKUP_AUTHOR_NAME = "YUNA Blog Bot"
