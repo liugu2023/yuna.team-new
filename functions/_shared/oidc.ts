@@ -37,15 +37,11 @@ export async function getDiscovery(env: Env): Promise<OidcDiscovery> {
 
 // 站点可能通过多个 CNAME 域名访问,登录回调必须回到用户实际访问的域名,
 // 否则 oidc_state cookie 与回调不在同一域下,state 校验必然失败。
-// 请求 origin 在允许名单内就用它,否则退回 PUBLIC_BASE_URL 的规范域名。
 // 名单 = PUBLIC_BASE_URL + SSO_ALLOWED_HOSTS(逗号分隔,可写主机名或完整 origin)。
-export function redirectUri(env: Env, requestUrl: URL): string {
-  return new URL(env.AUTHENTIK_REDIRECT_PATH, resolveCallbackOrigin(env, requestUrl)).toString();
-}
-
-function resolveCallbackOrigin(env: Env, requestUrl: URL): string {
-  const canonical = new URL(env.PUBLIC_BASE_URL).origin;
-  const allowed = new Set([canonical]);
+export function allowedOrigins(env: Env): Set<string> {
+  const allowed = new Set<string>();
+  const canonical = canonicalOrigin(env);
+  if (canonical) allowed.add(canonical);
   for (const entry of (env.SSO_ALLOWED_HOSTS ?? "").split(",")) {
     const trimmed = entry.trim();
     if (!trimmed) continue;
@@ -55,7 +51,32 @@ function resolveCallbackOrigin(env: Env, requestUrl: URL): string {
       // 名单里的坏条目直接跳过,不影响其余域名登录。
     }
   }
-  return allowed.has(requestUrl.origin) ? requestUrl.origin : canonical;
+  return allowed;
+}
+
+function canonicalOrigin(env: Env): string | null {
+  try {
+    return new URL(env.PUBLIC_BASE_URL).origin;
+  } catch {
+    return null;
+  }
+}
+
+// 裸域可能经外部 CDN(如阿里云)反代回源 pages.dev,此时 request.url 是回源
+// Host 而非用户访问的域名,需要 CDN 回源时带 X-Forwarded-Host 头声明原始域名。
+// 该头只有落在允许名单内才被采信,直连伪造它拿不到任何名单外的回调地址。
+export function effectiveOrigin(env: Env, request: Request): string {
+  const allowed = allowedOrigins(env);
+  const forwarded = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  if (forwarded && allowed.has(`https://${forwarded}`)) return `https://${forwarded}`;
+
+  const requestOrigin = new URL(request.url).origin;
+  if (allowed.has(requestOrigin)) return requestOrigin;
+  return canonicalOrigin(env) ?? requestOrigin;
+}
+
+export function redirectUri(env: Env, request: Request): string {
+  return new URL(env.AUTHENTIK_REDIRECT_PATH, effectiveOrigin(env, request)).toString();
 }
 
 export async function exchangeCode(

@@ -16,9 +16,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     return new Response("登录回调无效，请重新登录。", { status: 400 });
   }
 
-  // 回调发生在用户实际访问的域名上,换码用的 redirect_uri 也按该域名解析,
-  // 与 login 时发给 Authentik 的保持一致。
-  const token = await exchangeCode(env, code, redirectUri(env, url));
+  // 回调发生在用户实际访问的域名上(可能由 CDN 反代转发),换码用的
+  // redirect_uri 也按同一规则解析,与 login 时发给 Authentik 的保持一致。
+  const token = await exchangeCode(env, code, redirectUri(env, request));
   const userInfo = await getUserInfo(env, token.access_token);
   const identity = userInfo.email ?? userInfo.preferred_username;
 

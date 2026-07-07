@@ -209,6 +209,12 @@ SSO_ALLOWED_HOSTS = "docs.example.com, blog.example.org"
 
 同时要把每个域名的回调地址加入 Authentik Provider 的 Redirect URIs，例如 `https://docs.example.com/auth/callback`。不在名单内的域名会退回 `PUBLIC_BASE_URL` 的规范回调地址。
 
+裸域(如 `yuna.team`)无法直接绑定为 Pages 自定义域时，可经外部 CDN(如阿里云 CDN)反代回源 `yuna-team-new.pages.dev`。此时需要在 CDN 上配置：
+
+- 回源 HOST：`yuna-team-new.pages.dev`，回源协议 HTTPS。
+- 自定义回源请求头：`X-Forwarded-Host: yuna.team`(Worker 只信任允许名单内的值，用于解析登录回调域名和 CSRF 同源判断)。
+- `/api/*` 与 `/auth/*` 必须不缓存，且回源时透传 Cookie、查询串，响应中的 Set-Cookie 不能被剥离，否则登录态无法建立。
+
 本地开发时，如果需要完整测试登录，也需要在 Authentik Provider 中加入本地回调地址：
 
 ```text

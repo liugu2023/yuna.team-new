@@ -1,3 +1,4 @@
+import { allowedOrigins } from "./_shared/oidc";
 import type { Env } from "./_shared/types";
 
 interface PostMetaRow {
@@ -78,10 +79,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, next }) => {
 
 function isAllowedOrigin(origin: string, url: URL, env: Env): boolean {
   if (origin === url.origin) return true;
-  try {
-    if (env.PUBLIC_BASE_URL && origin === new URL(env.PUBLIC_BASE_URL).origin) return true;
-  } catch {
-    // PUBLIC_BASE_URL 配置异常时忽略，仅按请求自身 origin 判断。
-  }
-  return false;
+  // 经外部 CDN 反代访问时浏览器的 Origin 是站点域名、回源 Host 是 pages.dev,
+  // 两者不相等;凡在登录允许名单内的域名都视为本站,不算跨站写请求。
+  return allowedOrigins(env).has(origin);
 }
