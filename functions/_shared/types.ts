@@ -7,6 +7,7 @@ export interface Env {
   AUTHENTIK_CLIENT_ID: string;
   AUTHENTIK_CLIENT_SECRET: string;
   AUTHENTIK_REDIRECT_PATH: string;
+  SSO_ALLOWED_HOSTS?: string;
   SESSION_SECRET: string;
   CONTROL_GROUP?: string;
   R2_MIGRATION_TOKEN?: string;

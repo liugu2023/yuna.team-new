@@ -162,6 +162,7 @@ PUBLIC_BASE_URL = "https://yuna.liugu.cc"
 AUTHENTIK_ISSUER = "https://sso.yuna.welain.com/application/o/yuna-docs/"
 AUTHENTIK_CLIENT_ID = "esxw1ynBDm6B6r5dzIdCtBfJ3ifkKVk7WbIRD7Py"
 AUTHENTIK_REDIRECT_PATH = "/auth/callback"
+SSO_ALLOWED_HOSTS = ""
 CONTROL_GROUP = "yuna-docs-edit"
 R2_MIGRATION_PREFIXES = "activates"
 GITHUB_BACKUP_REPO = ""
@@ -194,11 +195,19 @@ Issuer：
 https://sso.yuna.welain.com/application/o/yuna-docs/
 ```
 
-回调地址固定为：
+回调地址默认为：
 
 ```text
 https://yuna.liugu.cc/auth/callback
 ```
+
+站点支持通过多个 CNAME 域名访问。把额外域名写进 `SSO_ALLOWED_HOSTS`（逗号分隔，主机名或完整 origin 均可）后，登录会回调到用户实际访问的域名：
+
+```toml
+SSO_ALLOWED_HOSTS = "docs.example.com, blog.example.org"
+```
+
+同时要把每个域名的回调地址加入 Authentik Provider 的 Redirect URIs，例如 `https://docs.example.com/auth/callback`。不在名单内的域名会退回 `PUBLIC_BASE_URL` 的规范回调地址。
 
 本地开发时，如果需要完整测试登录，也需要在 Authentik Provider 中加入本地回调地址：
 

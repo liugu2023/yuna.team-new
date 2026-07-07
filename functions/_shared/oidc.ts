@@ -35,16 +35,40 @@ export async function getDiscovery(env: Env): Promise<OidcDiscovery> {
   return discovery;
 }
 
-export function redirectUri(env: Env): string {
-  return new URL(env.AUTHENTIK_REDIRECT_PATH, env.PUBLIC_BASE_URL).toString();
+// 站点可能通过多个 CNAME 域名访问,登录回调必须回到用户实际访问的域名,
+// 否则 oidc_state cookie 与回调不在同一域下,state 校验必然失败。
+// 请求 origin 在允许名单内就用它,否则退回 PUBLIC_BASE_URL 的规范域名。
+// 名单 = PUBLIC_BASE_URL + SSO_ALLOWED_HOSTS(逗号分隔,可写主机名或完整 origin)。
+export function redirectUri(env: Env, requestUrl: URL): string {
+  return new URL(env.AUTHENTIK_REDIRECT_PATH, resolveCallbackOrigin(env, requestUrl)).toString();
 }
 
-export async function exchangeCode(env: Env, code: string): Promise<TokenResponse> {
+function resolveCallbackOrigin(env: Env, requestUrl: URL): string {
+  const canonical = new URL(env.PUBLIC_BASE_URL).origin;
+  const allowed = new Set([canonical]);
+  for (const entry of (env.SSO_ALLOWED_HOSTS ?? "").split(",")) {
+    const trimmed = entry.trim();
+    if (!trimmed) continue;
+    try {
+      allowed.add(new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`).origin);
+    } catch {
+      // 名单里的坏条目直接跳过,不影响其余域名登录。
+    }
+  }
+  return allowed.has(requestUrl.origin) ? requestUrl.origin : canonical;
+}
+
+export async function exchangeCode(
+  env: Env,
+  code: string,
+  callbackUri: string,
+): Promise<TokenResponse> {
   const discovery = await getDiscovery(env);
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
-    redirect_uri: redirectUri(env),
+    // 必须与授权请求时的 redirect_uri 完全一致,否则 Authentik 拒绝换码。
+    redirect_uri: callbackUri,
     client_id: env.AUTHENTIK_CLIENT_ID,
     client_secret: env.AUTHENTIK_CLIENT_SECRET,
   });

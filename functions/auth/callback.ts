@@ -1,5 +1,5 @@
 import { getCookie, serializeCookie, verifySignedValue } from "../_shared/cookies";
-import { exchangeCode, getUserInfo } from "../_shared/oidc";
+import { exchangeCode, getUserInfo, redirectUri } from "../_shared/oidc";
 import { createSession } from "../_shared/session";
 import type { Env } from "../_shared/types";
 
@@ -16,7 +16,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     return new Response("登录回调无效，请重新登录。", { status: 400 });
   }
 
-  const token = await exchangeCode(env, code);
+  // 回调发生在用户实际访问的域名上,换码用的 redirect_uri 也按该域名解析,
+  // 与 login 时发给 Authentik 的保持一致。
+  const token = await exchangeCode(env, code, redirectUri(env, url));
   const userInfo = await getUserInfo(env, token.access_token);
   const identity = userInfo.email ?? userInfo.preferred_username;
 
