@@ -1995,7 +1995,7 @@ function renderMembersRecord(record, items) {
 }
 
 function renderMemberTerm(term, items, active) {
-  const departments = ["主席团", "开发部", "网络安全部", "运维部", "组宣秘书处", "技术支持"];
+  const departments = ["主席团", "开发部", "网络安全部", "运维部", "组宣秘书处"];
   return `
     <section data-term-panel="${escapeHtml(term)}" ${active ? "" : "hidden"}>
       ${departments
