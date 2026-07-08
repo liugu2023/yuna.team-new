@@ -1393,6 +1393,42 @@ async function renderUserNav() {
   }
 }
 
+// 备用账密登录(SSO 网关故障时的兜底):提交到 /api/auth/password-login,
+// 成功后与 OIDC 登录一样持有会话 Cookie,直接进后台。
+function initFallbackLogin() {
+  const form = document.querySelector("[data-fallback-login]");
+  if (!form) return;
+  const message = form.querySelector("[data-fallback-message]");
+  const submit = form.querySelector("[data-fallback-submit]");
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const username = form.username.value.trim();
+    const password = form.password.value;
+    if (!username || !password) return;
+
+    if (submit) submit.disabled = true;
+    if (message) {
+      message.hidden = true;
+      message.textContent = "";
+    }
+    try {
+      await fetchJson("/api/auth/password-login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      window.location.href = "/admin/";
+    } catch (error) {
+      if (message) {
+        message.textContent = error.message || "登录失败，请稍后再试。";
+        message.hidden = false;
+      }
+      if (submit) submit.disabled = false;
+    }
+  });
+}
+
 async function renderEditableBlocks() {
   const blocks = Array.from(document.querySelectorAll("[data-editable-block]"));
   if (!blocks.length) return;
@@ -2448,6 +2484,7 @@ window.blog = {
   renderKnowledgeBase,
   renderPost,
   renderUserNav,
+  initFallbackLogin,
   renderAdminOnlyActions,
   renderEditableBlocks,
   renderTeamRecords,

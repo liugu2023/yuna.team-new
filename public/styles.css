@@ -2539,3 +2539,10 @@
     .select-input option:hover,
     .select-input option:focus{background:#e6f5ff}
     .select-input option:checked{color:#0a6fb1;font-weight:900}
+
+    /* 备用账密登录(SSO 网关故障时的兜底入口,admin-login 登录卡内)。 */
+    .fallback-login{margin-top:24px}
+    .login-divider{display:flex;align-items:center;gap:12px;margin:0 0 18px;color:#7a90a8;font-size:13px;font-weight:800;white-space:nowrap}
+    .login-divider::before,.login-divider::after{content:"";flex:1;height:1px;background:rgba(20,84,150,.16)}
+    .fallback-login .btn{width:100%}
+    .fallback-login [data-fallback-message]{margin:12px 0 0;color:#c0392b}

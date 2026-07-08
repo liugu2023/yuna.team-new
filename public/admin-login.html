@@ -87,6 +87,13 @@
       <div class="field"><label>可用权限</label><input value="内容维护成员" data-block-field="permission" data-block-label="可用权限" readonly/></div>
       <a class="btn primary magnetic" href="/api/auth/login?return_to=%2Fadmin%2F">验证成员身份</a>
       <p class="meta login-message" data-login-message data-block-field="body">点击后将跳转到统一登录，验证通过后自动进入后台。</p>
+      <form class="fallback-login" data-fallback-login>
+        <div class="login-divider"><span>统一登录不可用时的备用入口</span></div>
+        <div class="field"><label for="fallbackUser">账号</label><input id="fallbackUser" name="username" type="text" autocomplete="username" required/></div>
+        <div class="field"><label for="fallbackPassword">密码</label><input id="fallbackPassword" name="password" type="password" autocomplete="current-password" required/></div>
+        <button class="btn secondary" type="submit" data-fallback-submit>备用登录</button>
+        <p class="meta" data-fallback-message hidden></p>
+      </form>
     </section>
   </div>
 </main>
@@ -96,6 +103,7 @@
 <script>
   window.blog.renderUserNav();
   window.blog.renderEditableBlocks();
+  window.blog.initFallbackLogin();
 </script>
 <script src="/yuna-ui.js"></script>
 </body>

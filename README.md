@@ -144,6 +144,8 @@ Cloudflare Pages 项目名以控制台为准。当前线上项目使用过 `yuna
 ```bash
 npx wrangler pages secret put AUTHENTIK_CLIENT_SECRET --project-name yuna-team-new
 npx wrangler pages secret put SESSION_SECRET --project-name yuna-team-new
+npx wrangler pages secret put FALLBACK_ADMIN_USER --project-name yuna-team-new
+npx wrangler pages secret put FALLBACK_ADMIN_PASSWORD --project-name yuna-team-new
 npx wrangler pages secret put R2_MIGRATION_TOKEN --project-name yuna-team-new
 npx wrangler pages secret put GITHUB_BACKUP_TOKEN --project-name yuna-team-new
 ```
@@ -152,6 +154,7 @@ npx wrangler pages secret put GITHUB_BACKUP_TOKEN --project-name yuna-team-new
 
 - `AUTHENTIK_CLIENT_SECRET`：Authentik OAuth Provider 的客户端密钥。
 - `SESSION_SECRET`：用于签名登录会话 Cookie，必须是随机长字符串。
+- `FALLBACK_ADMIN_USER` / `FALLBACK_ADMIN_PASSWORD`：备用账密登录凭据，见下方“备用账密登录”。
 - `R2_MIGRATION_TOKEN`：只用于旧媒体迁移脚本写入 R2，不具备后台管理权限。
 - `GITHUB_BACKUP_TOKEN`：写入私有 GitHub 备份仓库的 token。
 
@@ -229,6 +232,15 @@ http://localhost:8788/auth/callback
 - `CONTROL_GROUP` 为空时，没有任何登录用户拥有控制权限。
 
 用户组信息会在登录时写入会话。Authentik 侧改组后，用户需要退出并重新登录。
+
+## 备用账密登录
+
+Authentik 网关不可用时，后台入口页（`/admin-login.html`）提供备用账号密码登录，接口为 `POST /api/auth/password-login`。
+
+- 仅当 `FALLBACK_ADMIN_USER` 与 `FALLBACK_ADMIN_PASSWORD` 两个 secret 都已配置时启用；缺任一个接口返回 404。
+- 凭据核对通过后创建的会话与 OIDC 登录完全同构，用户组直接写入 `CONTROL_GROUP`，拥有全部后台权限；退出登录、会话过期逻辑一致。
+- 密码务必使用高强度随机串（建议 24 位以上）。校验失败统一延迟约 0.8 秒并返回相同文案，不区分账号或密码错误。
+- 这是应急通道：SSO 恢复后建议轮换或清空这两个 secret。
 
 调试权限时，登录后访问：
 
@@ -339,6 +351,7 @@ npm run media:migrate     # 旧媒体文件迁移到 R2
 鉴权接口：
 
 - `GET /api/auth/login`：跳转 Authentik 登录。
+- `POST /api/auth/password-login`：备用账密登录（需配置 fallback secrets）。
 - `GET /auth/callback`：OIDC 回调。
 - `POST /api/auth/logout`：退出登录。
 - `GET /api/auth/me`：获取当前登录用户。

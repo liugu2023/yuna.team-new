@@ -9,6 +9,8 @@ export interface Env {
   AUTHENTIK_REDIRECT_PATH: string;
   SSO_ALLOWED_HOSTS?: string;
   SESSION_SECRET: string;
+  FALLBACK_ADMIN_USER?: string;
+  FALLBACK_ADMIN_PASSWORD?: string;
   CONTROL_GROUP?: string;
   R2_MIGRATION_TOKEN?: string;
   R2_MIGRATION_PREFIXES?: string;
