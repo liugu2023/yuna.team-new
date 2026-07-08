@@ -730,19 +730,6 @@
       .nav a{
         padding:6px 0;
       }
-      .card:hover,
-      .aside-card:hover,
-      .knowledge-card:hover,
-      .resource-card:hover,
-      .member-card:hover,
-      .visual-card:hover,
-      .login-card:hover,
-      .stat:hover,
-      .tool-card:hover,
-      .admin-item:hover,
-      .site-map a:hover{
-        transform:none!important;
-      }
     }
 
     /* v9 reference restore: keep the approved page skeleton and micro-interactions. */
@@ -2311,14 +2298,6 @@
       .reveal{opacity:1!important;transform:none!important}
     }
 
-    /* 小屏导航：多行堆叠的顶栏不再吸顶（否则常驻吃掉约三分之一视口），
-       同时把导航链接点击区加大到 44px 触控标准。 */
-    @media(max-width:760px){
-      .topbar{position:static}
-      .nav{gap:2px 18px}
-      .nav a,.nav button,.nav .nav-link,.nav [data-user-nav]{display:inline-flex;align-items:center;min-height:44px}
-    }
-
     /* 入场动效只在 JS 就绪（<head> 里加 js 类）后启用：
        脚本加载失败或被禁用时内容保持可见，不再整页空白。 */
     .reveal{opacity:1;transform:none}
@@ -2345,3 +2324,202 @@
       .hero-wrap{min-height:100dvh}
       .hero{min-height:calc(100dvh - 78px)}
     }
+
+    /* ============ 触屏与移动端适配 ============
+       此段必须保持在文件末尾:前面多轮样式带 !important,只有排在最后才能稳定覆盖。 */
+
+    /* 触屏没有真正的悬停:点按触发的 :hover 位移和扫光会一直挂着,直到点别处才消失,
+       这是触屏端"不跟手"的主因。按指针能力(而非屏宽)关掉,触屏平板也能覆盖到。 */
+    @media (hover:none),(pointer:coarse){
+      .card:hover,.aside-card:hover,.knowledge-card:hover,.resource-card:hover,
+      .member-card:hover,.visual-card:hover,.login-card:hover,.stat:hover,
+      .tool-card:hover,.admin-item:hover,.site-map a:hover,
+      .btn:hover,.read-more:hover,.member-actions a:hover,.member-actions button:hover,
+      .tab:hover,.resource-tab:hover,.admin-tab:hover,
+      .team-term-button:hover,.contact-icon:hover,
+      .page-wrap .visual-orb:hover,.big-logo:hover{
+        transform:none!important;
+      }
+      .card:hover .flash,
+      .resource-card:hover .flash,
+      .member-card:hover .flash{
+        animation:none!important;
+        opacity:0!important;
+      }
+      /* 点按的即时反馈:轻微下压,松手立即回弹,替代粘滞 hover。 */
+      .btn:active,.read-more:active,.tab:active,.resource-tab:active,.admin-tab:active,
+      .member-actions a:active,.member-actions button:active,.team-term-button:active{
+        transform:scale(.97)!important;
+        transition:transform .08s ease!important;
+      }
+      .card:active,.aside-card:active,.knowledge-card:active,.resource-card:active,
+      .member-card:active,.tool-card:active,.site-map a:active{
+        transform:scale(.99)!important;
+        transition:transform .08s ease!important;
+      }
+    }
+
+    /* 移动端导航:顶栏恢复单行吸顶,链接收进汉堡按钮展开的下拉面板(按钮由 yuna-ui.js 注入)。 */
+    .nav-toggle{display:none}
+    @media (max-width:760px){
+      /* 下滑收起、上滑呼出(yuna-ui.js 控制 topbar-hide),阅读时顶栏不占屏。 */
+      .topbar{position:sticky;top:0;transition:transform .28s ease}
+      .topbar.topbar-hide{transform:translateY(-100%)}
+      .topbar-inner{flex-direction:row;align-items:center;height:56px;padding:0;gap:12px}
+      .brand{font-size:21px}
+      .nav-toggle{
+        display:inline-flex;
+        margin-left:auto;
+        flex:none;
+        width:44px;
+        height:44px;
+        position:relative;
+        padding:0;
+        border:1px solid rgba(170,205,236,.55);
+        border-radius:14px;
+        background:rgba(255,255,255,.72);
+        cursor:pointer;
+      }
+      .nav-toggle span{
+        position:absolute;
+        left:13px;
+        right:13px;
+        height:2px;
+        border-radius:999px;
+        background:var(--blue-ink,#0f4c81);
+        transition:transform .24s cubic-bezier(.2,.8,.2,1),opacity .18s ease;
+      }
+      .nav-toggle span:nth-child(1){top:15px}
+      .nav-toggle span:nth-child(2){top:21px}
+      .nav-toggle span:nth-child(3){top:27px}
+      .topbar.nav-open .nav-toggle span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+      .topbar.nav-open .nav-toggle span:nth-child(2){opacity:0}
+      .topbar.nav-open .nav-toggle span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+      .nav{
+        position:absolute;
+        left:0;
+        right:0;
+        top:100%;
+        z-index:29;
+        flex-direction:column;
+        align-items:stretch;
+        width:auto;
+        gap:0;
+        margin:0;
+        padding:6px 22px 10px;
+        background:rgba(250,253,255,.94)!important;
+        backdrop-filter:blur(24px) saturate(1.2);
+        -webkit-backdrop-filter:blur(24px) saturate(1.2);
+        border-bottom:1px solid rgba(170,205,236,.45);
+        box-shadow:0 26px 48px rgba(20,84,150,.14);
+        opacity:0;
+        visibility:hidden;
+        transform:translateY(-10px);
+        transition:opacity .22s ease,transform .26s cubic-bezier(.2,.8,.2,1),visibility .26s;
+      }
+      .topbar.nav-open .nav{opacity:1;visibility:visible;transform:none}
+      /* 登录区的包裹 span 摊平,让里面的链接/退出按钮直接成为竖排菜单项。 */
+      .nav [data-user-nav]{display:contents}
+      /* 菜单项做成细线分割的列表(不是按钮):压掉 640 断点给 .nav a 的胶囊底色和圆角。 */
+      .nav a,.nav button[data-logout],.nav .nav-link{
+        display:flex!important;
+        align-items:center;
+        justify-content:flex-start;
+        width:100%;
+        min-height:48px;
+        padding:4px 2px!important;
+        font-size:17px;
+        white-space:normal;
+        background:none;
+        border:0;
+        border-top:1px solid rgba(20,84,150,.12);
+        border-radius:0;
+        color:#245b82;
+      }
+      .nav>a:first-child{border-top:0}
+      .nav a.active{background:none;border-color:rgba(20,84,150,.12);color:var(--blue-solid);font-weight:600}
+      .nav a::after{display:none}
+    }
+
+    /* 移动端引导:单列后公告不再沉底。把 aside 摊平成 content-grid 的直接子项,
+       公告(招新入口)排到文章列表前面,热门博客留在列表后面。 */
+    @media (max-width:760px){
+      .home-page .content-grid>aside{display:contents}
+      .home-page .content-grid [data-home-notice]{order:-1}
+    }
+
+    /* 横滑标签条:还有更多内容时右缘渐隐提示(scroll-more 由 yuna-ui.js 维护,滑到底自动消失)。 */
+    @media (max-width:640px){
+      .tabs.scroll-more,.team-term-switcher.scroll-more,
+      .resource-tabs.scroll-more,.admin-tabs.scroll-more{
+        -webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 38px),transparent);
+        mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 38px),transparent);
+      }
+    }
+
+    /* 首页头图底部收尾:v9 restore 想恢复的渐变被 gradient-audit 的
+       `.hero-wrap .mist-bottom{background:#eef5ff!important}` 按优先级盖死,头图下缘
+       实际是一条纯色糊边,顶栏变矮后在移动端首屏露了出来。此处按同优先级、更后源序接回渐变;
+       元素约 53% 处被 hero-wrap 的 overflow 裁掉,渐变需在 52% 前落到实色,避免裁切硬边。 */
+    .hero-wrap .mist-bottom{
+      background:linear-gradient(180deg,rgba(238,245,255,0) 0%,rgba(238,245,255,.38) 24%,rgba(238,245,255,.88) 42%,#eef5ff 52%)!important;
+    }
+    /* 照片上的覆盖层同理被压成了均匀 42% 白雾(gradient-audit 的 .hero-wrap .hero-bg::before),
+       恢复 v9 的纵向渐变:顶部压暗保导航可读,中段放照片透出来,底部渐重接进 mist-bottom。 */
+    .hero-wrap .hero-bg::before{
+      background:linear-gradient(180deg,rgba(248,252,255,.56),rgba(248,252,255,.20) 22%,rgba(244,249,255,.08) 48%,rgba(239,246,255,.32) 74%,rgba(239,246,255,.76) 100%),linear-gradient(90deg,rgba(248,252,255,.26),rgba(248,252,255,.06) 26%,rgba(248,252,255,.05) 72%,rgba(248,252,255,.20))!important;
+    }
+    /* 手机竖屏 cover 只能显示原图中间约 29% 宽的一条,而这张图中间恰是天空+湖面的留白,
+       两侧才有内容。把焦点移到左侧"燕山大学"门塔,首屏不再是一片空。 */
+    @media (max-width:640px){
+      .hero-wrap .hero-bg{background-position:12% 50%}
+    }
+
+    /* 下拉框统一进站内风格:第 6 行的全局继承只写了 button,input,漏了 select——
+       全站下拉框一直是系统默认字体 + 原生箭头。补继承、去原生外观、自绘 chevron。 */
+    select{font:inherit}
+    .select-input{
+      appearance:none;
+      -webkit-appearance:none;
+      /* base-select 接管后按钮是普通盒子,min-height 撑高时文字会贴顶,自己居中。 */
+      display:inline-flex;
+      align-items:center;
+      font-weight:800;
+      color:#245b82;
+      cursor:pointer;
+      padding-right:42px;
+      background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%230f4c81' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;
+      background-position:right 16px center;
+      background-size:12px 8px;
+    }
+    /* 展开面板也接管成站内风格:Chromium 的可定制 select(base-select + ::picker)。
+       声明顺序在上面 appearance:none 之后——支持的浏览器用 base-select 接管面板,
+       不支持的(iOS Safari 等)因值无效保持 none,面板回退系统原生,不受影响。 */
+    .select-input{appearance:base-select}
+    .select-input::picker(select){
+      appearance:base-select;
+      margin-top:6px;
+      padding:6px;
+      border:1px solid rgba(177,204,231,.72);
+      border-radius:16px;
+      background:rgba(250,253,255,.97);
+      box-shadow:0 22px 48px rgba(20,84,150,.18);
+      max-height:320px;
+    }
+    /* base-select 会自带一个默认箭头,隐藏掉,统一用上面自绘的 chevron。 */
+    .select-input::picker-icon{display:none}
+    .select-input option{
+      min-height:42px;
+      display:flex;
+      align-items:center;
+      padding:8px 12px;
+      border-radius:10px;
+      font-weight:750;
+      color:#245b82;
+      background:none;
+      cursor:pointer;
+    }
+    .select-input option:hover,
+    .select-input option:focus{background:#e6f5ff}
+    .select-input option:checked{color:#0a6fb1;font-weight:900}

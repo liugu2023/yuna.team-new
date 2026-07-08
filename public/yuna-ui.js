@@ -1,7 +1,14 @@
 const root=document.documentElement;const finePointer=matchMedia('(hover:hover) and (pointer:fine)');const glow=document.getElementById('cursorGlow');const heroBg=document.getElementById('heroBg');const cursorRing=document.getElementById('cursorRing');const scrollProgress=document.getElementById('scrollProgress');
-    window.addEventListener('pointermove',(e)=>{const x=e.clientX,y=e.clientY;root.style.setProperty('--mx',`${x}px`);root.style.setProperty('--my',`${y}px`);if(glow&&finePointer.matches)glow.animate({transform:`translate(${x-140}px,${y-140}px)`},{duration:500,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'});if(cursorRing&&finePointer.matches)cursorRing.animate({transform:`translate(${x-17}px,${y-17}px)`},{duration:260,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'});if(heroBg){const tx=(window.innerWidth/2-x)*.006,ty=(window.innerHeight/2-y)*.006;heroBg.style.setProperty('--bg-x',`${tx}px`);heroBg.style.setProperty('--bg-y',`${ty}px`)}},{passive:true});
-    const updateScroll=()=>{const max=document.documentElement.scrollHeight-innerHeight;const pct=max>0?(scrollY/max)*100:0;if(scrollProgress)scrollProgress.style.width=`${pct}%`;document.body.classList.toggle('scrolled',scrollY>18)};updateScroll();addEventListener('scroll',updateScroll,{passive:true});
-    document.querySelectorAll('.magnetic').forEach(el=>{el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect();el.style.setProperty('--mag-x',`${(e.clientX-r.left-r.width/2)*.08}px`);el.style.setProperty('--mag-y',`${(e.clientY-r.top-r.height/2)*.08}px`)});el.addEventListener('pointerleave',()=>{el.style.setProperty('--mag-x','0px');el.style.setProperty('--mag-y','0px')})});
+    // 光标跟随用 rAF 插值:旧版每次 pointermove 起一段 260/500ms 的 WAAPI 动画,
+    // 光环永远慢半拍,是桌面端"不跟手"的主因。插值系数让光环基本贴住鼠标、光晕留一点拖尾。
+    let ptrX=innerWidth/2,ptrY=innerHeight/2,glowX=ptrX,glowY=ptrY,ringX=ptrX,ringY=ptrY,followRunning=false;
+    const followCursor=()=>{ringX+=(ptrX-ringX)*.6;ringY+=(ptrY-ringY)*.6;glowX+=(ptrX-glowX)*.28;glowY+=(ptrY-glowY)*.28;if(cursorRing)cursorRing.style.transform=`translate(${ringX-17}px,${ringY-17}px)`;if(glow)glow.style.transform=`translate(${glowX-140}px,${glowY-140}px)`;if(Math.abs(ptrX-ringX)+Math.abs(ptrY-ringY)+Math.abs(ptrX-glowX)+Math.abs(ptrY-glowY)>.5){requestAnimationFrame(followCursor)}else{followRunning=false}};
+    window.addEventListener('pointermove',(e)=>{const x=e.clientX,y=e.clientY;root.style.setProperty('--mx',`${x}px`);root.style.setProperty('--my',`${y}px`);ptrX=x;ptrY=y;if((glow||cursorRing)&&finePointer.matches&&!followRunning){followRunning=true;requestAnimationFrame(followCursor)}if(heroBg){const tx=(window.innerWidth/2-x)*.006,ty=(window.innerHeight/2-y)*.006;heroBg.style.setProperty('--bg-x',`${tx}px`);heroBg.style.setProperty('--bg-y',`${ty}px`)}},{passive:true});
+    // 滚动进度条 + 移动端顶栏收放:下滑让出屏幕,上滑或回到页首立即呼出;菜单展开时不收。
+    const topbarEl=document.querySelector('.topbar');const compactNav=matchMedia('(max-width:760px)');let lastScrollY=scrollY;
+    const updateScroll=()=>{const max=document.documentElement.scrollHeight-innerHeight;const pct=max>0?(scrollY/max)*100:0;if(scrollProgress)scrollProgress.style.width=`${pct}%`;document.body.classList.toggle('scrolled',scrollY>18);if(topbarEl){const y=scrollY;if(!compactNav.matches||topbarEl.classList.contains('nav-open')||y<=70){topbarEl.classList.remove('topbar-hide')}else if(y>lastScrollY+4){topbarEl.classList.add('topbar-hide')}else if(y<lastScrollY-4){topbarEl.classList.remove('topbar-hide')}lastScrollY=y}};updateScroll();addEventListener('scroll',updateScroll,{passive:true});
+    // 磁吸只在精准指针(鼠标)下启用:触屏上 pointermove 会把按钮拽着跑,点按不跟手。
+    if(finePointer.matches)document.querySelectorAll('.magnetic').forEach(el=>{el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect();el.style.setProperty('--mag-x',`${(e.clientX-r.left-r.width/2)*.08}px`);el.style.setProperty('--mag-y',`${(e.clientY-r.top-r.height/2)*.08}px`)});el.addEventListener('pointerleave',()=>{el.style.setProperty('--mag-x','0px');el.style.setProperty('--mag-y','0px')})});
     // 聚光/涟漪/悬停光标改为事件委托：动态渲染出来的卡片（文章列表、成员卡）也能拿到同一套交互。
     const SPOT_SELECTOR='.btn,.card,.knowledge-card,.resource-card,.member-card,.aside-card,.visual-card,.login-card,.stat';
     const HOVER_SELECTOR='a,button,.card,.knowledge-card,.resource-card,.member-card,.aside-card,.big-logo,.logo-stage,.visual-card,.login-card';
@@ -9,7 +16,23 @@ const root=document.documentElement;const finePointer=matchMedia('(hover:hover) 
     document.addEventListener('click',e=>{const el=e.target instanceof Element?e.target.closest(SPOT_SELECTOR):null;if(!el)return;const r=el.getBoundingClientRect();const s=document.createElement('span');s.className='ripple';s.style.left=`${e.clientX-r.left}px`;s.style.top=`${e.clientY-r.top}px`;el.appendChild(s);setTimeout(()=>s.remove(),760)});
     document.addEventListener('pointerover',e=>{const el=e.target instanceof Element?e.target.closest(HOVER_SELECTOR):null;document.body.classList.toggle('cursor-active',Boolean(el))});
     document.documentElement.addEventListener('pointerleave',()=>document.body.classList.remove('cursor-active'));
+    // 移动端汉堡导航:按钮由这里注入(全部页面共用),开合状态挂在 .topbar 的 nav-open 上;
+    // 点链接、点面板外、按 Esc、窗口回到桌面宽度时都自动收起。
+    const topbar=document.querySelector('.topbar');const topbarInner=topbar?topbar.querySelector('.topbar-inner'):null;const siteNav=topbarInner?topbarInner.querySelector('.nav'):null;
+    if(topbar&&topbarInner&&siteNav){
+      if(!siteNav.id)siteNav.id='siteNav';
+      const navToggle=document.createElement('button');navToggle.type='button';navToggle.className='nav-toggle';navToggle.setAttribute('aria-controls',siteNav.id);navToggle.setAttribute('aria-expanded','false');navToggle.setAttribute('aria-label','打开导航菜单');navToggle.innerHTML='<span></span><span></span><span></span>';
+      topbarInner.appendChild(navToggle);
+      const setNavOpen=(open)=>{topbar.classList.toggle('nav-open',open);if(open)topbar.classList.remove('topbar-hide');navToggle.setAttribute('aria-expanded',String(open));navToggle.setAttribute('aria-label',open?'关闭导航菜单':'打开导航菜单')};
+      navToggle.addEventListener('click',()=>setNavOpen(!topbar.classList.contains('nav-open')));
+      siteNav.addEventListener('click',e=>{if(e.target instanceof Element&&e.target.closest('a,button'))setNavOpen(false)});
+      document.addEventListener('click',e=>{if(topbar.classList.contains('nav-open')&&e.target instanceof Element&&!topbar.contains(e.target))setNavOpen(false)});
+      addEventListener('keydown',e=>{if(e.key==='Escape')setNavOpen(false)});
+      const desktopNav=matchMedia('(min-width:761px)');desktopNav.addEventListener?.('change',e=>{if(e.matches)setNavOpen(false)});
+    }
     const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.15});document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=`${Math.min(i*40,220)}ms`;io.observe(el)});
+    // 横滑标签条:右边还有内容时挂 scroll-more(CSS 渐隐提示),滑到底自动摘掉;标签由 app.js 动态填充,所以也监听子节点变化。
+    document.querySelectorAll('.tabs,.team-term-switcher,.resource-tabs,.admin-tabs').forEach(el=>{const sync=()=>el.classList.toggle('scroll-more',el.scrollWidth-el.clientWidth-el.scrollLeft>12);el.addEventListener('scroll',sync,{passive:true});addEventListener('resize',sync);new MutationObserver(sync).observe(el,{childList:true,subtree:true});sync()});
     // 粒子背景：画布被 CSS 隐藏（移动端/减少动效）或标签页不可见时停帧，避免空转烧 CPU。
     const canvas=document.getElementById('particleCanvas'),ctx=canvas?canvas.getContext('2d'):null;let particles=[];let particlesRunning=false;
     const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
