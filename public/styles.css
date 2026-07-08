@@ -2475,6 +2475,22 @@
       .hero-wrap .hero-bg{background-position:12% 50%}
     }
 
+    /* 子页面头图同款三连修:subpage unification 给 .page-wrap 压的是均匀 68% 白雾
+       (.page-wrap .hero-bg::before,优先级 0-2-1 带 !important,上面 .hero-wrap 的恢复规则打不过它)
+       加一层平铺 46% 白的 mist-top;手机上头图区又只剩约 250px 高,mist-top(230px)几乎整条盖住,
+       露出的还是照片中间的天空留白——三层叠完子页面头图在手机上等于消失。
+       此处按同选择器、更后源序把两层蒙版接回纵向渐变:顶部保导航可读,中段放照片透出来。 */
+    .page-wrap .hero-bg::before{
+      background:linear-gradient(180deg,rgba(248,252,255,.56),rgba(244,249,255,.30) 46%,rgba(239,246,255,.72) 100%)!important;
+    }
+    .page-wrap .mist-top{
+      background:linear-gradient(180deg,rgba(255,255,255,.54),rgba(255,255,255,.16) 55%,transparent)!important;
+    }
+    /* 焦点同首页移到左侧门塔,避开原图中间的天空+湖面留白。 */
+    @media (max-width:640px){
+      .page-wrap .hero-bg{background-position:12% 50%}
+    }
+
     /* 下拉框统一进站内风格:第 6 行的全局继承只写了 button,input,漏了 select——
        全站下拉框一直是系统默认字体 + 原生箭头。补继承、去原生外观、自绘 chevron。 */
     select{font:inherit}
