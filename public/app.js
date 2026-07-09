@@ -174,18 +174,51 @@ function postTimeMetaHtml(post) {
 }
 
 function postTag(post) {
-  const tag = String(post?.tag || "").trim();
-  return tag || "未分类";
+  return postTagList(post).join("、");
+}
+
+function postTagList(post) {
+  return splitPostTags(post?.tag);
+}
+
+function splitPostTags(value) {
+  const seen = new Set();
+  const tags = String(value || "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .filter((tag) => {
+      if (seen.has(tag)) return false;
+      seen.add(tag);
+      return true;
+    });
+  return tags.length ? tags : ["未分类"];
+}
+
+function postTagsHtml(post) {
+  return postTagList(post).map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("");
+}
+
+function postTagsDataValue(post) {
+  return postTagList(post).map(encodeURIComponent).join(",");
+}
+
+function parsePostTagsDataValue(value) {
+  return String(value || "")
+    .split(",")
+    .filter(Boolean)
+    .map((tag) => decodeURIComponent(tag));
 }
 
 function postTags(posts) {
   const seen = new Set();
   const tags = [];
   for (const post of posts) {
-    const tag = postTag(post);
-    if (seen.has(tag)) continue;
-    seen.add(tag);
-    tags.push(tag);
+    for (const tag of postTagList(post)) {
+      if (seen.has(tag)) continue;
+      seen.add(tag);
+      tags.push(tag);
+    }
   }
   return tags;
 }
@@ -193,8 +226,9 @@ function postTags(posts) {
 function postTagCounts(posts) {
   const counts = new Map();
   for (const post of posts) {
-    const tag = postTag(post);
-    counts.set(tag, (counts.get(tag) || 0) + 1);
+    for (const tag of postTagList(post)) {
+      counts.set(tag, (counts.get(tag) || 0) + 1);
+    }
   }
   return Array.from(counts, ([tag, count]) => ({ tag, count }))
     .sort((left, right) => right.count - left.count || left.tag.localeCompare(right.tag, "zh-CN"));
@@ -731,7 +765,7 @@ function renderPostListInto(list, posts, admin) {
     const selectedTag = selectedHomePostTag();
     const homePosts = selectedTag === "all"
       ? posts
-      : posts.filter((post) => postTag(post) === selectedTag);
+      : posts.filter((post) => postTagList(post).includes(selectedTag));
 
     if (!homePosts.length) {
       list.innerHTML = `<p class="empty-state">暂无${selectedTag === "all" ? "" : escapeHtml(selectedTag)}文章。</p>`;
@@ -748,7 +782,7 @@ function renderPostListInto(list, posts, admin) {
             <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
             <div class="card-footer">
-              <span class="tag">${escapeHtml(postTag(post))}</span>
+              <div class="contact-row">${postTagsHtml(post)}</div>
               <a class="read-more" href="/post.html?slug=${encodeURIComponent(post.slug)}">阅读全文 →</a>
             </div>
           </article>
@@ -761,7 +795,7 @@ function renderPostListInto(list, posts, admin) {
   list.innerHTML = posts
     .map(
       (post) => `
-          <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-tag="${escapeHtml(postTag(post))}" data-search="${escapeHtml(`${post.title} ${postTag(post)} ${post.excerpt || ""}`.toLowerCase())}">
+          <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-tags="${escapeHtml(postTagsDataValue(post))}" data-search="${escapeHtml(`${post.title} ${postTag(post)} ${post.excerpt || ""}`.toLowerCase())}">
           <span class="flash"></span>
           ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
           <div class="article-head">
@@ -770,7 +804,7 @@ function renderPostListInto(list, posts, admin) {
           <h2><a href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">${escapeHtml(post.title)}</a></h2>
           <p>${escapeHtml(post.excerpt || "")}</p>
           <div class="card-footer">
-            <span class="tag">${escapeHtml(postTag(post))}</span>
+            <div class="contact-row">${postTagsHtml(post)}</div>
             <a class="read-more" href="${admin ? `/admin/?slug=${encodeURIComponent(post.slug)}` : `/post.html?slug=${encodeURIComponent(post.slug)}`}">阅读全文 →</a>
           </div>
         </article>
@@ -792,7 +826,8 @@ function bindArticleFilters() {
     const selectedTag = tagSelect?.value && tagSelect.value !== "all" ? tagSelect.value : "";
     const matches = cards.filter((card) => {
       const haystack = card.dataset.search || card.textContent.toLowerCase();
-      return (!keyword || haystack.includes(keyword)) && (!selectedTag || card.dataset.tag === selectedTag);
+      const tags = parsePostTagsDataValue(card.dataset.tags);
+      return (!keyword || haystack.includes(keyword)) && (!selectedTag || tags.includes(selectedTag));
     });
     const totalPages = Math.max(1, Math.ceil(matches.length / LIST_PAGE_SIZE));
     const page = Math.min(currentPageFromUrl(), totalPages);
@@ -872,7 +907,7 @@ async function renderKnowledgeBase() {
     const selectedTag = tagSelect?.value && tagSelect.value !== "all" ? tagSelect.value : "";
     const filtered = posts.filter((post) => {
       const haystack = `${post.title} ${post.tag || ""} ${post.excerpt || ""}`.toLowerCase();
-      return (!keyword || haystack.includes(keyword)) && (!selectedTag || postTag(post) === selectedTag);
+      return (!keyword || haystack.includes(keyword)) && (!selectedTag || postTagList(post).includes(selectedTag));
     });
     const totalPages = Math.max(1, Math.ceil(filtered.length / LIST_PAGE_SIZE));
     const page = Math.min(currentPageFromUrl(), totalPages);
@@ -905,7 +940,7 @@ async function renderKnowledgeBase() {
     list.innerHTML = pagePosts
       .map(
         (post) => `
-          <article class="card article-card knowledge-entry reveal visible" data-knowledge-card data-tag="${escapeHtml(postTag(post))}">
+          <article class="card article-card knowledge-entry reveal visible" data-knowledge-card data-tags="${escapeHtml(postTagsDataValue(post))}">
             <span class="flash"></span>
             ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
             <div class="article-head">
@@ -914,7 +949,7 @@ async function renderKnowledgeBase() {
             <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
             <p>${escapeHtml(post.excerpt || "")}</p>
             <div class="card-footer">
-              <span class="tag">${escapeHtml(postTag(post))}</span>
+              <div class="contact-row">${postTagsHtml(post)}</div>
               <a class="read-more" href="/post.html?slug=${encodeURIComponent(post.slug)}">查看资料 →</a>
             </div>
           </article>
@@ -1894,9 +1929,9 @@ async function renderPost() {
     if (viewNode) viewNode.textContent = views;
     if (authorNode) authorNode.textContent = authorName;
     if (authorRow) authorRow.hidden = !authorName;
-    if (tagNode) tagNode.textContent = postTag(data.post);
+    if (tagNode) tagNode.innerHTML = `<span class="contact-row">${postTagsHtml(data.post)}</span>`;
     article.innerHTML = `
-      <div class="meta">${authorName ? `<span>作者 ${escapeHtml(authorName)}</span>` : ""}${postTimeMetaHtml(data.post)}${editedAfterPublish && editorName ? `<span>编辑 ${escapeHtml(editorName)}</span>` : ""}${data.post.status === "published" ? "" : "<span>草稿</span>"}<span>${escapeHtml(postTag(data.post))}</span><span>${views}</span></div>
+      <div class="meta">${authorName ? `<span>作者 ${escapeHtml(authorName)}</span>` : ""}${postTimeMetaHtml(data.post)}${editedAfterPublish && editorName ? `<span>编辑 ${escapeHtml(editorName)}</span>` : ""}${data.post.status === "published" ? "" : "<span>草稿</span>"}${postTagsHtml(data.post)}<span>${views}</span></div>
       ${markdownToHtml(stripDuplicateLeadingTitle(data.markdown, data.post.title))}
     `;
   } catch (error) {
@@ -2657,6 +2692,8 @@ window.blog = {
   formatDay,
   formatViews,
   postTimeText,
+  postTag,
+  postTagsHtml,
   escapeHtml,
   markdownToHtml,
   normalizeAssetUrl,

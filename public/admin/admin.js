@@ -292,7 +292,7 @@ function renderContentList(kind) {
     .map(
       (post) => `
         <article class="admin-item admin-post-card${state.editingSlug === post.slug ? " active is-active" : ""}">
-          <p class="meta">${post.status === "published" ? "已发布" : "草稿"} · ${window.blog.escapeHtml(post.tag || "未分类")}${post.author_name ? ` · ${window.blog.escapeHtml(post.author_name)}` : ""} · ${window.blog.postTimeText(post)} · ${window.blog.formatViews(post.view_count)}</p>
+          <p class="meta"><span>${post.status === "published" ? "已发布" : "草稿"}</span>${window.blog.postTagsHtml(post)}${post.author_name ? `<span>${window.blog.escapeHtml(post.author_name)}</span>` : ""}<span>${window.blog.postTimeText(post)}</span><span>${window.blog.formatViews(post.view_count)}</span></p>
           <strong>${window.blog.escapeHtml(post.title)}</strong>
           <p>${window.blog.escapeHtml(post.excerpt || "")}</p>
           <div class="editor-actions">
@@ -1262,12 +1262,12 @@ function activateAdminTab(name) {
 
 function updatePreview() {
   const title = fields.title.value.trim() || "未命名文章";
-  const tag = fields.tag.value.trim() || "协会动态";
   const authorName = fields.authorName.value.trim();
   const excerpt = fields.excerpt.value.trim();
   const coverUrl = window.blog.safeDisplayAssetUrl(fields.coverUrl.value.trim());
+  const previewPost = { tag: fields.tag.value.trim() || "协会动态" };
   fields.preview.innerHTML = `
-    <p class="meta">${window.blog.escapeHtml(tag)}${authorName ? ` · ${window.blog.escapeHtml(authorName)}` : ""}</p>
+    <p class="meta">${window.blog.postTagsHtml(previewPost)}${authorName ? `<span>${window.blog.escapeHtml(authorName)}</span>` : ""}</p>
     <h1>${window.blog.escapeHtml(title)}</h1>
     ${excerpt ? `<p>${window.blog.escapeHtml(excerpt)}</p>` : ""}
     ${coverUrl ? `<img src="${window.blog.escapeHtml(coverUrl)}" alt="" loading="lazy">` : ""}

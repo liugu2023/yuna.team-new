@@ -1554,6 +1554,11 @@
       transform:translateY(-1px);
       box-shadow:0 18px 34px rgba(10,111,177,.26);
     }
+    .card-footer .contact-row,
+    .meta .contact-row,
+    .pipeline-row .contact-row{
+      margin-top:0;
+    }
     .article-body .custom-block{
       margin:22px 0;
       padding:15px 18px 16px;
