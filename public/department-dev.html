@@ -74,15 +74,25 @@
 
 <main class="main page-main" id="content">
   <section class="shell">
-    <div class="service-strip">
-      <article class="visual-card reveal" id="dept-dev" data-editable-block="departments-dev-detail" data-editable-title="部门详情：开发部">
-        <h3 data-block-field="title">开发部</h3>
-        <div class="pipeline" data-block-rows>
-          <div class="pipeline-row" data-block-row><strong>主要方向</strong><span>前端、后端、数据库、自动化工具和校园服务开发</span></div>
-          <div class="pipeline-row" data-block-row><strong>日常内容</strong><span>项目协作、代码评审、站点维护和技术分享</span></div>
-          <div class="pipeline-row" data-block-row><strong>适合对象</strong><span>想把想法做成真实产品，并持续提升工程能力的同学</span></div>
-        </div>
-      </article>
+    <div data-department-markdown-page="departments/dev" data-department-markdown-title="开发部">
+      <div class="article-body"><p class="empty-state">正在加载部门详情。</p></div>
+      <script type="text/plain" data-department-markdown-default># 开发部
+
+## 主要方向
+
+- 前端、后端、数据库、自动化工具和校园服务开发
+- 协会站点、内容系统、活动工具和内部协作工具维护
+- 将成员的技术学习落实到真实项目和可复用作品
+
+## 日常内容
+
+- 围绕实际需求做项目协作、代码评审和版本迭代
+- 维护协会网站和相关校园服务，整理工程实践记录
+- 定期分享前后端、数据库、部署和自动化相关经验
+
+## 适合对象
+
+想把想法做成真实产品，并持续提升工程能力的同学。</script>
     </div>
     <div class="hero-actions">
       <a class="btn secondary magnetic" href="/articles.html">查看开发文章</a>
@@ -99,6 +109,7 @@
 <script>
   window.blog.renderUserNav();
   window.blog.renderEditableBlocks();
+  window.blog.renderDepartmentMarkdownPage();
 </script>
 <script src="/yuna-ui.js"></script>
 </body>

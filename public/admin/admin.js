@@ -783,9 +783,9 @@ function renderContactIcons(links) {
   if (!Array.isArray(links) || !links.length) return "";
   const icons = links
     .map((link) => {
-      const href = safeAdminContactUrl(link.url);
-      if (!href) return "";
       const label = link.label || "链接";
+      const href = safeAdminContactUrl(label, link.url);
+      if (!href) return "";
       return `
         <a class="contact-icon" href="${window.blog.escapeHtml(href)}" target="_blank" rel="noreferrer" title="${window.blog.escapeHtml(label)}" aria-label="${window.blog.escapeHtml(label)}">
           ${window.blog.escapeHtml(contactIconText(label))}
@@ -805,8 +805,8 @@ function contactIconText(label) {
   return "WEB";
 }
 
-function safeAdminContactUrl(value) {
-  const raw = String(value || "").trim();
+function safeAdminContactUrl(label, value) {
+  const raw = isQQContactLabel(label) ? qqContactUrl(value) : String(value || "").trim();
   if (!raw) return "";
   if (/^(https?:|mailto:)/i.test(raw)) return raw;
   return "";
@@ -933,13 +933,36 @@ function clearFameForm() {
 
 function normalizeContactUrl(label, value) {
   if (label === "Email" && !value.startsWith("mailto:")) return `mailto:${value}`;
-  if (label === "QQ" && /^\d+$/.test(value)) return `https://qm.qq.com/q/${value}`;
+  if (isQQContactLabel(label)) {
+    const qq = qqContactNumber(value);
+    return qq ? qqContactUrl(qq) : value;
+  }
   return value;
 }
 
 function displayContactValue(label, value) {
   if (label === "Email") return value.replace(/^mailto:/, "");
+  if (isQQContactLabel(label)) return qqContactNumber(value) || value;
   return value;
+}
+
+function isQQContactLabel(label) {
+  return String(label || "").trim().toLowerCase() === "qq";
+}
+
+function qqContactNumber(value) {
+  const raw = String(value || "").trim();
+  if (/^\d+$/.test(raw)) return raw;
+  return (
+    raw.match(/^https?:\/\/qm\.qq\.com\/q\/(\d+)\/?$/i)?.[1]
+    || raw.match(/[?&]uin=(\d+)/i)?.[1]
+    || ""
+  );
+}
+
+function qqContactUrl(value) {
+  const qq = qqContactNumber(value);
+  return qq ? `https://wpa.qq.com/msgrd?v=3&uin=${qq}&site=qq&menu=yes` : String(value || "").trim();
 }
 
 function updateContactPlaceholder(select, input) {

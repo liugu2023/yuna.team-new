@@ -387,6 +387,7 @@ function inlineMarkdown(html) {
 
   // URL 部分允许一层成对括号，兼容历史内容里未编码的 "file (1).pdf" 类链接。
   const rendered = withPlaceholders
+    .replace(/&lt;a\s+([\s\S]*?)&gt;([\s\S]*?)&lt;\/a&gt;/gi, renderSafeHtmlAnchor)
     .replace(/!\[([^\]]*)\]\(((?:[^()]|\([^()]*\))+)\)/g, (_match, alt, src) => {
       const safeSrc = normalizeAssetUrl(src);
       return `<img src="${safeSrc}" alt="${alt}" loading="lazy">`;
@@ -407,6 +408,44 @@ function inlineMarkdown(html) {
     );
 
   return rendered.replace(/\u0000(\d+)\u0000/g, (_match, index) => codeSpans[Number(index)]);
+}
+
+function renderSafeHtmlAnchor(_match, rawAttrs, label) {
+  const attrs = parseEscapedHtmlAttributes(rawAttrs);
+  const href = safeLinkUrl(attrs.href || "");
+  if (!href) return label;
+
+  const normalizedHref = normalizeInternalHref(href);
+  const classes = String(attrs.class || "")
+    .split(/\s+/)
+    .filter((name) => name === "link-button")
+    .join(" ");
+  const classAttr = classes ? ` class="${classes}"` : "";
+  const target = attrs.target === "_blank" || normalizedHref.startsWith("http") ? ' target="_blank"' : "";
+  const rel = target ? ' rel="noopener noreferrer"' : "";
+  const ariaLabel = attrs["aria-label"] ? ` aria-label="${escapeHtml(attrs["aria-label"])}"` : "";
+  const title = attrs.title ? ` title="${escapeHtml(attrs.title)}"` : "";
+  return `<a${classAttr} href="${escapeHtml(normalizedHref)}"${target}${rel}${ariaLabel}${title}>${label}</a>`;
+}
+
+function parseEscapedHtmlAttributes(rawAttrs) {
+  const attrs = {};
+  const pattern = /([a-zA-Z:-]+)\s*=\s*(?:&quot;([\s\S]*?)&quot;|&#39;([\s\S]*?)&#39;|([^\s]+))/g;
+  let match;
+  while ((match = pattern.exec(rawAttrs))) {
+    const name = match[1].toLowerCase();
+    attrs[name] = decodeEscapedAttribute(match[2] ?? match[3] ?? match[4] ?? "");
+  }
+  return attrs;
+}
+
+function decodeEscapedAttribute(value) {
+  return String(value || "")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
 }
 
 function normalizeInternalHref(href) {
@@ -507,6 +546,31 @@ function safeLinkUrl(value) {
   if (raw.startsWith("/") || raw.startsWith("#")) return raw;
   if (/^(https?:|mailto:)/i.test(raw)) return raw;
   return "";
+}
+
+function isQQContactLabel(label) {
+  return String(label || "").trim().toLowerCase() === "qq";
+}
+
+function qqContactUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const direct = raw.match(/^\d+$/);
+  if (direct) return `https://wpa.qq.com/msgrd?v=3&uin=${direct[0]}&site=qq&menu=yes`;
+
+  const oldQm = raw.match(/^https?:\/\/qm\.qq\.com\/q\/(\d+)\/?$/i);
+  if (oldQm) return `https://wpa.qq.com/msgrd?v=3&uin=${oldQm[1]}&site=qq&menu=yes`;
+
+  const uin = raw.match(/[?&]uin=(\d+)/i);
+  if (uin) return `https://wpa.qq.com/msgrd?v=3&uin=${uin[1]}&site=qq&menu=yes`;
+
+  return raw;
+}
+
+function safeContactLinkUrl(link) {
+  const label = link?.label || "";
+  const raw = link?.url || "";
+  return safeLinkUrl(isQQContactLabel(label) ? qqContactUrl(raw) : raw);
 }
 
 // 弹窗通用关闭行为：Esc、点击遮罩。返回清理函数，close 时调用避免监听残留。
@@ -1882,6 +1946,50 @@ async function renderStaticPage() {
   }
 }
 
+async function renderDepartmentMarkdownPage() {
+  const containers = Array.from(document.querySelectorAll("[data-department-markdown-page]"));
+  if (!containers.length) return;
+  await Promise.all(containers.map(renderDepartmentMarkdownContainer));
+}
+
+async function renderDepartmentMarkdownContainer(container) {
+  const page = container.dataset.departmentMarkdownPage || "";
+  if (!isSafeMarkdownPath(page)) {
+    container.innerHTML = '<div class="article-body"><p class="empty-state error">部门页面路径无效。</p></div>';
+    return;
+  }
+
+  const defaultTitle = container.dataset.departmentMarkdownTitle || pageTitleFromPath(page);
+  const defaultMarkdown =
+    container.querySelector("[data-department-markdown-default]")?.textContent.trim()
+    || `# ${defaultTitle}\n\n`;
+
+  let title = defaultTitle;
+  let markdown = defaultMarkdown;
+  try {
+    const data = await fetchJson(pageApiPath(page));
+    const content = String(data.page?.content || "").trim();
+    if (content) {
+      markdown = content;
+      title = firstHeading(markdown) || data.page.title || defaultTitle;
+    }
+  } catch (error) {
+    if (!isNotFoundError(error)) {
+      container.innerHTML = `<div class="article-body"><p class="empty-state error">${escapeHtml(error.message)}</p></div>`;
+      return;
+    }
+  }
+
+  container.innerHTML = `<div class="article-body">${markdownToHtml(markdown)}</div>`;
+  await attachStaticPageEditor(container, {
+    page,
+    title,
+    markdown,
+    editorTitle: `编辑${defaultTitle}详情`,
+    editorHelper: "保存后会作为固定 Markdown 页面写入 D1，并纳入 Markdown 备份。",
+  });
+}
+
 function updateStaticPageHero(title, key) {
   const heroTitle = document.querySelector("[data-page-hero-title]");
   const heroEyebrow = document.querySelector("[data-page-hero-eyebrow]");
@@ -1976,7 +2084,7 @@ function renderStructuredRecord(record) {
 }
 
 function renderMembersRecord(record, items) {
-  const terms = [...new Set(items.map((item) => item.term || "未填写届数"))];
+  const terms = sortedMemberTerms(items);
   const activeTerm = terms[0];
   return `
     <div class="article-body">
@@ -1988,7 +2096,7 @@ function renderMembersRecord(record, items) {
         </select>
       </label>
       <div data-term-panels>
-        ${terms.map((term) => renderMemberTerm(term, items.filter((item) => (item.term || "未填写届数") === term), term === activeTerm)).join("")}
+        ${terms.map((term) => renderMemberTerm(term, items.filter((item) => memberTermLabel(item) === term), term === activeTerm)).join("")}
       </div>
     </div>
   `;
@@ -2016,6 +2124,82 @@ function renderMemberTerm(term, items, active) {
 
 function normalizeDepartmentName(value) {
   return value === "\u7ec4\u5ba3\u79d8\u4e66\u5904" || value === "秘书处" ? "组宣部" : value;
+}
+
+function memberTermLabel(item) {
+  return String(item?.term || "").trim() || "未填写届数";
+}
+
+function sortedMemberTerms(items) {
+  return [...new Set(items.map(memberTermLabel))].sort(compareMemberTerms);
+}
+
+function compareMemberTerms(a, b) {
+  const rankA = memberTermOrdinal(a);
+  const rankB = memberTermOrdinal(b);
+  if (rankA !== null || rankB !== null) {
+    if (rankA === null) return 1;
+    if (rankB === null) return -1;
+    if (rankA !== rankB) return rankB - rankA;
+  }
+  if (a === "未填写届数") return 1;
+  if (b === "未填写届数") return -1;
+  return String(a).localeCompare(String(b), "zh-CN", { numeric: true });
+}
+
+function memberTermOrdinal(value) {
+  const text = String(value || "").trim().replace(/\s+/g, "");
+  if (!text || text === "未填写届数") return null;
+
+  const numberMatch = text.match(/^第?(\d+)届?$/) || text.match(/^(\d+)$/);
+  if (numberMatch) return Number(numberMatch[1]);
+
+  const chineseMatch = text.match(/^第?([零〇一二两三四五六七八九十百千万廿卅]+)届?$/);
+  if (!chineseMatch) return null;
+  return parseChineseOrdinal(chineseMatch[1]);
+}
+
+function parseChineseOrdinal(value) {
+  const text = String(value || "");
+  const digitMap = {
+    零: 0,
+    〇: 0,
+    一: 1,
+    二: 2,
+    两: 2,
+    三: 3,
+    四: 4,
+    五: 5,
+    六: 6,
+    七: 7,
+    八: 8,
+    九: 9,
+  };
+  if (text.startsWith("廿")) return 20 + (digitMap[text[1]] || 0);
+  if (text.startsWith("卅")) return 30 + (digitMap[text[1]] || 0);
+
+  const unitMap = { 十: 10, 百: 100, 千: 1000, 万: 10000 };
+  let total = 0;
+  let section = 0;
+  let number = 0;
+  for (const char of text) {
+    if (digitMap[char] !== undefined) {
+      number = digitMap[char];
+      continue;
+    }
+    const unit = unitMap[char];
+    if (!unit) return null;
+    if (unit === 10000) {
+      section = (section + number) * unit;
+      total += section;
+      section = 0;
+    } else {
+      section += (number || 1) * unit;
+    }
+    number = 0;
+  }
+  const result = total + section + number;
+  return result > 0 ? result : null;
 }
 
 async function renderTeamRecords() {
@@ -2048,13 +2232,13 @@ async function renderTeamRecord(key, container) {
 }
 
 function renderTeamMembers(items) {
-  const terms = [...new Set(items.map((item) => item.term || "未填写届数"))];
+  const terms = sortedMemberTerms(items);
   const activeTerm = terms[0];
   return `
     <div class="team-term-switcher" role="group" aria-label="往届成员届数切换">
       ${terms
         .map((term) => {
-          const count = items.filter((item) => (item.term || "未填写届数") === term).length;
+          const count = items.filter((item) => memberTermLabel(item) === term).length;
           const active = term === activeTerm;
           return `<button class="team-term-button${active ? " is-active" : ""}" type="button" data-team-term-button="${escapeHtml(term)}" aria-pressed="${active ? "true" : "false"}">${escapeHtml(term)}<span>${count.toLocaleString("zh-CN")} 人</span></button>`;
         })
@@ -2063,7 +2247,7 @@ function renderTeamMembers(items) {
     <div data-team-term-panels>
       ${terms
         .map((term) => {
-          const termItems = items.filter((item) => (item.term || "未填写届数") === term);
+          const termItems = items.filter((item) => memberTermLabel(item) === term);
           return `
             <section data-team-term-panel="${escapeHtml(term)}" ${term === activeTerm ? "" : "hidden"}>
               <div class="member-grid refined-member-grid">
@@ -2116,7 +2300,7 @@ function renderProfileCard(item) {
         links.length
           ? `<div class="member-actions">${links
               .map((link) => {
-                const href = safeLinkUrl(link.url);
+                const href = safeContactLinkUrl(link);
                 if (!href) return "";
                 return `<a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(link.label || link.url)}</a>`;
               })
@@ -2488,6 +2672,7 @@ window.blog = {
   renderAdminOnlyActions,
   renderEditableBlocks,
   renderTeamRecords,
+  renderDepartmentMarkdownPage,
   renderStaticPage,
 };
 

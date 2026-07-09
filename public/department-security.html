@@ -74,15 +74,25 @@
 
 <main class="main page-main" id="content">
   <section class="shell">
-    <div class="service-strip">
-      <article class="visual-card reveal" id="dept-security" data-editable-block="departments-security-detail" data-editable-title="部门详情：网络安全部">
-        <h3 data-block-field="title">网络安全部</h3>
-        <div class="pipeline" data-block-rows>
-          <div class="pipeline-row" data-block-row><strong>主要方向</strong><span>Web 安全、CTF、逆向、漏洞复现和攻防基础</span></div>
-          <div class="pipeline-row" data-block-row><strong>日常内容</strong><span>训练题复盘、专题学习、竞赛准备和安全资料整理</span></div>
-          <div class="pipeline-row" data-block-row><strong>适合对象</strong><span>对安全思维、系统底层和攻防实践感兴趣的同学</span></div>
-        </div>
-      </article>
+    <div data-department-markdown-page="departments/security" data-department-markdown-title="网络安全部">
+      <div class="article-body"><p class="empty-state">正在加载部门详情。</p></div>
+      <script type="text/plain" data-department-markdown-default># 网络安全部
+
+## 主要方向
+
+- Web 安全、CTF、逆向、漏洞复现和攻防基础
+- 安全工具使用、靶场训练、竞赛题目复盘和基础研究
+- 将分散的学习过程整理成可继续传承的训练资料
+
+## 日常内容
+
+- 组织训练题复盘、专题学习、竞赛准备和安全资料整理
+- 记录漏洞原理、环境搭建、解题路径和排错经验
+- 通过文章和分享沉淀阶段性学习成果
+
+## 适合对象
+
+对安全思维、系统底层和攻防实践感兴趣的同学。</script>
     </div>
     <div class="hero-actions">
       <a class="btn secondary magnetic" href="/knowledge.html">查看训练资料</a>
@@ -99,6 +109,7 @@
 <script>
   window.blog.renderUserNav();
   window.blog.renderEditableBlocks();
+  window.blog.renderDepartmentMarkdownPage();
 </script>
 <script src="/yuna-ui.js"></script>
 </body>

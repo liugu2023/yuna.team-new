@@ -74,15 +74,25 @@
 
 <main class="main page-main" id="content">
   <section class="shell">
-    <div class="service-strip">
-      <article class="visual-card reveal" id="dept-publicity" data-editable-block="departments-publicity-detail" data-editable-title="部门详情：组宣部">
-        <h3 data-block-field="title">组宣部</h3>
-        <div class="pipeline" data-block-rows>
-          <div class="pipeline-row" data-block-row><strong>主要方向</strong><span>活动记录、视觉物料、图文传播、成员资料和会议档案</span></div>
-          <div class="pipeline-row" data-block-row><strong>日常内容</strong><span>整理活动内容、维护协会资料、协调流程和沉淀长期档案</span></div>
-          <div class="pipeline-row" data-block-row><strong>适合对象</strong><span>愿意参与内容表达、组织协作和协会日常运转的同学</span></div>
-        </div>
-      </article>
+    <div data-department-markdown-page="departments/publicity" data-department-markdown-title="组宣部">
+      <div class="article-body"><p class="empty-state">正在加载部门详情。</p></div>
+      <script type="text/plain" data-department-markdown-default># 组宣部
+
+## 主要方向
+
+- 活动记录、视觉物料、图文传播、成员资料和会议档案
+- 协会内容展示、日常沟通、资料归档和流程协调
+- 让活动内容、成员信息和长期档案保持清晰可追溯
+
+## 日常内容
+
+- 整理活动内容，维护协会资料，协调流程并沉淀长期档案
+- 参与图文发布、视觉物料整理、会议记录和成员资料维护
+- 与各部门配合完成活动宣传、成果展示和内容归档
+
+## 适合对象
+
+愿意参与内容表达、组织协作和协会日常运转的同学。</script>
     </div>
     <div class="hero-actions">
       <a class="btn secondary magnetic" href="/join.html">了解招新</a>
@@ -99,6 +109,7 @@
 <script>
   window.blog.renderUserNav();
   window.blog.renderEditableBlocks();
+  window.blog.renderDepartmentMarkdownPage();
 </script>
 <script src="/yuna-ui.js"></script>
 </body>

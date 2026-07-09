@@ -74,15 +74,25 @@
 
 <main class="main page-main" id="content">
   <section class="shell">
-    <div class="service-strip">
-      <article class="visual-card reveal" id="dept-ops" data-editable-block="departments-ops-detail" data-editable-title="部门详情：运维部">
-        <h3 data-block-field="title">运维部</h3>
-        <div class="pipeline" data-block-rows>
-          <div class="pipeline-row" data-block-row><strong>主要方向</strong><span>部署、监控、域名证书、备份和服务稳定性维护</span></div>
-          <div class="pipeline-row" data-block-row><strong>日常内容</strong><span>维护协会站点、整理部署流程、处理运行问题和服务迁移</span></div>
-          <div class="pipeline-row" data-block-row><strong>适合对象</strong><span>愿意理解系统运行链路，并关注长期稳定性的同学</span></div>
-        </div>
-      </article>
+    <div data-department-markdown-page="departments/ops" data-department-markdown-title="运维部">
+      <div class="article-body"><p class="empty-state">正在加载部门详情。</p></div>
+      <script type="text/plain" data-department-markdown-default># 运维部
+
+## 主要方向
+
+- 部署、监控、域名证书、备份和服务稳定性维护
+- 协会站点运行环境、自动化流程和内容资源可用性保障
+- 将日常维护经验整理成可复用的运维文档
+
+## 日常内容
+
+- 维护协会站点，整理部署流程，处理运行问题和服务迁移
+- 关注访问稳定性、配置变更、资源归档和备份恢复
+- 与开发部协作完成上线、排错和基础设施调整
+
+## 适合对象
+
+愿意理解系统运行链路，并关注长期稳定性的同学。</script>
     </div>
     <div class="hero-actions">
       <a class="btn secondary magnetic" href="/articles.html">查看运维文章</a>
@@ -99,6 +109,7 @@
 <script>
   window.blog.renderUserNav();
   window.blog.renderEditableBlocks();
+  window.blog.renderDepartmentMarkdownPage();
 </script>
 <script src="/yuna-ui.js"></script>
 </body>
