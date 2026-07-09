@@ -1995,7 +1995,7 @@ function renderMembersRecord(record, items) {
 }
 
 function renderMemberTerm(term, items, active) {
-  const departments = ["主席团", "开发部", "网络安全部", "运维部", "组宣秘书处"];
+  const departments = ["主席团", "开发部", "网络安全部", "运维部", "组宣部"];
   return `
     <section data-term-panel="${escapeHtml(term)}" ${active ? "" : "hidden"}>
       ${departments
@@ -2015,7 +2015,7 @@ function renderMemberTerm(term, items, active) {
 }
 
 function normalizeDepartmentName(value) {
-  return value === "组宣部" || value === "秘书处" ? "组宣秘书处" : value;
+  return value === "\u7ec4\u5ba3\u79d8\u4e66\u5904" || value === "秘书处" ? "组宣部" : value;
 }
 
 async function renderTeamRecords() {
@@ -2107,7 +2107,7 @@ function renderProfileCard(item) {
             ? `<img class="avatar image-avatar" src="${escapeHtml(normalizeAssetUrl(item.avatar))}" alt="${escapeHtml(item.name || "")}" loading="lazy">`
             : `<div class="avatar">${escapeHtml(avatarText)}</div>`
         }
-        <span class="tag">${escapeHtml(item.department || item.title || "YUNA")}</span>
+        <span class="tag">${escapeHtml(item.department ? normalizeDepartmentName(item.department) : item.title || "YUNA")}</span>
       </div>
       <h3>${escapeHtml(item.name || "")}</h3>
       ${item.title ? `<p class="meta">${escapeHtml(item.title)}</p>` : ""}

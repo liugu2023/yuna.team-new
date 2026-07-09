@@ -752,7 +752,7 @@ function renderFixedList(items, listEl, type) {
     .map((item, index) => {
       const meta =
         type === "members"
-          ? `${window.blog.escapeHtml(item.term || "未填写届数")} · ${window.blog.escapeHtml(item.department || "")}`
+          ? `${window.blog.escapeHtml(item.term || "未填写届数")} · ${window.blog.escapeHtml(normalizeMemberDepartment(item.department || ""))}`
           : "名人堂";
       const avatarText = (item.name || item.title || "Y").slice(0, 2).toUpperCase();
       const avatar = item.avatar
@@ -953,7 +953,7 @@ function updateContactPlaceholder(select, input) {
 }
 
 function normalizeMemberDepartment(value) {
-  return value === "组宣部" || value === "秘书处" ? "组宣秘书处" : value;
+  return value === "\u7ec4\u5ba3\u79d8\u4e66\u5904" || value === "秘书处" ? "组宣部" : value;
 }
 
 // 导出走 fetch + blob 下载：直接 <a href> 在会话过期时会把整个后台导航到 401 JSON，
