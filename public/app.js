@@ -773,7 +773,7 @@ function renderPostListInto(list, posts, admin) {
     }
 
     list.innerHTML = homePosts
-      .slice(0, 3)
+      .slice(0, LIST_PAGE_SIZE)
       .map(
         (post) => `
           <article class="card reveal visible">
