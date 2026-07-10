@@ -35,6 +35,8 @@ export interface PostRecord {
   markdown_content: string;
   author_email: string;
   author_name: string;
+  author_url: string;
+  author_avatar: string;
   editor_name: string;
   created_at: string;
   updated_at: string;

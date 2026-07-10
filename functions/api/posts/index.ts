@@ -14,6 +14,8 @@ interface CreatePostPayload {
   excerpt?: string;
   cover_url?: string;
   author_name?: string;
+  author_url?: string;
+  author_avatar?: string;
   editor_name?: string;
   status?: "draft" | "published";
   kind?: "article" | "knowledge";
@@ -37,7 +39,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   }
   const includeAll = includeDrafts && canSeeDrafts;
   // 列表不输出 author_email：公开接口不暴露成员登录邮箱，展示用 author_name。
-  const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_name, editor_name, created_at, updated_at, published_at, view_count";
+  const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_name, author_url, author_avatar, editor_name, created_at, updated_at, published_at, view_count";
 
   const query = includeAll
     ? `SELECT ${columns} FROM posts WHERE kind = ? ORDER BY COALESCE(published_at, updated_at) DESC${usePagination ? " LIMIT ? OFFSET ?" : ""}`
@@ -90,6 +92,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   const tag = normalizeTag(payload.tag);
   const coverUrl = normalizeOptionalText(payload.cover_url);
   const authorName = normalizeOptionalText(payload.author_name) || DEFAULT_CREDIT_NAME;
+  const authorUrl = normalizeHttpUrl(payload.author_url);
+  if (authorUrl === null) return badRequest("作者链接必须是有效的 HTTP 或 HTTPS 地址");
+  const authorAvatar = normalizeAvatarUrl(payload.author_avatar);
+  if (authorAvatar === null) return badRequest("作者头像必须是本站媒体地址或有效的 HTTP/HTTPS 图片地址");
   const editorName = normalizeOptionalText(payload.editor_name) || DEFAULT_CREDIT_NAME;
 
   const publishedAt = status === "published" ? now : null;
@@ -97,8 +103,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   const insertPost = (slugValue: string) =>
     env.BLOG_DB.prepare(
       `INSERT INTO posts
-        (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, editor_name, created_at, updated_at, published_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, author_url, author_avatar, editor_name, created_at, updated_at, published_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         id,
@@ -113,6 +119,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
         payload.markdown,
         session.user_email,
         authorName,
+        authorUrl,
+        authorAvatar,
         editorName,
         now,
         now,
@@ -154,6 +162,29 @@ function normalizeTag(value: unknown): string {
 
 function normalizeOptionalText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeHttpUrl(value: unknown): string | null {
+  const raw = normalizeOptionalText(value);
+  if (!raw) return "";
+  if (raw.length > 2048) return null;
+  try {
+    const url = new URL(raw);
+    if ((url.protocol !== "http:" && url.protocol !== "https:") || !url.hostname || url.username || url.password) {
+      return null;
+    }
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeAvatarUrl(value: unknown): string | null {
+  const raw = normalizeOptionalText(value);
+  if (!raw) return "";
+  if (raw.length > 2048 || /[\0\r\n\\]/.test(raw)) return null;
+  if (raw.startsWith("/media/") && !raw.startsWith("/media//")) return raw;
+  return normalizeHttpUrl(raw);
 }
 
 function normalizeKind(value: unknown): "article" | "knowledge" {

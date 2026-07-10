@@ -199,6 +199,8 @@ async function buildMarkdownDocuments(env: Env, prefix: string): Promise<Markdow
         excerpt: post.excerpt,
         author_email: post.author_email,
         author_name: post.author_name || "",
+        author_url: post.author_url || "",
+        author_avatar: post.author_avatar || "",
         editor_name: post.editor_name || "",
         created_at: post.created_at,
         updated_at: post.updated_at,

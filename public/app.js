@@ -582,6 +582,39 @@ function safeLinkUrl(value) {
   return "";
 }
 
+function safeAuthorUrl(value) {
+  const raw = String(value || "").trim();
+  if (!/^https?:\/\//i.test(raw)) return "";
+  try {
+    const url = new URL(raw);
+    return url.hostname ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function authorInitials(name) {
+  return (String(name || "Y").trim() || "Y").slice(0, 2).toUpperCase();
+}
+
+function authorIdentityHtml(post, { prefix = "" } = {}) {
+  const name = String(post?.author_name || "").trim();
+  if (!name) return "";
+  const avatar = safeDisplayAssetUrl(post?.author_avatar);
+  const href = safeAuthorUrl(post?.author_url);
+  const avatarHtml = `<span class="author-avatar"><span>${escapeHtml(authorInitials(name))}</span>${avatar ? `<img src="${escapeHtml(avatar)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-author-avatar-image>` : ""}</span>`;
+  const content = `${avatarHtml}<span>${escapeHtml(prefix)}${escapeHtml(name)}</span>`;
+  return href
+    ? `<a class="author-chip" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${content}</a>`
+    : `<span class="author-chip">${content}</span>`;
+}
+
+function bindAuthorAvatarFallbacks(root = document) {
+  root.querySelectorAll?.("[data-author-avatar-image]").forEach((image) => {
+    image.addEventListener("error", () => image.remove(), { once: true });
+  });
+}
+
 function isQQContactLabel(label) {
   return String(label || "").trim().toLowerCase() === "qq";
 }
@@ -1927,13 +1960,15 @@ async function renderPost() {
     if (updated) updated.textContent = editedAfterPublish && editorName ? `${updatedDate} · ${editorName}` : updatedDate;
     if (updatedRow) updatedRow.hidden = !editedAfterPublish;
     if (viewNode) viewNode.textContent = views;
-    if (authorNode) authorNode.textContent = authorName;
+    if (authorNode) authorNode.innerHTML = authorIdentityHtml(data.post);
     if (authorRow) authorRow.hidden = !authorName;
     if (tagNode) tagNode.innerHTML = `<span class="contact-row">${postTagsHtml(data.post)}</span>`;
     article.innerHTML = `
-      <div class="meta">${authorName ? `<span>作者 ${escapeHtml(authorName)}</span>` : ""}${postTimeMetaHtml(data.post)}${editedAfterPublish && editorName ? `<span>编辑 ${escapeHtml(editorName)}</span>` : ""}${data.post.status === "published" ? "" : "<span>草稿</span>"}${postTagsHtml(data.post)}<span>${views}</span></div>
+      ${authorName ? `<div class="author-byline">${authorIdentityHtml(data.post, { prefix: "作者 " })}</div>` : ""}
+      <div class="meta">${postTimeMetaHtml(data.post)}${editedAfterPublish && editorName ? `<span>编辑 ${escapeHtml(editorName)}</span>` : ""}${data.post.status === "published" ? "" : "<span>草稿</span>"}${postTagsHtml(data.post)}<span>${views}</span></div>
       ${markdownToHtml(stripDuplicateLeadingTitle(data.markdown, data.post.title))}
     `;
+    bindAuthorAvatarFallbacks(document);
   } catch (error) {
     article.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
   }
@@ -2698,6 +2733,9 @@ window.blog = {
   markdownToHtml,
   normalizeAssetUrl,
   safeDisplayAssetUrl,
+  safeAuthorUrl,
+  authorIdentityHtml,
+  bindAuthorAvatarFallbacks,
   renderPostList,
   renderHomeHero,
   renderHomeNotice,

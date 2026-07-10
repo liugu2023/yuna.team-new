@@ -16,6 +16,10 @@ const fields = {
   title: document.querySelector("[data-title]"),
   tag: document.querySelector("[data-post-tag]"),
   authorName: document.querySelector("[data-author-name]"),
+  authorUrl: document.querySelector("[data-author-url]"),
+  authorAvatar: document.querySelector("[data-author-avatar]"),
+  authorGithub: document.querySelector("[data-author-github]"),
+  authorAvatarFile: document.querySelector("[data-author-avatar-file]"),
   lastEditor: document.querySelector("[data-last-editor]"),
   excerpt: document.querySelector("[data-excerpt]"),
   coverUrl: document.querySelector("[data-cover-url]"),
@@ -105,6 +109,9 @@ function editorSnapshot() {
     title: fields.title.value,
     tag: fields.tag.value,
     authorName: fields.authorName.value,
+    authorUrl: fields.authorUrl.value,
+    authorAvatar: fields.authorAvatar.value,
+    authorGithub: fields.authorGithub.value,
     lastEditor: fields.lastEditor.value,
     excerpt: fields.excerpt.value,
     coverUrl: fields.coverUrl.value,
@@ -345,6 +352,9 @@ async function loadPost(slug) {
   fields.title.value = data.post.title;
   fields.tag.value = data.post.tag || defaultTag(state.editingKind);
   fields.authorName.value = data.post.author_name || DEFAULT_CREDIT_NAME;
+  fields.authorUrl.value = data.post.author_url || "";
+  fields.authorAvatar.value = data.post.author_avatar || "";
+  fields.authorGithub.value = githubUsernameFromAuthor(data.post);
   fields.lastEditor.value = data.post.editor_name || DEFAULT_CREDIT_NAME;
   fields.excerpt.value = data.post.excerpt || "";
   fields.coverUrl.value = data.post.cover_url || "";
@@ -367,6 +377,8 @@ async function savePost(status) {
       title: fields.title.value.trim(),
       tag: fields.tag.value.trim(),
       author_name: fields.authorName.value.trim(),
+      author_url: fields.authorUrl.value.trim(),
+      author_avatar: fields.authorAvatar.value.trim(),
       editor_name: fields.lastEditor.value.trim(),
       excerpt: fields.excerpt.value.trim(),
       cover_url: fields.coverUrl.value.trim(),
@@ -394,6 +406,9 @@ async function savePost(status) {
       state.editingUpdatedAt = data.post.updated_at || null;
       // 服务端会把留空的署名/标签归一成默认值，回填保持表单与实际数据一致。
       fields.authorName.value = data.post.author_name || DEFAULT_CREDIT_NAME;
+      fields.authorUrl.value = data.post.author_url || "";
+      fields.authorAvatar.value = data.post.author_avatar || "";
+      fields.authorGithub.value = githubUsernameFromAuthor(data.post);
       fields.lastEditor.value = data.post.editor_name || DEFAULT_CREDIT_NAME;
       fields.tag.value = data.post.tag || defaultTag(state.editingKind);
       fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
@@ -495,6 +510,62 @@ async function uploadCoverImage() {
       fields.message.textContent = adminErrorText(error);
     }
   });
+}
+
+async function uploadAuthorAvatar() {
+  await withLockedButtons("[data-upload-author-avatar]", async () => {
+    const file = fields.authorAvatarFile.files[0];
+    if (!file) {
+      fields.message.textContent = "请选择作者头像。";
+      return;
+    }
+    if (!["image/png", "image/jpeg", "image/gif", "image/webp"].includes(file.type)) {
+      fields.message.textContent = "作者头像仅支持 PNG、JPEG、GIF 或 WebP。";
+      return;
+    }
+
+    try {
+      fields.message.textContent = "作者头像上传中…";
+      const data = await uploadImage(file, "avatars/authors");
+      fields.authorAvatar.value = data.url;
+      fields.authorGithub.value = "";
+      fields.authorAvatarFile.value = "";
+      fields.message.textContent = "作者头像已设置。";
+      updatePreview();
+    } catch (error) {
+      fields.message.textContent = adminErrorText(error);
+    }
+  });
+}
+
+function githubUsernameFromAuthor(post) {
+  const values = [post?.author_avatar, post?.author_url];
+  for (const value of values) {
+    const match = String(value || "").match(/^https:\/\/(?:www\.)?github\.com\/([^/?#]+)(?:\.png)?(?:[/?#]|$)/i);
+    if (match) {
+      try {
+        return decodeURIComponent(match[1]).replace(/\.png$/i, "");
+      } catch {
+        return match[1].replace(/\.png$/i, "");
+      }
+    }
+  }
+  return "";
+}
+
+function useGithubAvatar() {
+  const username = fields.authorGithub.value.trim().replace(/^@/, "");
+  if (!/^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?$/i.test(username)) {
+    fields.message.textContent = "请输入有效的 GitHub 用户名（1–39 位字母、数字或连字符）。";
+    return;
+  }
+  fields.authorGithub.value = username;
+  fields.authorAvatar.value = `https://github.com/${encodeURIComponent(username)}.png?size=200`;
+  if (!fields.authorUrl.value.trim()) {
+    fields.authorUrl.value = `https://github.com/${encodeURIComponent(username)}`;
+  }
+  fields.message.textContent = `已读取 GitHub 用户 ${username} 的头像。`;
+  updatePreview();
 }
 
 async function uploadPostFiles() {
@@ -1216,6 +1287,10 @@ function resetEditor(kind = "article") {
   fields.title.value = "";
   fields.tag.value = defaultTag(state.editingKind);
   fields.authorName.value = DEFAULT_CREDIT_NAME;
+  fields.authorUrl.value = "";
+  fields.authorAvatar.value = "";
+  fields.authorGithub.value = "";
+  fields.authorAvatarFile.value = "";
   fields.lastEditor.value = DEFAULT_CREDIT_NAME;
   fields.excerpt.value = "";
   fields.coverUrl.value = "";
@@ -1263,16 +1338,23 @@ function activateAdminTab(name) {
 function updatePreview() {
   const title = fields.title.value.trim() || "未命名文章";
   const authorName = fields.authorName.value.trim();
+  const authorPost = {
+    author_name: authorName,
+    author_url: fields.authorUrl.value.trim(),
+    author_avatar: fields.authorAvatar.value.trim(),
+  };
   const excerpt = fields.excerpt.value.trim();
   const coverUrl = window.blog.safeDisplayAssetUrl(fields.coverUrl.value.trim());
   const previewPost = { tag: fields.tag.value.trim() || "协会动态" };
   fields.preview.innerHTML = `
-    <p class="meta">${window.blog.postTagsHtml(previewPost)}${authorName ? `<span>${window.blog.escapeHtml(authorName)}</span>` : ""}</p>
+    ${authorName ? `<div class="author-byline">${window.blog.authorIdentityHtml(authorPost, { prefix: "作者 " })}</div>` : ""}
+    <p class="meta">${window.blog.postTagsHtml(previewPost)}</p>
     <h1>${window.blog.escapeHtml(title)}</h1>
     ${excerpt ? `<p>${window.blog.escapeHtml(excerpt)}</p>` : ""}
     ${coverUrl ? `<img src="${window.blog.escapeHtml(coverUrl)}" alt="" loading="lazy">` : ""}
     ${window.blog.markdownToHtml(fields.markdown.value || "开始输入 Markdown 内容。")}
   `;
+  window.blog.bindAuthorAvatarFallbacks(fields.preview);
 }
 
 function insertAtCursor(textarea, text) {
@@ -1351,6 +1433,8 @@ bindElement(fields.markdown, "drop", (event) => {
 }, "data-markdown");
 bind("[data-upload-post-image]", "click", uploadPostImage);
 bind("[data-upload-cover]", "click", uploadCoverImage);
+bind("[data-upload-author-avatar]", "click", uploadAuthorAvatar);
+bind("[data-use-github-avatar]", "click", useGithubAvatar);
 bind("[data-upload-post-file]", "click", uploadPostFiles);
 bindElement(fields.memberImageFile, "change", uploadMemberAvatar, "data-member-image-file");
 bindElement(fields.fameImageFile, "change", uploadFameAvatar, "data-fame-image-file");
@@ -1402,6 +1486,11 @@ bindElement(fields.knowledgeFilterStatus, "change", () => {
 bindElement(fields.title, "input", updatePreview, "data-title");
 bindElement(fields.tag, "input", updatePreview, "data-post-tag");
 bindElement(fields.authorName, "input", updatePreview, "data-author-name");
+bindElement(fields.authorUrl, "input", updatePreview, "data-author-url");
+bindElement(fields.authorAvatar, "input", () => {
+  fields.authorGithub.value = githubUsernameFromAuthor({ author_avatar: fields.authorAvatar.value });
+  updatePreview();
+}, "data-author-avatar");
 bindElement(fields.excerpt, "input", updatePreview, "data-excerpt");
 bindElement(fields.coverUrl, "input", updatePreview, "data-cover-url");
 bindElement(fields.markdown, "input", updatePreview, "data-markdown");

@@ -14,6 +14,8 @@ interface UpdatePostPayload {
   excerpt?: string;
   cover_url?: string;
   author_name?: string;
+  author_url?: string;
+  author_avatar?: string;
   editor_name?: string;
   status?: "draft" | "published";
   kind?: "article" | "knowledge";
@@ -100,6 +102,14 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
   const nextAuthorName = payload.author_name !== undefined
     ? normalizeOptionalText(payload.author_name) || DEFAULT_CREDIT_NAME
     : post.author_name ?? "";
+  const nextAuthorUrl = payload.author_url !== undefined
+    ? normalizeHttpUrl(payload.author_url)
+    : post.author_url ?? "";
+  if (nextAuthorUrl === null) return badRequest("作者链接必须是有效的 HTTP 或 HTTPS 地址");
+  const nextAuthorAvatar = payload.author_avatar !== undefined
+    ? normalizeAvatarUrl(payload.author_avatar)
+    : post.author_avatar ?? "";
+  if (nextAuthorAvatar === null) return badRequest("作者头像必须是本站媒体地址或有效的 HTTP/HTTPS 图片地址");
   const nextKind = payload.kind !== undefined ? normalizeKind(payload.kind) : post.kind ?? "article";
   const publishedAt =
     post.published_at ?? (post.status !== "published" && nextStatus === "published" ? now : null);
@@ -112,7 +122,7 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   await env.BLOG_DB.prepare(
     `UPDATE posts
-     SET title = ?, tag = ?, excerpt = ?, cover_url = ?, author_name = ?, editor_name = ?, status = ?, kind = ?, markdown_content = ?, updated_at = ?, published_at = ?
+     SET title = ?, tag = ?, excerpt = ?, cover_url = ?, author_name = ?, author_url = ?, author_avatar = ?, editor_name = ?, status = ?, kind = ?, markdown_content = ?, updated_at = ?, published_at = ?
      WHERE slug = ?`,
   )
     .bind(
@@ -121,6 +131,8 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
       payload.excerpt ?? post.excerpt,
       nextCoverUrl,
       nextAuthorName,
+      nextAuthorUrl,
+      nextAuthorAvatar,
       editorName,
       nextStatus,
       nextKind,
@@ -151,6 +163,29 @@ function normalizeTag(value: unknown): string {
 
 function normalizeOptionalText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeHttpUrl(value: unknown): string | null {
+  const raw = normalizeOptionalText(value);
+  if (!raw) return "";
+  if (raw.length > 2048) return null;
+  try {
+    const url = new URL(raw);
+    if ((url.protocol !== "http:" && url.protocol !== "https:") || !url.hostname || url.username || url.password) {
+      return null;
+    }
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeAvatarUrl(value: unknown): string | null {
+  const raw = normalizeOptionalText(value);
+  if (!raw) return "";
+  if (raw.length > 2048 || /[\0\r\n\\]/.test(raw)) return null;
+  if (raw.startsWith("/media/") && !raw.startsWith("/media//")) return raw;
+  return normalizeHttpUrl(raw);
 }
 
 function normalizeKind(value: unknown): "article" | "knowledge" {
