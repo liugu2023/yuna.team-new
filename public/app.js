@@ -1964,9 +1964,11 @@ async function renderPost() {
     if (authorRow) authorRow.hidden = !authorName;
     if (tagNode) tagNode.innerHTML = `<span class="contact-row">${postTagsHtml(data.post)}</span>`;
     article.innerHTML = `
-      ${authorName ? `<div class="author-byline">${authorIdentityHtml(data.post, { prefix: "作者 " })}</div>` : ""}
-      <div class="meta">${postTimeMetaHtml(data.post)}${editedAfterPublish && editorName ? `<span>编辑 ${escapeHtml(editorName)}</span>` : ""}${data.post.status === "published" ? "" : "<span>草稿</span>"}${postTagsHtml(data.post)}<span>${views}</span></div>
       ${markdownToHtml(stripDuplicateLeadingTitle(data.markdown, data.post.title))}
+      <footer class="article-detail-footer" aria-label="文章标签与阅读次数">
+        <div class="contact-row">${postTagsHtml(data.post)}</div>
+        <span class="article-detail-views">${views}</span>
+      </footer>
     `;
     bindAuthorAvatarFallbacks(document);
   } catch (error) {

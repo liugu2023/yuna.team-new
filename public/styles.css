@@ -1157,6 +1157,27 @@
     .post-info-card .pipeline-row strong{
       min-width:2.25em;
     }
+    .article-detail-footer{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:48px;
+      padding-top:22px;
+      border-top:1px solid rgba(170,205,236,.48);
+      color:#54667d;
+      font-size:14px;
+      font-weight:850;
+    }
+    .article-detail-footer .contact-row{
+      margin-top:0;
+    }
+    .article-detail-views{
+      display:inline-flex;
+      align-items:center;
+      min-height:34px;
+    }
     .join-page .visual-card,
     .join-page .member-card{
       display:flex;
