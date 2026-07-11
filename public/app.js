@@ -1926,6 +1926,49 @@ function stripDuplicateLeadingTitle(markdown, title) {
   return lines.join("\n");
 }
 
+function articleHeadingSlug(value, fallback) {
+  return String(value || "")
+    .trim()
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\p{Letter}\p{Number}_-]+/gu, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "") || fallback;
+}
+
+function renderArticleToc(article) {
+  const toc = document.querySelector("[data-article-toc]");
+  const list = toc?.querySelector("[data-article-toc-list]");
+  if (!toc || !list) return;
+
+  const headings = Array.from(article.children).filter((node) => node.matches("h1, h2"));
+  if (!headings.length) {
+    toc.hidden = true;
+    list.innerHTML = "";
+    return;
+  }
+
+  const usedIds = new Set();
+  const entries = headings.map((heading, index) => {
+    const label = heading.textContent.trim() || `章节 ${index + 1}`;
+    const baseId = `article-${articleHeadingSlug(label, `section-${index + 1}`)}`;
+    let id = baseId;
+    let suffix = 2;
+    while (usedIds.has(id) || document.getElementById(id)) {
+      id = `${baseId}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(id);
+    heading.id = id;
+    const subheading = heading.tagName === "H2" ? " is-subheading" : "";
+    return `<a class="article-toc-link${subheading}" href="#${escapeHtml(id)}">${escapeHtml(label)}</a>`;
+  });
+
+  list.innerHTML = entries.join("");
+  toc.hidden = false;
+}
+
 async function renderPost() {
   const article = document.querySelector("[data-article]");
   if (!article) return;
@@ -1965,11 +2008,8 @@ async function renderPost() {
     if (tagNode) tagNode.innerHTML = `<span class="contact-row">${postTagsHtml(data.post)}</span>`;
     article.innerHTML = `
       ${markdownToHtml(stripDuplicateLeadingTitle(data.markdown, data.post.title))}
-      <footer class="article-detail-footer" aria-label="文章标签与阅读次数">
-        <div class="contact-row">${postTagsHtml(data.post)}</div>
-        <span class="article-detail-views">${views}</span>
-      </footer>
     `;
+    renderArticleToc(article);
     bindAuthorAvatarFallbacks(document);
   } catch (error) {
     article.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
