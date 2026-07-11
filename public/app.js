@@ -2196,6 +2196,27 @@ function normalizeDepartmentName(value) {
   return value === "\u7ec4\u5ba3\u79d8\u4e66\u5904" || value === "秘书处" ? "组宣部" : value;
 }
 
+function memberDepartmentLabel(item) {
+  return normalizeDepartmentName(String(item?.department || "").trim()) || "未分组";
+}
+
+function sortedMemberDepartments(items) {
+  const preferredDepartments = ["主席团", "开发部", "网络安全部", "运维部", "组宣部"];
+  const departments = [...new Set(items.map(memberDepartmentLabel))];
+  return departments.sort((a, b) => {
+    const rankA = preferredDepartments.indexOf(a);
+    const rankB = preferredDepartments.indexOf(b);
+    if (rankA !== -1 || rankB !== -1) {
+      if (rankA === -1) return 1;
+      if (rankB === -1) return -1;
+      return rankA - rankB;
+    }
+    if (a === "未分组") return 1;
+    if (b === "未分组") return -1;
+    return a.localeCompare(b, "zh-CN");
+  });
+}
+
 function memberTermLabel(item) {
   return String(item?.term || "").trim() || "未填写届数";
 }
@@ -2293,7 +2314,7 @@ async function renderTeamRecord(key, container) {
     container.innerHTML = key === "members"
       ? renderTeamMembers(items)
       : `<div class="member-grid refined-member-grid">${items.map(renderProfileCard).join("")}</div>`;
-    bindTeamMemberTermSwitch(container);
+    bindTeamMemberFilters(container);
   } catch (error) {
     container.innerHTML = isNotFoundError(error)
       ? '<p class="empty-state">暂无内容。</p>'
@@ -2303,16 +2324,26 @@ async function renderTeamRecord(key, container) {
 
 function renderTeamMembers(items) {
   const terms = sortedMemberTerms(items);
+  const departments = sortedMemberDepartments(items);
   const activeTerm = terms[0];
   return `
-    <div class="team-term-switcher" role="group" aria-label="往届成员届数切换">
-      ${terms
-        .map((term) => {
-          const count = items.filter((item) => memberTermLabel(item) === term).length;
-          const active = term === activeTerm;
-          return `<button class="team-term-button${active ? " is-active" : ""}" type="button" data-team-term-button="${escapeHtml(term)}" aria-pressed="${active ? "true" : "false"}">${escapeHtml(term)}<span>${count.toLocaleString("zh-CN")} 人</span></button>`;
-        })
-        .join("")}
+    <div class="team-toolbar">
+      <div class="team-term-switcher" role="group" aria-label="往届成员届数切换">
+        ${terms
+          .map((term) => {
+            const count = items.filter((item) => memberTermLabel(item) === term).length;
+            const active = term === activeTerm;
+            return `<button class="team-term-button${active ? " is-active" : ""}" type="button" data-team-term-button="${escapeHtml(term)}" aria-pressed="${active ? "true" : "false"}">${escapeHtml(term)}<span>${count.toLocaleString("zh-CN")} 人</span></button>`;
+          })
+          .join("")}
+      </div>
+      <label class="field-lite team-department-filter">
+        <span>部门</span>
+        <select class="select-input" data-team-department-filter aria-label="按部门筛选往届成员">
+          <option value="">全部部门</option>
+          ${departments.map((department) => `<option value="${escapeHtml(department)}">${escapeHtml(department)}</option>`).join("")}
+        </select>
+      </label>
     </div>
     <div data-team-term-panels>
       ${terms
@@ -2323,6 +2354,7 @@ function renderTeamMembers(items) {
               <div class="member-grid refined-member-grid">
                 ${termItems.map(renderProfileCard).join("")}
               </div>
+              <p class="empty-state team-filter-empty" data-team-filter-empty aria-live="polite" hidden></p>
             </section>
           `;
         })
@@ -2331,29 +2363,63 @@ function renderTeamMembers(items) {
   `;
 }
 
-function bindTeamMemberTermSwitch(container) {
+function bindTeamMemberFilters(container) {
   const buttons = Array.from(container.querySelectorAll("[data-team-term-button]"));
   if (!buttons.length) return;
+  const departmentFilter = container.querySelector("[data-team-department-filter]");
+
+  const applyFilters = (resetUnavailableDepartment = false) => {
+    const activeTerm = buttons.find((button) => button.classList.contains("is-active"))?.dataset.teamTermButton || "";
+    const activePanel = Array.from(container.querySelectorAll("[data-team-term-panel]")).find(
+      (panel) => panel.dataset.teamTermPanel === activeTerm,
+    );
+    let department = departmentFilter?.value || "";
+    if (resetUnavailableDepartment && department && activePanel) {
+      const availableDepartments = new Set(
+        Array.from(activePanel.querySelectorAll("[data-member-department]")).map((card) => card.dataset.memberDepartment || ""),
+      );
+      if (!availableDepartments.has(department)) {
+        department = "";
+        departmentFilter.value = "";
+      }
+    }
+
+    container.querySelectorAll("[data-team-term-panel]").forEach((panel) => {
+      const active = panel.dataset.teamTermPanel === activeTerm;
+      panel.hidden = !active;
+      let visibleCount = 0;
+      panel.querySelectorAll("[data-member-department]").forEach((card) => {
+        const visible = !department || card.dataset.memberDepartment === department;
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      });
+      const emptyState = panel.querySelector("[data-team-filter-empty]");
+      if (emptyState) {
+        emptyState.hidden = !active || visibleCount > 0;
+        emptyState.textContent = department ? `当前届数暂无${department}成员。` : "当前届数暂无成员。";
+      }
+    });
+  };
+
   buttons.forEach((button) => {
     button.addEventListener("click", () => {
-      const term = button.dataset.teamTermButton || "";
       buttons.forEach((item) => {
         const active = item === button;
         item.classList.toggle("is-active", active);
         item.setAttribute("aria-pressed", active ? "true" : "false");
       });
-      container.querySelectorAll("[data-team-term-panel]").forEach((panel) => {
-        panel.hidden = panel.dataset.teamTermPanel !== term;
-      });
+      applyFilters(true);
     });
   });
+  departmentFilter?.addEventListener("change", applyFilters);
+  applyFilters();
 }
 
 function renderProfileCard(item) {
   const links = Array.isArray(item.links) ? item.links : [];
   const avatarText = (item.name || item.title || "Y").slice(0, 2).toUpperCase();
   return `
-    <article class="member-card refined-member-card reveal visible">
+    <article class="member-card refined-member-card reveal visible" data-member-department="${escapeHtml(memberDepartmentLabel(item))}">
       <span class="flash"></span>
       <div class="member-card-top">
         ${
