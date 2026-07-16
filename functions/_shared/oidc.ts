@@ -12,6 +12,7 @@ export interface UserInfo {
   name?: string;
   preferred_username?: string;
   groups?: string[];
+  [claim: string]: unknown;
 }
 
 interface OidcDiscovery {
@@ -24,12 +25,12 @@ interface OidcDiscovery {
 const discoveryCache = new Map<string, OidcDiscovery>();
 
 export async function getDiscovery(env: Env): Promise<OidcDiscovery> {
-  const issuer = env.AUTHENTIK_ISSUER.replace(/\/+$/, "");
+  const issuer = env.ZITADEL_ISSUER.replace(/\/+$/, "");
   const cached = discoveryCache.get(issuer);
   if (cached) return cached;
 
   const response = await fetch(`${issuer}/.well-known/openid-configuration`);
-  if (!response.ok) throw new Error("无法加载 Authentik OIDC 配置");
+  if (!response.ok) throw new Error("无法加载 Zitadel OIDC 配置");
   const discovery = await response.json<OidcDiscovery>();
   discoveryCache.set(issuer, discovery);
   return discovery;
@@ -76,7 +77,7 @@ export function effectiveOrigin(env: Env, request: Request): string {
 }
 
 export function redirectUri(env: Env, request: Request): string {
-  return new URL(env.AUTHENTIK_REDIRECT_PATH, effectiveOrigin(env, request)).toString();
+  return new URL(env.ZITADEL_REDIRECT_PATH, effectiveOrigin(env, request)).toString();
 }
 
 export async function exchangeCode(
@@ -88,15 +89,22 @@ export async function exchangeCode(
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
-    // 必须与授权请求时的 redirect_uri 完全一致,否则 Authentik 拒绝换码。
+    // 必须与授权请求时的 redirect_uri 完全一致,否则 Zitadel 拒绝换码。
     redirect_uri: callbackUri,
-    client_id: env.AUTHENTIK_CLIENT_ID,
-    client_secret: env.AUTHENTIK_CLIENT_SECRET,
   });
+
+  // Zitadel Web 应用的 Client Secret Basic 要求凭据位于 Authorization 头中。
+  // encodeURIComponent 对齐 OAuth 2.0 对 client_id/client_secret 的 form-url-encode 要求。
+  const credentials = btoa(
+    `${encodeURIComponent(env.ZITADEL_CLIENT_ID)}:${encodeURIComponent(env.ZITADEL_CLIENT_SECRET)}`,
+  );
 
   const response = await fetch(discovery.token_endpoint, {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
+    headers: {
+      authorization: `Basic ${credentials}`,
+      "content-type": "application/x-www-form-urlencoded",
+    },
     body,
   });
 
@@ -110,6 +118,18 @@ export async function getUserInfo(env: Env, accessToken: string): Promise<UserIn
     headers: { authorization: `Bearer ${accessToken}` },
   });
 
-  if (!response.ok) throw new Error("无法读取 Authentik 用户信息");
+  if (!response.ok) throw new Error("无法读取 Zitadel 用户信息");
   return response.json<UserInfo>();
+}
+
+// Zitadel 将项目角色放在 urn:zitadel:iam:org:project:*:roles claim 中，
+// 值是以角色 key 为键的对象。这里同时接受 groups，便于已有会话平滑过渡。
+export function getUserRoles(userInfo: UserInfo): string[] {
+  const roles = new Set(Array.isArray(userInfo.groups) ? userInfo.groups : []);
+  for (const [claim, value] of Object.entries(userInfo)) {
+    if (!/^urn:zitadel:iam:org:project(?::[^:]+)?:roles$/.test(claim)) continue;
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    for (const role of Object.keys(value)) roles.add(role);
+  }
+  return [...roles];
 }

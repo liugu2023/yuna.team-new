@@ -1,5 +1,5 @@
 import { getCookie, serializeCookie, verifySignedValue } from "../_shared/cookies";
-import { exchangeCode, getUserInfo, redirectUri } from "../_shared/oidc";
+import { exchangeCode, getUserInfo, getUserRoles, redirectUri } from "../_shared/oidc";
 import { createSession } from "../_shared/session";
 import type { Env } from "../_shared/types";
 
@@ -17,13 +17,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   }
 
   // 回调发生在用户实际访问的域名上(可能由 CDN 反代转发),换码用的
-  // redirect_uri 也按同一规则解析,与 login 时发给 Authentik 的保持一致。
+  // redirect_uri 也按同一规则解析,与 login 时发给 Zitadel 的保持一致。
   const token = await exchangeCode(env, code, redirectUri(env, request));
   const userInfo = await getUserInfo(env, token.access_token);
   const identity = userInfo.email ?? userInfo.preferred_username;
 
   if (!identity) {
-    return new Response("登录成功，但 Authentik 没有返回邮箱或用户名，无法创建后台会话。", {
+    return new Response("登录成功，但 Zitadel 没有返回邮箱或用户名，无法创建后台会话。", {
       status: 403,
     });
   }
@@ -31,7 +31,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const sessionCookie = await createSession(env, {
     email: identity,
     name: userInfo.name ?? userInfo.preferred_username ?? "",
-    groups: Array.isArray(userInfo.groups) ? userInfo.groups : [],
+    groups: getUserRoles(userInfo),
   });
 
   return new Response(null, {

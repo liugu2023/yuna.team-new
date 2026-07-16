@@ -1,4 +1,4 @@
-AUTHENTIK_CLIENT_SECRET=replace-with-client-secret
+ZITADEL_CLIENT_SECRET=replace-with-client-secret
 SESSION_SECRET=replace-with-at-least-32-random-bytes
 FALLBACK_ADMIN_USER=replace-with-fallback-admin-username
 FALLBACK_ADMIN_PASSWORD=replace-with-strong-random-password

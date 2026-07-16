@@ -15,7 +15,7 @@ export async function createSession(
   // 顺手清理过期会话，避免 sessions 表只增不减。
   await env.BLOG_DB.prepare("DELETE FROM sessions WHERE expires_at <= ?").bind(now).run();
 
-  // 登录时把 Authentik 用户组快照进会话，供后续请求免去重复回源。
+  // 登录时把 Zitadel 项目角色快照进会话，供后续请求免去重复回源。
   const groups = JSON.stringify(Array.isArray(user.groups) ? user.groups : []);
 
   await env.BLOG_DB.prepare(

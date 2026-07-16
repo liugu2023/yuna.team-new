@@ -3,10 +3,10 @@ export interface Env {
   BLOG_BUCKET: R2Bucket;
   SITE_NAME: string;
   PUBLIC_BASE_URL: string;
-  AUTHENTIK_ISSUER: string;
-  AUTHENTIK_CLIENT_ID: string;
-  AUTHENTIK_CLIENT_SECRET: string;
-  AUTHENTIK_REDIRECT_PATH: string;
+  ZITADEL_ISSUER: string;
+  ZITADEL_CLIENT_ID: string;
+  ZITADEL_CLIENT_SECRET: string;
+  ZITADEL_REDIRECT_PATH: string;
   SSO_ALLOWED_HOSTS?: string;
   SESSION_SECRET: string;
   FALLBACK_ADMIN_USER?: string;

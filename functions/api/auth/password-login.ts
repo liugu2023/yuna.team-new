@@ -9,7 +9,7 @@ interface LoginBody {
 }
 
 // 备用账密登录:仅在同时配置了 FALLBACK_ADMIN_USER / FALLBACK_ADMIN_PASSWORD 时启用,
-// 供 Authentik 网关不可用时进入后台。凭据核对通过后走与 OIDC 回调完全相同的会话通道,
+// 供 Zitadel 网关不可用时进入后台。凭据核对通过后走与 OIDC 回调完全相同的会话通道,
 // 用户组直接写入 CONTROL_GROUP,后台权限判定、退出登录均复用现有逻辑。
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const expectedUser = (env.FALLBACK_ADMIN_USER || "").trim();

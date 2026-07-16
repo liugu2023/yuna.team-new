@@ -14,15 +14,15 @@ bucket_name = "cloudflare-markdown-blog"
 [vars]
 SITE_NAME = "YUNA 最新动态"
 PUBLIC_BASE_URL = "https://yuna.liugu.cc"
-AUTHENTIK_ISSUER = "https://sso.yuna.welain.com/application/o/yuna-docs/"
-AUTHENTIK_CLIENT_ID = "esxw1ynBDm6B6r5dzIdCtBfJ3ifkKVk7WbIRD7Py"
-AUTHENTIK_REDIRECT_PATH = "/auth/callback"
+ZITADEL_ISSUER = "https://sso.welain.com"
+ZITADEL_CLIENT_ID = "382015127156752388"
+ZITADEL_REDIRECT_PATH = "/auth/callback"
 
 # 额外允许的 SSO 登录回调域名(CNAME 到本站的域名),逗号分隔,可写主机名或完整 origin。
-# 每个域名的 https://<域名>/auth/callback 也要加进 Authentik provider 的 Redirect URIs。
+# 每个域名的 https://<域名>/auth/callback 也要加进 Zitadel 应用的 Redirect URIs。
 SSO_ALLOWED_HOSTS = "https://yuna.liugu.cc/auth/callback,https://www.yuna.team/auth/callback,https://yuna-team-new.pages.dev/auth/callback"
 
-# 拥有全部控制权限的 Authentik 用户组；留空则没有登录用户拥有控制权限。
+# 拥有全部控制权限的 Zitadel 项目角色；留空则没有登录用户拥有控制权限。
 CONTROL_GROUP = "yuna-docs-edit"
 
 # R2 旧媒体迁移 token 只允许写入这些 media 前缀，多个前缀用英文逗号分隔。

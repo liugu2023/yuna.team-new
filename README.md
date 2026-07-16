@@ -1,6 +1,6 @@
 # YUNA 协会博客系统
 
-这是燕山大学大学生网络信息协会（YUNA）的协会博客系统。项目部署在 Cloudflare Pages 上，使用 Pages Functions 提供后端接口，D1 保存文章和长期数据，R2 保存图片、PDF 等文件资源，Authentik 负责登录鉴权。
+这是燕山大学大学生网络信息协会（YUNA）的协会博客系统。项目部署在 Cloudflare Pages 上，使用 Pages Functions 提供后端接口，D1 保存文章和长期数据，R2 保存图片、PDF 等文件资源，Zitadel 负责登录鉴权。
 
 这个仓库只保存网站框架、页面逻辑、样式和数据库迁移脚本；实际文章、固定页面内容、协会成员、名人堂和首页图库等数据都进入 D1。图片、头像、PDF 等二进制资源进入 R2。
 
@@ -15,7 +15,7 @@
 - 图片和授课资料上传直接写入 R2，页面通过 `/media/...` 访问。
 - R2 上传支持小文件直传和大文件分片上传。
 - 文章或固定 Markdown 页面发生改动后，会自动同步 Markdown 快照到私有 GitHub 仓库。
-- Authentik OIDC 登录后进入管理后台。
+- Zitadel OIDC 登录后进入管理后台。
 
 ## 技术栈
 
@@ -23,7 +23,7 @@
 - Cloudflare Pages Functions：接口、鉴权、媒体读取。
 - Cloudflare D1：文章 Markdown、站点结构化数据、会话、备份。
 - Cloudflare R2：图片、头像、PDF 等二进制资源。
-- Authentik：OIDC 登录和用户身份来源。
+- Zitadel：OIDC 登录、用户身份和项目角色来源。
 - TypeScript：Functions 类型检查。
 - 原生 HTML/CSS/JavaScript：前台和后台界面。
 
@@ -78,7 +78,7 @@ copy .dev.vars.example .dev.vars
 在 `.dev.vars` 中填写：
 
 ```text
-AUTHENTIK_CLIENT_SECRET=Authentik Provider 的 client secret
+ZITADEL_CLIENT_SECRET=Zitadel Web 应用的 client secret
 SESSION_SECRET=至少 32 字节的随机字符串
 R2_MIGRATION_TOKEN=仅旧媒体迁移脚本写入 R2 时需要
 R2_MIGRATION_PREFIXES=activates
@@ -142,7 +142,7 @@ npm run db:migrate
 Cloudflare Pages 项目名以控制台为准。当前线上项目使用过 `yuna-team-new`，设置 secret 时建议显式指定项目名：
 
 ```bash
-npx wrangler pages secret put AUTHENTIK_CLIENT_SECRET --project-name yuna-team-new
+npx wrangler pages secret put ZITADEL_CLIENT_SECRET --project-name yuna-team-new
 npx wrangler pages secret put SESSION_SECRET --project-name yuna-team-new
 npx wrangler pages secret put FALLBACK_ADMIN_USER --project-name yuna-team-new
 npx wrangler pages secret put FALLBACK_ADMIN_PASSWORD --project-name yuna-team-new
@@ -152,7 +152,7 @@ npx wrangler pages secret put GITHUB_BACKUP_TOKEN --project-name yuna-team-new
 
 说明：
 
-- `AUTHENTIK_CLIENT_SECRET`：Authentik OAuth Provider 的客户端密钥。
+- `ZITADEL_CLIENT_SECRET`：Zitadel Web 应用的客户端密钥。
 - `SESSION_SECRET`：用于签名登录会话 Cookie，必须是随机长字符串。
 - `FALLBACK_ADMIN_USER` / `FALLBACK_ADMIN_PASSWORD`：备用账密登录凭据，见下方“备用账密登录”。
 - `R2_MIGRATION_TOKEN`：只用于旧媒体迁移脚本写入 R2，不具备后台管理权限。
@@ -162,9 +162,9 @@ npx wrangler pages secret put GITHUB_BACKUP_TOKEN --project-name yuna-team-new
 
 ```toml
 PUBLIC_BASE_URL = "https://yuna.liugu.cc"
-AUTHENTIK_ISSUER = "https://sso.yuna.welain.com/application/o/yuna-docs/"
-AUTHENTIK_CLIENT_ID = "esxw1ynBDm6B6r5dzIdCtBfJ3ifkKVk7WbIRD7Py"
-AUTHENTIK_REDIRECT_PATH = "/auth/callback"
+ZITADEL_ISSUER = "https://sso.welain.com"
+ZITADEL_CLIENT_ID = "replace-with-zitadel-client-id"
+ZITADEL_REDIRECT_PATH = "/auth/callback"
 SSO_ALLOWED_HOSTS = ""
 CONTROL_GROUP = "yuna-docs-edit"
 R2_MIGRATION_PREFIXES = "activates"
@@ -184,18 +184,14 @@ GitHub Markdown 备份配置：
 
 备份仓库建议使用独立私有仓库，不要把它绑定到 Cloudflare Pages 项目。这个同步只会向 GitHub 写入 Markdown 快照，不会调用 Cloudflare 部署；如果目标仓库本身被 Pages 监听，GitHub 提交仍然会触发 Pages 构建。
 
-## Authentik 配置
+## Zitadel 配置
 
-Authentik Application slug：
-
-```text
-yuna-docs
-```
+在 `https://sso.welain.com` 中创建 Web 类型 OIDC 应用，认证方式选择 Client Secret Basic。
 
 Issuer：
 
 ```text
-https://sso.yuna.welain.com/application/o/yuna-docs/
+https://sso.welain.com
 ```
 
 回调地址默认为：
@@ -210,7 +206,7 @@ https://yuna.liugu.cc/auth/callback
 SSO_ALLOWED_HOSTS = "docs.example.com, blog.example.org"
 ```
 
-同时要把每个域名的回调地址加入 Authentik Provider 的 Redirect URIs，例如 `https://docs.example.com/auth/callback`。不在名单内的域名会退回 `PUBLIC_BASE_URL` 的规范回调地址。
+同时要把每个域名的回调地址加入 Zitadel 应用的 Redirect URIs，例如 `https://docs.example.com/auth/callback`。不在名单内的域名会退回 `PUBLIC_BASE_URL` 的规范回调地址。
 
 裸域(如 `yuna.team`)无法直接绑定为 Pages 自定义域时，可经外部 CDN(如阿里云 CDN)反代回源 `yuna-team-new.pages.dev`。此时需要在 CDN 上配置：
 
@@ -218,7 +214,7 @@ SSO_ALLOWED_HOSTS = "docs.example.com, blog.example.org"
 - 自定义回源请求头：`X-Forwarded-Host: yuna.team`(Worker 只信任允许名单内的值，用于解析登录回调域名和 CSRF 同源判断)。
 - `/api/*` 与 `/auth/*` 必须不缓存，且回源时透传 Cookie、查询串，响应中的 Set-Cookie 不能被剥离，否则登录态无法建立。
 
-本地开发时，如果需要完整测试登录，也需要在 Authentik Provider 中加入本地回调地址：
+本地开发时，如果需要完整测试登录，也需要在 Zitadel 应用中加入本地回调地址：
 
 ```text
 http://localhost:8788/auth/callback
@@ -226,16 +222,16 @@ http://localhost:8788/auth/callback
 
 后台权限规则：
 
-- `CONTROL_GROUP` 是唯一控制权限组。
-- 登录用户必须属于 `CONTROL_GROUP` 对应的 Authentik 用户组，才可以进入后台、管理文章、维护成员和名人堂、编辑固定 Markdown 页面、上传后台资源。
+- `CONTROL_GROUP` 保留原变量名，但现在表示唯一控制权限角色。
+- 登录用户必须拥有 `CONTROL_GROUP` 对应的 Zitadel 项目角色，才可以进入后台、管理文章、维护成员和名人堂、编辑固定 Markdown 页面、上传后台资源。
 - 未登录用户，以及已登录但不在该组内的用户，都没有控制权限。
 - `CONTROL_GROUP` 为空时，没有任何登录用户拥有控制权限。
 
-用户组信息会在登录时写入会话。Authentik 侧改组后，用户需要退出并重新登录。
+在 Zitadel 项目设置中开启 **Assert Roles on Authentication**，并给管理员分配与 `CONTROL_GROUP` 同名的项目角色。角色信息会在登录时写入会话；角色变更后，用户需要退出并重新登录。
 
 ## 备用账密登录
 
-Authentik 网关不可用时，后台入口页（`/admin-login.html`）提供备用账号密码登录，接口为 `POST /api/auth/password-login`。
+Zitadel 网关不可用时，后台入口页（`/admin-login.html`）提供备用账号密码登录，接口为 `POST /api/auth/password-login`。
 
 - 仅当 `FALLBACK_ADMIN_USER` 与 `FALLBACK_ADMIN_PASSWORD` 两个 secret 都已配置时启用；缺任一个接口返回 404。
 - 凭据核对通过后创建的会话与 OIDC 登录完全同构，用户组直接写入 `CONTROL_GROUP`，拥有全部后台权限；退出登录、会话过期逻辑一致。
@@ -248,7 +244,7 @@ Authentik 网关不可用时，后台入口页（`/admin-login.html`）提供备
 /api/auth/me
 ```
 
-返回里的 `user.groups` 是 Authentik 通过 `groups` scope 返回并写入会话的用户组，`authz.controlGroupMatched` 会显示当前配置的组名是否命中。
+返回里的 `user.groups` 是从 Zitadel userinfo 角色 claim 提取并写入会话的项目角色（字段名为兼容旧会话而保留），`authz.controlGroupMatched` 会显示当前配置的角色名是否命中。
 
 ## 部署
 
@@ -350,7 +346,7 @@ npm run media:migrate     # 旧媒体文件迁移到 R2
 
 鉴权接口：
 
-- `GET /api/auth/login`：跳转 Authentik 登录。
+- `GET /api/auth/login`：跳转 Zitadel 登录。
 - `POST /api/auth/password-login`：备用账密登录（需配置 fallback secrets）。
 - `GET /auth/callback`：OIDC 回调。
 - `POST /api/auth/logout`：退出登录。
@@ -373,7 +369,7 @@ npm run media:migrate     # 旧媒体文件迁移到 R2
 
 ## 安全说明
 
-- 不要把 `AUTHENTIK_CLIENT_SECRET`、`SESSION_SECRET`、`R2_MIGRATION_TOKEN`、`GITHUB_BACKUP_TOKEN` 提交进仓库。
+- 不要把 `ZITADEL_CLIENT_SECRET`、`SESSION_SECRET`、`R2_MIGRATION_TOKEN`、`GITHUB_BACKUP_TOKEN` 提交进仓库。
 - `SESSION_SECRET` 修改后，已有登录会话会失效。
 - R2 文件通过后端接口输出，非图片类型会按下载文件处理。
 - 联系方式链接会限制协议，避免写入危险链接。
