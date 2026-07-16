@@ -21,12 +21,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   url.searchParams.set("client_id", env.ZITADEL_CLIENT_ID);
   url.searchParams.set("redirect_uri", redirectUri(env, request));
   url.searchParams.set("response_type", "code");
-  // 同时请求新旧两种 Zitadel 项目角色 scope，兼容不同实例版本。
-  // 项目侧也应开启 Assert Roles on Authentication。
-  url.searchParams.set(
-    "scope",
-    "openid email profile urn:iam:org:project:roles urn:zitadel:iam:org:projects:roles",
-  );
+  // 精确请求 CONTROL_GROUP 对应的 Zitadel 项目角色。仅请求 projects:roles 而不带
+  // project audience 时不会产生目标项目的角色 claim，userinfo 会得到空角色列表。
+  const scopes = ["openid", "email", "profile"];
+  const controlRole = (env.CONTROL_GROUP ?? "").trim();
+  if (controlRole) {
+    scopes.push(`urn:zitadel:iam:org:project:role:${controlRole}`);
+  }
+  url.searchParams.set("scope", scopes.join(" "));
   url.searchParams.set("state", state);
 
   return new Response(null, {
