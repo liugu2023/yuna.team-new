@@ -60,7 +60,7 @@ function forbiddenPage(): string {
         <div class="reveal">
           <p class="eyebrow">Access Denied</p>
           <h1>403 · 没有后台管理权限。</h1>
-          <p class="lead">你已登录，但当前账号不在控制组中。后台管理仅对 CONTROL_GROUP 成员开放。</p>
+          <p class="lead">你已登录，但当前账号没有配置的 Zitadel 项目角色。后台管理仅对 CONTROL_GROUP 对应角色开放。</p>
           <div class="hero-actions">
             <a class="btn primary magnetic" href="/">返回首页</a>
             <a class="btn secondary magnetic" href="/admin-login.html">后台入口</a>
@@ -89,7 +89,7 @@ function forbiddenPage(): string {
       <section class="shell">
         <article class="article-body reveal">
           <h2>权限说明</h2>
-          <p>如果你认为这是误判，请联系管理员把你的账号加入控制组后再进入后台。</p>
+          <p>如果你认为这是误判，请联系管理员为账号分配对应的 Zitadel 项目角色，然后退出并重新登录。</p>
         </article>
       </section>
     </main>

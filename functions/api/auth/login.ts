@@ -21,8 +21,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   url.searchParams.set("client_id", env.ZITADEL_CLIENT_ID);
   url.searchParams.set("redirect_uri", redirectUri(env, request));
   url.searchParams.set("response_type", "code");
-  // 请求 Zitadel 项目角色；项目还需开启 Assert Roles on Authentication。
-  url.searchParams.set("scope", "openid email profile urn:zitadel:iam:org:projects:roles");
+  // 同时请求新旧两种 Zitadel 项目角色 scope，兼容不同实例版本。
+  // 项目侧也应开启 Assert Roles on Authentication。
+  url.searchParams.set(
+    "scope",
+    "openid email profile urn:iam:org:project:roles urn:zitadel:iam:org:projects:roles",
+  );
   url.searchParams.set("state", state);
 
   return new Response(null, {

@@ -227,7 +227,7 @@ http://localhost:8788/auth/callback
 - 未登录用户，以及已登录但不在该组内的用户，都没有控制权限。
 - `CONTROL_GROUP` 为空时，没有任何登录用户拥有控制权限。
 
-在 Zitadel 项目设置中开启 **Assert Roles on Authentication**，并给管理员分配与 `CONTROL_GROUP` 同名的项目角色。角色信息会在登录时写入会话；角色变更后，用户需要退出并重新登录。
+在 Zitadel 项目设置中开启 **Assert Roles on Authentication**，创建与 `CONTROL_GROUP` 同名的项目角色，并通过 **Role Assignments** 把该角色分配给管理员。Zitadel 的普通组织成员关系或其他系统中的“用户组”不会自动成为项目角色。角色信息会在登录时写入会话；角色变更后，用户需要退出并重新登录。
 
 ## 备用账密登录
 

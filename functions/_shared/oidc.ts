@@ -127,9 +127,18 @@ export async function getUserInfo(env: Env, accessToken: string): Promise<UserIn
 export function getUserRoles(userInfo: UserInfo): string[] {
   const roles = new Set(Array.isArray(userInfo.groups) ? userInfo.groups : []);
   for (const [claim, value] of Object.entries(userInfo)) {
-    if (!/^urn:zitadel:iam:org:project(?::[^:]+)?:roles$/.test(claim)) continue;
-    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
-    for (const role of Object.keys(value)) roles.add(role);
+    if (!/^urn:(?:zitadel:)?iam:org:project(?::[^:]+|s)?:roles$/.test(claim)) continue;
+    if (Array.isArray(value)) {
+      for (const role of value) if (typeof role === "string" && role) roles.add(role);
+      continue;
+    }
+    if (typeof value === "string" && value) {
+      roles.add(value);
+      continue;
+    }
+    if (value && typeof value === "object") {
+      for (const role of Object.keys(value)) roles.add(role);
+    }
   }
   return [...roles];
 }
