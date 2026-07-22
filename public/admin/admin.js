@@ -88,11 +88,19 @@ function collectCoauthors() {
 }
 
 function coauthorRowHtml(author = {}) {
+  const githubUsername = githubUsernameFromAuthor({
+    author_url: author.url || "",
+    author_avatar: author.avatar || "",
+  });
   return `
     <div class="coauthor-row" data-coauthor-row>
       <label>姓名<input class="admin-input" data-coauthor-name value="${window.blog.escapeHtml(author.name || "")}" placeholder="协同作者姓名" /></label>
       <label>主页<input class="admin-input" data-coauthor-url type="url" value="${window.blog.escapeHtml(author.url || "")}" placeholder="https://example.com/profile" /></label>
       <label>头像<input class="admin-input" data-coauthor-avatar value="${window.blog.escapeHtml(author.avatar || "")}" placeholder="图片地址或 /media/..." /></label>
+      <div class="inline-uploader">
+        <label>GitHub 用户名<input class="admin-input" data-coauthor-github value="${window.blog.escapeHtml(githubUsername)}" placeholder="例如 octocat" autocomplete="off" /></label>
+        <button class="btn secondary compact" type="button" data-use-coauthor-github>读取 GitHub 头像</button>
+      </div>
       <button class="coauthor-remove" type="button" data-remove-coauthor aria-label="移除协同作者">×</button>
     </div>`;
 }
@@ -607,6 +615,22 @@ function useGithubAvatar() {
     fields.authorUrl.value = `https://github.com/${encodeURIComponent(username)}`;
   }
   fields.message.textContent = `已读取 GitHub 用户 ${username} 的头像。`;
+  updatePreview();
+}
+
+function useCoauthorGithubAvatar(row) {
+  const githubInput = row?.querySelector("[data-coauthor-github]");
+  const urlInput = row?.querySelector("[data-coauthor-url]");
+  const avatarInput = row?.querySelector("[data-coauthor-avatar]");
+  const username = githubInput?.value.trim().replace(/^@/, "") || "";
+  if (!/^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?$/i.test(username)) {
+    fields.message.textContent = "请输入有效的 GitHub 用户名（1–39 位字母、数字或连字符）。";
+    return;
+  }
+  githubInput.value = username;
+  avatarInput.value = `https://github.com/${encodeURIComponent(username)}.png?size=200`;
+  if (!urlInput.value.trim()) urlInput.value = `https://github.com/${encodeURIComponent(username)}`;
+  fields.message.textContent = `已读取协同作者 ${username} 的 GitHub 头像。`;
   updatePreview();
 }
 
@@ -1482,6 +1506,11 @@ bind("[data-use-github-avatar]", "click", useGithubAvatar);
 bind("[data-add-coauthor]", "click", () => addCoauthor());
 bindElement(fields.coauthorsList, "input", updatePreview, "data-coauthors-list");
 bindElement(fields.coauthorsList, "click", (event) => {
+  const githubButton = event.target.closest("[data-use-coauthor-github]");
+  if (githubButton) {
+    useCoauthorGithubAvatar(githubButton.closest("[data-coauthor-row]"));
+    return;
+  }
   const button = event.target.closest("[data-remove-coauthor]");
   if (!button) return;
   button.closest("[data-coauthor-row]")?.remove();
