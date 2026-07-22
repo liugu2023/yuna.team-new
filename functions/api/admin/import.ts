@@ -1,13 +1,16 @@
 import { badRequest, json, readJson } from "../../_shared/http";
 import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
+import { normalizePostAuthors, parsePostAuthors, serializePostAuthors } from "../../_shared/post-authors";
 import { getAdminIdentity } from "../../_shared/session";
 import type { Env, PostRecord, SiteRecord } from "../../_shared/types";
 
 interface DatabaseImportPayload {
-  posts?: Partial<PostRecord>[];
+  posts?: ImportPost[];
   siteRecords?: Partial<SiteRecord>[];
   siteRecordBackups?: Partial<SiteRecordBackup>[];
 }
+
+type ImportPost = Partial<PostRecord> & { coauthors?: unknown };
 
 interface SiteRecordBackup {
   id: string;
@@ -67,8 +70,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
     statements.push(
       env.BLOG_DB.prepare(
         `INSERT INTO posts
-          (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, author_url, author_avatar, editor_name, created_at, updated_at, published_at, view_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, author_url, author_avatar, coauthors_json, editor_name, created_at, updated_at, published_at, view_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         post.id,
         post.slug,
@@ -84,6 +87,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
         post.author_name,
         post.author_url,
         post.author_avatar,
+        post.coauthors_json,
         post.editor_name,
         post.created_at,
         post.updated_at,
@@ -146,7 +150,7 @@ async function snapshotCurrentDatabase(env: Env, admin: string): Promise<string>
   ]);
 
   const snapshot = {
-    version: 1,
+    version: 2,
     snapshotAt: new Date().toISOString(),
     snapshotBy: admin,
     reason: "pre-import",
@@ -164,7 +168,7 @@ async function snapshotCurrentDatabase(env: Env, admin: string): Promise<string>
   return key;
 }
 
-function normalizePost(input: Partial<PostRecord>): PostRecord {
+function normalizePost(input: ImportPost): PostRecord {
   const slug = requireText(input.slug, "文章 slug 不能为空");
   const status = input.status === "published" ? "published" : "draft";
   const kind = input.kind === "knowledge" ? "knowledge" : "article";
@@ -184,6 +188,9 @@ function normalizePost(input: Partial<PostRecord>): PostRecord {
     author_name: text(input.author_name),
     author_url: text(input.author_url),
     author_avatar: text(input.author_avatar),
+    coauthors_json: serializePostAuthors(
+      normalizePostAuthors(Array.isArray(input.coauthors) ? input.coauthors : parsePostAuthors(input.coauthors_json)),
+    ),
     editor_name: text(input.editor_name),
     created_at: text(input.created_at) || now,
     updated_at: text(input.updated_at) || now,

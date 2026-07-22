@@ -20,6 +20,7 @@ const fields = {
   authorAvatar: document.querySelector("[data-author-avatar]"),
   authorGithub: document.querySelector("[data-author-github]"),
   authorAvatarFile: document.querySelector("[data-author-avatar-file]"),
+  coauthorsList: document.querySelector("[data-coauthors-list]"),
   lastEditor: document.querySelector("[data-last-editor]"),
   excerpt: document.querySelector("[data-excerpt]"),
   coverUrl: document.querySelector("[data-cover-url]"),
@@ -76,6 +77,42 @@ const ADMIN_PAGE_SIZE = 10;
 // 作者与最后编辑人默认署协会名，不再取登录账号；两个字段都可手动改。
 const DEFAULT_CREDIT_NAME = "网络信息协会";
 
+function collectCoauthors() {
+  return Array.from(fields.coauthorsList?.querySelectorAll("[data-coauthor-row]") || []).flatMap((row) => {
+    const name = row.querySelector("[data-coauthor-name]")?.value.trim() || "";
+    const url = row.querySelector("[data-coauthor-url]")?.value.trim() || "";
+    const avatar = row.querySelector("[data-coauthor-avatar]")?.value.trim() || "";
+    if (!name && !url && !avatar) return [];
+    return [{ name, url, avatar }];
+  });
+}
+
+function coauthorRowHtml(author = {}) {
+  return `
+    <div class="coauthor-row" data-coauthor-row>
+      <label>姓名<input class="admin-input" data-coauthor-name value="${window.blog.escapeHtml(author.name || "")}" placeholder="协同作者姓名" /></label>
+      <label>主页<input class="admin-input" data-coauthor-url type="url" value="${window.blog.escapeHtml(author.url || "")}" placeholder="https://example.com/profile" /></label>
+      <label>头像<input class="admin-input" data-coauthor-avatar value="${window.blog.escapeHtml(author.avatar || "")}" placeholder="图片地址或 /media/..." /></label>
+      <button class="coauthor-remove" type="button" data-remove-coauthor aria-label="移除协同作者">×</button>
+    </div>`;
+}
+
+function renderCoauthors(authors = []) {
+  if (!fields.coauthorsList) return;
+  const valid = Array.isArray(authors) ? authors : [];
+  fields.coauthorsList.innerHTML = valid.length
+    ? valid.map(coauthorRowHtml).join("")
+    : '<p class="coauthor-empty" data-coauthor-empty>尚未添加协同作者。</p>';
+}
+
+function addCoauthor(author = {}) {
+  if (!fields.coauthorsList) return;
+  fields.coauthorsList.querySelector("[data-coauthor-empty]")?.remove();
+  fields.coauthorsList.insertAdjacentHTML("beforeend", coauthorRowHtml(author));
+  fields.coauthorsList.querySelector("[data-coauthor-row]:last-child [data-coauthor-name]")?.focus();
+  updatePreview();
+}
+
 // 异步操作期间锁住触发按钮：双击「发布」会创建两篇文章，导入/同步重复触发同理。
 async function withLockedButtons(selector, task) {
   const buttons = Array.from(document.querySelectorAll(selector));
@@ -112,6 +149,7 @@ function editorSnapshot() {
     authorUrl: fields.authorUrl.value,
     authorAvatar: fields.authorAvatar.value,
     authorGithub: fields.authorGithub.value,
+    coauthors: collectCoauthors(),
     lastEditor: fields.lastEditor.value,
     excerpt: fields.excerpt.value,
     coverUrl: fields.coverUrl.value,
@@ -280,7 +318,8 @@ function renderContentList(kind) {
   renderPostSummary(kind);
   const posts = config.items.filter((post) => {
     const matchesStatus = status === "all" || post.status === status;
-    const haystack = `${post.title} ${post.tag || ""} ${post.author_name || ""} ${post.excerpt || ""} ${post.slug}`.toLowerCase();
+    const coauthorNames = (Array.isArray(post.coauthors) ? post.coauthors : []).map((author) => author?.name || "").join(" ");
+    const haystack = `${post.title} ${post.tag || ""} ${post.author_name || ""} ${coauthorNames} ${post.excerpt || ""} ${post.slug}`.toLowerCase();
     return matchesStatus && (!keyword || haystack.includes(keyword));
   });
   const totalPages = Math.max(1, Math.ceil(posts.length / ADMIN_PAGE_SIZE));
@@ -355,6 +394,7 @@ async function loadPost(slug) {
   fields.authorUrl.value = data.post.author_url || "";
   fields.authorAvatar.value = data.post.author_avatar || "";
   fields.authorGithub.value = githubUsernameFromAuthor(data.post);
+  renderCoauthors(data.post.coauthors);
   fields.lastEditor.value = data.post.editor_name || DEFAULT_CREDIT_NAME;
   fields.excerpt.value = data.post.excerpt || "";
   fields.coverUrl.value = data.post.cover_url || "";
@@ -379,6 +419,7 @@ async function savePost(status) {
       author_name: fields.authorName.value.trim(),
       author_url: fields.authorUrl.value.trim(),
       author_avatar: fields.authorAvatar.value.trim(),
+      coauthors: collectCoauthors(),
       editor_name: fields.lastEditor.value.trim(),
       excerpt: fields.excerpt.value.trim(),
       cover_url: fields.coverUrl.value.trim(),
@@ -409,6 +450,7 @@ async function savePost(status) {
       fields.authorUrl.value = data.post.author_url || "";
       fields.authorAvatar.value = data.post.author_avatar || "";
       fields.authorGithub.value = githubUsernameFromAuthor(data.post);
+      renderCoauthors(data.post.coauthors);
       fields.lastEditor.value = data.post.editor_name || DEFAULT_CREDIT_NAME;
       fields.tag.value = data.post.tag || defaultTag(state.editingKind);
       fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
@@ -1291,6 +1333,7 @@ function resetEditor(kind = "article") {
   fields.authorAvatar.value = "";
   fields.authorGithub.value = "";
   fields.authorAvatarFile.value = "";
+  renderCoauthors();
   fields.lastEditor.value = DEFAULT_CREDIT_NAME;
   fields.excerpt.value = "";
   fields.coverUrl.value = "";
@@ -1342,12 +1385,13 @@ function updatePreview() {
     author_name: authorName,
     author_url: fields.authorUrl.value.trim(),
     author_avatar: fields.authorAvatar.value.trim(),
+    coauthors: collectCoauthors(),
   };
   const excerpt = fields.excerpt.value.trim();
   const coverUrl = window.blog.safeDisplayAssetUrl(fields.coverUrl.value.trim());
   const previewPost = { tag: fields.tag.value.trim() || "协会动态" };
   fields.preview.innerHTML = `
-    ${authorName ? `<div class="author-byline">${window.blog.authorIdentityHtml(authorPost, { prefix: "作者 " })}</div>` : ""}
+    ${window.blog.postAuthors(authorPost).length ? `<div class="author-byline author-collection">${window.blog.authorsIdentityHtml(authorPost)}</div>` : ""}
     <p class="meta">${window.blog.postTagsHtml(previewPost)}</p>
     <h1>${window.blog.escapeHtml(title)}</h1>
     ${excerpt ? `<p>${window.blog.escapeHtml(excerpt)}</p>` : ""}
@@ -1435,6 +1479,15 @@ bind("[data-upload-post-image]", "click", uploadPostImage);
 bind("[data-upload-cover]", "click", uploadCoverImage);
 bind("[data-upload-author-avatar]", "click", uploadAuthorAvatar);
 bind("[data-use-github-avatar]", "click", useGithubAvatar);
+bind("[data-add-coauthor]", "click", () => addCoauthor());
+bindElement(fields.coauthorsList, "input", updatePreview, "data-coauthors-list");
+bindElement(fields.coauthorsList, "click", (event) => {
+  const button = event.target.closest("[data-remove-coauthor]");
+  if (!button) return;
+  button.closest("[data-coauthor-row]")?.remove();
+  if (!fields.coauthorsList.querySelector("[data-coauthor-row]")) renderCoauthors();
+  updatePreview();
+}, "data-coauthors-list");
 bind("[data-upload-post-file]", "click", uploadPostFiles);
 bindElement(fields.memberImageFile, "change", uploadMemberAvatar, "data-member-image-file");
 bindElement(fields.fameImageFile, "change", uploadFameAvatar, "data-fame-image-file");

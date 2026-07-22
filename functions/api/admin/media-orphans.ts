@@ -122,8 +122,8 @@ async function listAllObjects(env: Env): Promise<ObjectEntry[]> {
 // 从数据库所有可能含媒体链接的文本里，提取出被引用的媒体 path（去掉 /media/ 前缀、解码）。
 async function collectReferencedMediaPaths(env: Env): Promise<ReferencedMediaPaths> {
   const [posts, siteRecords, backups] = await Promise.all([
-    env.BLOG_DB.prepare("SELECT markdown_content, excerpt, cover_url, author_avatar FROM posts").all<
-      Pick<PostRecord, "markdown_content" | "excerpt" | "cover_url" | "author_avatar">
+    env.BLOG_DB.prepare("SELECT markdown_content, excerpt, cover_url, author_avatar, coauthors_json FROM posts").all<
+      Pick<PostRecord, "markdown_content" | "excerpt" | "cover_url" | "author_avatar" | "coauthors_json">
     >(),
     env.BLOG_DB.prepare("SELECT content FROM site_records").all<Pick<SiteRecord, "content">>(),
     // 保守策略：历史备份里引用的媒体也算被引用，避免回滚备份时图片已被清掉。
@@ -132,7 +132,7 @@ async function collectReferencedMediaPaths(env: Env): Promise<ReferencedMediaPat
 
   const haystack: string[] = [];
   for (const post of posts.results ?? []) {
-    haystack.push(post.markdown_content || "", post.excerpt || "", post.cover_url || "", post.author_avatar || "");
+    haystack.push(post.markdown_content || "", post.excerpt || "", post.cover_url || "", post.author_avatar || "", post.coauthors_json || "");
   }
   for (const record of siteRecords.results ?? []) haystack.push(record.content || "");
   for (const backup of backups.results ?? []) haystack.push(backup.content || "");

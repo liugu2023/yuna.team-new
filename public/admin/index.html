@@ -322,7 +322,7 @@
               <div class="admin-form">
                 <label>标题<input class="admin-input" data-title placeholder="文章标题" /></label>
                 <label>标签<input class="admin-input" data-post-tag placeholder="协会动态, 技术笔记, 活动公告" /></label>
-                <label>作者<input class="admin-input" data-author-name placeholder="默认为网络信息协会" /></label>
+                <label>主要作者<input class="admin-input" data-author-name placeholder="默认为网络信息协会" /></label>
                 <label>作者跳转链接<input class="admin-input" data-author-url type="url" placeholder="https://example.com/profile" /></label>
                 <label>头像网页地址（直接读取）<input class="admin-input" data-author-avatar type="url" placeholder="https://example.com/avatar.jpg" /></label>
                 <div class="inline-uploader">
@@ -333,6 +333,12 @@
                   <label>本地作者头像<input class="admin-input" data-author-avatar-file type="file" accept="image/png,image/jpeg,image/gif,image/webp" /></label>
                   <button class="btn secondary" type="button" data-upload-author-avatar>上传并设为头像</button>
                 </div>
+                <fieldset class="coauthor-editor">
+                  <legend>协同作者</legend>
+                  <p class="meta">可添加多位协同作者；主页和头像均为选填。</p>
+                  <div class="coauthor-list" data-coauthors-list></div>
+                  <button class="btn secondary compact" type="button" data-add-coauthor>添加协同作者</button>
+                </fieldset>
                 <label>最后编辑人<input class="admin-input" data-last-editor placeholder="默认为网络信息协会" /></label>
                 <label>摘要<input class="admin-input" data-excerpt placeholder="文章简短摘要" /></label>
                 <input data-cover-url type="hidden" />

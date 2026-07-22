@@ -37,6 +37,7 @@ export interface PostRecord {
   author_name: string;
   author_url: string;
   author_avatar: string;
+  coauthors_json: string;
   editor_name: string;
   created_at: string;
   updated_at: string;

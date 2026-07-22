@@ -1,6 +1,7 @@
 import { badRequest, json, notFound, readJson } from "../../_shared/http";
 import { getCookie, serializeCookie } from "../../_shared/cookies";
 import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
+import { normalizePostAuthors, serializePostAuthors, type PostAuthor } from "../../_shared/post-authors";
 import { toPublicPost } from "../../_shared/sanitize";
 import { getSession, isAllowedAdmin } from "../../_shared/session";
 import type { Env, PostRecord } from "../../_shared/types";
@@ -16,6 +17,7 @@ interface UpdatePostPayload {
   author_name?: string;
   author_url?: string;
   author_avatar?: string;
+  coauthors?: PostAuthor[];
   editor_name?: string;
   status?: "draft" | "published";
   kind?: "article" | "knowledge";
@@ -110,6 +112,14 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
     ? normalizeAvatarUrl(payload.author_avatar)
     : post.author_avatar ?? "";
   if (nextAuthorAvatar === null) return badRequest("作者头像必须是本站媒体地址或有效的 HTTP/HTTPS 图片地址");
+  let nextCoauthorsJson = post.coauthors_json ?? "[]";
+  if (payload.coauthors !== undefined) {
+    try {
+      nextCoauthorsJson = serializePostAuthors(normalizePostAuthors(payload.coauthors));
+    } catch (error) {
+      return badRequest(error instanceof Error ? error.message : "协同作者格式无效");
+    }
+  }
   const nextKind = payload.kind !== undefined ? normalizeKind(payload.kind) : post.kind ?? "article";
   const publishedAt =
     post.published_at ?? (post.status !== "published" && nextStatus === "published" ? now : null);
@@ -122,7 +132,7 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   await env.BLOG_DB.prepare(
     `UPDATE posts
-     SET title = ?, tag = ?, excerpt = ?, cover_url = ?, author_name = ?, author_url = ?, author_avatar = ?, editor_name = ?, status = ?, kind = ?, markdown_content = ?, updated_at = ?, published_at = ?
+     SET title = ?, tag = ?, excerpt = ?, cover_url = ?, author_name = ?, author_url = ?, author_avatar = ?, coauthors_json = ?, editor_name = ?, status = ?, kind = ?, markdown_content = ?, updated_at = ?, published_at = ?
      WHERE slug = ?`,
   )
     .bind(
@@ -133,6 +143,7 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
       nextAuthorName,
       nextAuthorUrl,
       nextAuthorAvatar,
+      nextCoauthorsJson,
       editorName,
       nextStatus,
       nextKind,

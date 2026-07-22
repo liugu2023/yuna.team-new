@@ -1,5 +1,6 @@
 import { badRequest, json, readJson } from "../../_shared/http";
 import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
+import { normalizePostAuthors, serializePostAuthors, type PostAuthor } from "../../_shared/post-authors";
 import { toPublicPost } from "../../_shared/sanitize";
 import { getSession, isAllowedAdmin } from "../../_shared/session";
 import type { Env, PostRecord } from "../../_shared/types";
@@ -16,6 +17,7 @@ interface CreatePostPayload {
   author_name?: string;
   author_url?: string;
   author_avatar?: string;
+  coauthors?: PostAuthor[];
   editor_name?: string;
   status?: "draft" | "published";
   kind?: "article" | "knowledge";
@@ -39,7 +41,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   }
   const includeAll = includeDrafts && canSeeDrafts;
   // 列表不输出 author_email：公开接口不暴露成员登录邮箱，展示用 author_name。
-  const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_name, author_url, author_avatar, editor_name, created_at, updated_at, published_at, view_count";
+  const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_name, author_url, author_avatar, coauthors_json, editor_name, created_at, updated_at, published_at, view_count";
 
   const query = includeAll
     ? `SELECT ${columns} FROM posts WHERE kind = ? ORDER BY COALESCE(published_at, updated_at) DESC${usePagination ? " LIMIT ? OFFSET ?" : ""}`
@@ -56,7 +58,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   ]);
   const total = Number(count?.total || 0);
   return json({
-    posts: posts.results ?? [],
+    posts: (posts.results ?? []).map(toPublicPost),
     pagination: {
       page,
       perPage,
@@ -96,6 +98,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   if (authorUrl === null) return badRequest("作者链接必须是有效的 HTTP 或 HTTPS 地址");
   const authorAvatar = normalizeAvatarUrl(payload.author_avatar);
   if (authorAvatar === null) return badRequest("作者头像必须是本站媒体地址或有效的 HTTP/HTTPS 图片地址");
+  let coauthorsJson: string;
+  try {
+    coauthorsJson = serializePostAuthors(normalizePostAuthors(payload.coauthors));
+  } catch (error) {
+    return badRequest(error instanceof Error ? error.message : "协同作者格式无效");
+  }
   const editorName = normalizeOptionalText(payload.editor_name) || DEFAULT_CREDIT_NAME;
 
   const publishedAt = status === "published" ? now : null;
@@ -103,8 +111,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   const insertPost = (slugValue: string) =>
     env.BLOG_DB.prepare(
       `INSERT INTO posts
-        (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, author_url, author_avatar, editor_name, created_at, updated_at, published_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, markdown_content, author_email, author_name, author_url, author_avatar, coauthors_json, editor_name, created_at, updated_at, published_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         id,
@@ -121,6 +129,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
         authorName,
         authorUrl,
         authorAvatar,
+        coauthorsJson,
         editorName,
         now,
         now,

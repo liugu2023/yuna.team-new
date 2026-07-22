@@ -20,7 +20,7 @@ const TABLES = [
     name: "posts",
     label: "文章与知识库",
     byteSql:
-      "SELECT COALESCE(SUM(LENGTH(id) + LENGTH(slug) + LENGTH(title) + LENGTH(tag) + LENGTH(excerpt) + LENGTH(cover_url) + LENGTH(status) + LENGTH(kind) + LENGTH(r2_key) + LENGTH(markdown_content) + LENGTH(author_email) + LENGTH(author_name) + LENGTH(author_url) + LENGTH(author_avatar) + LENGTH(editor_name) + LENGTH(created_at) + LENGTH(updated_at) + LENGTH(COALESCE(published_at, ''))), 0) AS bytes FROM posts",
+      "SELECT COALESCE(SUM(LENGTH(id) + LENGTH(slug) + LENGTH(title) + LENGTH(tag) + LENGTH(excerpt) + LENGTH(cover_url) + LENGTH(status) + LENGTH(kind) + LENGTH(r2_key) + LENGTH(markdown_content) + LENGTH(author_email) + LENGTH(author_name) + LENGTH(author_url) + LENGTH(author_avatar) + LENGTH(coauthors_json) + LENGTH(editor_name) + LENGTH(created_at) + LENGTH(updated_at) + LENGTH(COALESCE(published_at, ''))), 0) AS bytes FROM posts",
   },
   {
     name: "site_records",

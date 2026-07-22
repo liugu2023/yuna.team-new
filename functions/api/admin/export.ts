@@ -29,7 +29,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     : { results: [] as SiteRecordBackup[] };
 
   const payload = {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     exportedBy: admin,
     backupHistory: includeHistory ? "included" : "omitted",

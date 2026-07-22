@@ -1,0 +1,1 @@
+ALTER TABLE posts ADD COLUMN coauthors_json TEXT NOT NULL DEFAULT '[]';

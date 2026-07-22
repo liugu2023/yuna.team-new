@@ -609,6 +609,37 @@ function authorIdentityHtml(post, { prefix = "" } = {}) {
     : `<span class="author-chip">${content}</span>`;
 }
 
+function postAuthors(post) {
+  const authors = [];
+  const primaryName = String(post?.author_name || "").trim();
+  if (primaryName) {
+    authors.push({
+      author_name: primaryName,
+      author_url: post?.author_url || "",
+      author_avatar: post?.author_avatar || "",
+    });
+  }
+  const coauthors = Array.isArray(post?.coauthors) ? post.coauthors : [];
+  for (const author of coauthors) {
+    const name = String(author?.name || "").trim();
+    if (!name) continue;
+    authors.push({
+      author_name: name,
+      author_url: author?.url || "",
+      author_avatar: author?.avatar || "",
+    });
+  }
+  return authors;
+}
+
+function authorsIdentityHtml(post, options = {}) {
+  return postAuthors(post).map((author) => authorIdentityHtml(author, options)).join("");
+}
+
+function postAuthorNames(post) {
+  return postAuthors(post).map((author) => author.author_name).join(" ");
+}
+
 function bindAuthorAvatarFallbacks(root = document) {
   root.querySelectorAll?.("[data-author-avatar-image]").forEach((image) => {
     image.addEventListener("error", () => image.remove(), { once: true });
@@ -828,7 +859,7 @@ function renderPostListInto(list, posts, admin) {
   list.innerHTML = posts
     .map(
       (post) => `
-          <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-tags="${escapeHtml(postTagsDataValue(post))}" data-search="${escapeHtml(`${post.title} ${postTag(post)} ${post.excerpt || ""}`.toLowerCase())}">
+          <article class="card article-card reveal visible" data-article-card data-status="${escapeHtml(post.status)}" data-tags="${escapeHtml(postTagsDataValue(post))}" data-search="${escapeHtml(`${post.title} ${postTag(post)} ${post.excerpt || ""} ${postAuthorNames(post)}`.toLowerCase())}">
           <span class="flash"></span>
           ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
           <div class="article-head">
@@ -939,7 +970,7 @@ async function renderKnowledgeBase() {
     const keyword = (search?.value || "").trim().toLowerCase();
     const selectedTag = tagSelect?.value && tagSelect.value !== "all" ? tagSelect.value : "";
     const filtered = posts.filter((post) => {
-      const haystack = `${post.title} ${post.tag || ""} ${post.excerpt || ""}`.toLowerCase();
+      const haystack = `${post.title} ${post.tag || ""} ${post.excerpt || ""} ${postAuthorNames(post)}`.toLowerCase();
       return (!keyword || haystack.includes(keyword)) && (!selectedTag || postTagList(post).includes(selectedTag));
     });
     const totalPages = Math.max(1, Math.ceil(filtered.length / LIST_PAGE_SIZE));
@@ -1985,7 +2016,7 @@ async function renderPost() {
     const publishedDate = data.post.published_at ? formatDay(data.post.published_at) : "未发布";
     const updatedDate = formatDay(data.post.updated_at || data.post.published_at);
     const views = formatViews(data.post.view_count);
-    const authorName = String(data.post.author_name || "").trim();
+    const authors = postAuthors(data.post);
     const editorName = String(data.post.editor_name || "").trim();
     const editedAfterPublish = hasPostEditAfterPublish(data.post);
     const heroTitle = document.querySelector("[data-article-hero-title]");
@@ -2003,8 +2034,11 @@ async function renderPost() {
     if (updated) updated.textContent = editedAfterPublish && editorName ? `${updatedDate} · ${editorName}` : updatedDate;
     if (updatedRow) updatedRow.hidden = !editedAfterPublish;
     if (viewNode) viewNode.textContent = views;
-    if (authorNode) authorNode.innerHTML = authorIdentityHtml(data.post);
-    if (authorRow) authorRow.hidden = !authorName;
+    if (authorNode) {
+      authorNode.classList.add("author-collection");
+      authorNode.innerHTML = authorsIdentityHtml(data.post);
+    }
+    if (authorRow) authorRow.hidden = authors.length === 0;
     if (tagNode) tagNode.innerHTML = `<span class="contact-row">${postTagsHtml(data.post)}</span>`;
     article.innerHTML = `
       ${markdownToHtml(stripDuplicateLeadingTitle(data.markdown, data.post.title))}
@@ -2843,6 +2877,8 @@ window.blog = {
   safeDisplayAssetUrl,
   safeAuthorUrl,
   authorIdentityHtml,
+  postAuthors,
+  authorsIdentityHtml,
   bindAuthorAvatarFallbacks,
   renderPostList,
   renderHomeHero,
