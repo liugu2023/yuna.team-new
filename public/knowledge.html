@@ -4,103 +4,13 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>知识库 · YUNA.BLOG</title>
-  <meta name="description" content="燕山大学大学生网络信息协会知识库：授课课件、学习路线、训练资料与下载入口。"/>
-  <meta property="og:site_name" content="YUNA.BLOG"/>
-  <meta property="og:title" content="知识库 · YUNA.BLOG"/>
-  <meta property="og:description" content="燕山大学大学生网络信息协会知识库：授课课件、学习路线、训练资料与下载入口。"/>
-  <meta property="og:type" content="website"/>
-  <meta property="og:url" content="https://yuna.liugu.cc/knowledge.html"/>
-  <meta property="og:image" content="https://yuna.liugu.cc/images/og-image.png"/>
-  <link rel="canonical" href="https://yuna.liugu.cc/knowledge.html"/>
-  <link rel="preload" as="image" href="/images/campus-bg.webp"/>
-  <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/styles.css"/>
-    <script>document.documentElement.classList.add("js");</script>
+  <meta name="description" content="燕山大学大学生网络信息协会知识库已迁移至 docs.yuna.team。"/>
+  <meta http-equiv="refresh" content="0; url=https://docs.yuna.team/"/>
+  <link rel="canonical" href="https://docs.yuna.team/"/>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml"/>
+  <script>window.location.replace("https://docs.yuna.team/");</script>
 </head>
 <body>
-<noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载知识库内容。</p></noscript>
-<div class="scroll-progress" id="scrollProgress"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-<div class="cursor-glow" id="cursorGlow"></div>
-<canvas class="particle-canvas" id="particleCanvas"></canvas>
-<div class="aurora-layer"></div>
-<header class="topbar">
-  <div class="shell topbar-inner">
-    <a class="brand magnetic" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
-    <nav class="nav">
-      <a href="/">首页</a>
-      <a href="/articles.html">文章列表</a>
-      <a class="active" href="/knowledge.html">知识库</a>
-      <a href="/team.html">关于协会</a>
-      <a href="/join.html">加入我们</a>
-      <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
-    </nav>
-  </div>
-</header>
-
-<div class="page-wrap">
-  <div class="hero-bg" id="heroBg"></div>
-  <div class="mist-top"></div>
-  <div class="mist-bottom"></div>
-  <div class="grid-overlay"></div>
-  <section class="shell page-hero">
-    <div class="reveal" data-editable-block="knowledge-hero-copy" data-editable-title="知识库主视觉文案">
-      <p class="eyebrow" data-block-field="eyebrow">Knowledge Base</p>
-      <h1 data-block-field="title">学习资料与加入入口。</h1>
-      <p class="lead" data-block-field="lead">这里整理授课资料、招新流程、联系方式和协会常用服务，方便新成员从一页开始了解方向与路径。</p>
-      <div class="page-kpi">
-        <div data-editable-block="knowledge-kpi-lessons" data-editable-title="知识库 KPI：授课"><strong data-block-field="title">授课</strong><span data-block-field="body">课件与练习</span></div>
-        <div data-editable-block="knowledge-kpi-join" data-editable-title="知识库 KPI：招新"><strong data-block-field="title">招新</strong><span data-block-field="body">方向与流程</span></div>
-        <div data-editable-block="knowledge-kpi-contact" data-editable-title="知识库 KPI：联系"><strong data-block-field="title">联系</strong><span data-block-field="body">社群与活动</span></div>
-      </div>
-    </div>
-    <div class="page-visual reveal" aria-hidden="true">
-      <div class="tech-sweep"></div>
-      <div class="logo-holo-grid"></div>
-      <div class="scanlines"></div>
-      <div class="tech-web"></div>
-      <div class="visual-lines"></div>
-      <span class="pulse-ring p1"></span>
-      <span class="pulse-ring p2"></span>
-      <span class="pulse-ring p3"></span>
-      <span class="ring r1"></span>
-      <span class="ring r2"></span>
-      <div class="visual-orb"><img src="/images/logo.svg" alt="YUNA"/></div>
-      <span class="tech-pill pill-a">Lessons</span>
-      <span class="tech-pill pill-b">Join</span>
-      <span class="tech-pill pill-c">Contact</span>
-      <div class="data-stream"><span>YUNA · KNOWLEDGE BASE · LESSON INDEX ·</span><span>COURSE NOTES · JOIN GUIDE · CAMPUS TECH COMMUNITY ·</span></div>
-    </div>
-  </section>
-</div>
-
-<main class="main page-main" id="content">
-  <section class="shell" id="lessons">
-    <div class="section-title reveal">
-      <p class="eyebrow">Knowledge Index</p>
-      <h2>知识库条目</h2>
-      <p class="section-desc">教程、资料说明、下载入口和招新文档统一以文章形式维护。</p>
-    </div>
-    <div class="admin-post-summary knowledge-summary reveal" data-knowledge-summary aria-label="知识库统计"></div>
-    <div class="control-row reveal">
-      <input class="search-input" data-knowledge-search placeholder="搜索标题、摘要或标签" aria-label="搜索知识库" />
-      <select class="select-input" data-knowledge-tag aria-label="按标签筛选知识库">
-        <option value="all">全部标签</option>
-      </select>
-    </div>
-    <p class="empty-state" data-knowledge-empty hidden>暂无知识库内容。</p>
-    <div class="article-list knowledge-list" data-knowledge-list></div>
-    <div class="pagination" data-knowledge-pagination></div>
-  </section>
-</main>
-
-<footer class="shell footer"><span>YUNA.BLOG · 知识库</span><span>资料与招新入口</span></footer>
-<script src="/app.js"></script>
-<script>
-  window.blog.renderUserNav();
-  window.blog.renderEditableBlocks();
-  window.blog.renderKnowledgeBase();
-</script>
-<script src="/yuna-ui.js"></script>
+  <p>知识库已迁移，正在跳转至 <a href="https://docs.yuna.team/">https://docs.yuna.team/</a> ……</p>
 </body>
 </html>

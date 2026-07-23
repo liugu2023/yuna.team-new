@@ -45,7 +45,7 @@ function forbiddenPage(): string {
         <nav class="nav" aria-label="站点导航">
           <a href="/">首页</a>
           <a href="/articles.html">文章列表</a>
-          <a href="/knowledge.html">知识库</a>
+          <a href="https://docs.yuna.team/">知识库</a>
           <a href="/team.html">关于协会</a>
           <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
         </nav>

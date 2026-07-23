@@ -6,9 +6,7 @@ const state = {
   editingMemberIndex: null,
   editingFameIndex: null,
   articlePage: 1,
-  knowledgePage: 1,
   posts: [],
-  knowledgePosts: [],
   members: [],
   fameItems: [],
 };
@@ -31,10 +29,6 @@ const fields = {
   filterStatus: document.querySelector("[data-filter-status]"),
   postListMessage: document.querySelector("[data-post-list-message]"),
   postSummary: document.querySelector("[data-post-summary]"),
-  knowledgeSearch: document.querySelector("[data-knowledge-search]"),
-  knowledgeFilterStatus: document.querySelector("[data-knowledge-filter-status]"),
-  knowledgeListMessage: document.querySelector("[data-knowledge-list-message]"),
-  knowledgeSummary: document.querySelector("[data-knowledge-summary]"),
   editorHeading: document.querySelector("[data-editor-heading]"),
   editorState: document.querySelector("[data-editor-state]"),
   coverFile: document.querySelector("[data-cover-file]"),
@@ -141,12 +135,12 @@ function statusLabel(status) {
   return status === "published" ? "已发布" : "草稿";
 }
 
-function defaultTag(kind = "article") {
-  return kind === "knowledge" ? "学习资料" : "协会动态";
+function defaultTag() {
+  return "协会动态";
 }
 
 function contentFolder() {
-  return state.editingKind === "knowledge" ? "knowledge" : "posts";
+  return "posts";
 }
 
 function editorSnapshot() {
@@ -226,26 +220,18 @@ async function refreshAdminData() {
 }
 
 async function refreshPosts() {
-  await Promise.all([refreshContentPosts("article"), refreshContentPosts("knowledge")]);
+  await refreshContentPosts("article");
 }
 
 async function refreshContentPosts(kind) {
   const config = contentConfig(kind);
   try {
     const data = await window.blog.fetchJson(`/api/posts?drafts=1&kind=${kind}`);
-    if (kind === "knowledge") {
-      state.knowledgePosts = Array.isArray(data.posts) ? data.posts : [];
-    } else {
-      state.posts = Array.isArray(data.posts) ? data.posts : [];
-    }
+    state.posts = Array.isArray(data.posts) ? data.posts : [];
     if (config.message) config.message.textContent = "";
     renderContentList(kind);
   } catch (error) {
-    if (kind === "knowledge") {
-      state.knowledgePosts = [];
-    } else {
-      state.posts = [];
-    }
+    state.posts = [];
     renderContentLoadError(kind, error);
   }
 }
@@ -254,32 +240,23 @@ function renderAdminPostList() {
   renderContentList("article");
 }
 
-function renderKnowledgePostList() {
-  renderContentList("knowledge");
-}
-
 function contentConfig(kind) {
-  const isKnowledge = kind === "knowledge";
   return {
     kind,
-    items: isKnowledge ? state.knowledgePosts : state.posts,
-    list: document.querySelector(isKnowledge ? "[data-knowledge-list]" : "[data-post-list]"),
-    search: isKnowledge ? fields.knowledgeSearch : fields.search,
-    filterStatus: isKnowledge ? fields.knowledgeFilterStatus : fields.filterStatus,
-    message: isKnowledge ? fields.knowledgeListMessage : fields.postListMessage,
-    summary: isKnowledge ? fields.knowledgeSummary : fields.postSummary,
-    pagination: document.querySelector(isKnowledge ? "[data-knowledge-pagination]" : "[data-post-pagination]"),
-    page: isKnowledge ? state.knowledgePage : state.articlePage,
-    emptyText: isKnowledge ? "没有匹配的知识库条目。" : "没有匹配的文章。",
+    items: state.posts,
+    list: document.querySelector("[data-post-list]"),
+    search: fields.search,
+    filterStatus: fields.filterStatus,
+    message: fields.postListMessage,
+    summary: fields.postSummary,
+    pagination: document.querySelector("[data-post-pagination]"),
+    page: state.articlePage,
+    emptyText: "没有匹配的文章。",
   };
 }
 
 function setContentPage(kind, page) {
-  if (kind === "knowledge") {
-    state.knowledgePage = page;
-  } else {
-    state.articlePage = page;
-  }
+  state.articlePage = page;
 }
 
 function renderContentPagination(kind, total, page) {
@@ -314,7 +291,7 @@ function renderContentLoadError(kind, error) {
   if (config.pagination) config.pagination.innerHTML = "";
   if (config.message) config.message.textContent = `加载失败：${message}`;
   if (config.list) {
-    config.list.innerHTML = `<p class="empty-state error">${kind === "knowledge" ? "知识库" : "文章"}列表加载失败：${window.blog.escapeHtml(message)}</p>`;
+    config.list.innerHTML = `<p class="empty-state error">文章列表加载失败：${window.blog.escapeHtml(message)}</p>`;
   }
 }
 
@@ -384,7 +361,7 @@ function renderPostSummary(kind = "article") {
   const drafts = config.items.filter((post) => post.status !== "published").length;
   const views = config.items.reduce((sum, post) => sum + Number(post.view_count || 0), 0);
   config.summary.innerHTML = `
-    <div><strong>${total.toLocaleString("zh-CN")}</strong><span>${kind === "knowledge" ? "全部条目" : "全部文章"}</span></div>
+    <div><strong>${total.toLocaleString("zh-CN")}</strong><span>全部文章</span></div>
     <div><strong>${published.toLocaleString("zh-CN")}</strong><span>已发布</span></div>
     <div><strong>${drafts.toLocaleString("zh-CN")}</strong><span>草稿</span></div>
     <div><strong>${views.toLocaleString("zh-CN")}</strong><span>总阅读</span></div>
@@ -394,7 +371,7 @@ function renderPostSummary(kind = "article") {
 async function loadPost(slug) {
   const data = await window.blog.fetchJson(`/api/posts/${encodeURIComponent(slug)}`);
   state.editingSlug = slug;
-  state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
+  state.editingKind = "article";
   state.editingUpdatedAt = data.post.updated_at || null;
   fields.title.value = data.post.title;
   fields.tag.value = data.post.tag || defaultTag(state.editingKind);
@@ -407,14 +384,13 @@ async function loadPost(slug) {
   fields.excerpt.value = data.post.excerpt || "";
   fields.coverUrl.value = data.post.cover_url || "";
   fields.markdown.value = data.markdown;
-  fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
+  fields.editorHeading.textContent = "编辑文章";
   fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
   fields.message.textContent = "";
   updatePreview();
   renderAdminPostList();
-  renderKnowledgePostList();
   markEditorClean();
-  activateAdminTab(state.editingKind === "knowledge" ? "knowledge" : "posts");
+  activateAdminTab("posts");
   updateEditorUrl(data.post.slug || slug, state.editingKind);
 }
 
@@ -451,7 +427,7 @@ async function savePost(status) {
         body: JSON.stringify(payload),
       });
       state.editingSlug = data.post.slug;
-      state.editingKind = data.post.kind === "knowledge" ? "knowledge" : "article";
+      state.editingKind = "article";
       state.editingUpdatedAt = data.post.updated_at || null;
       // 服务端会把留空的署名/标签归一成默认值，回填保持表单与实际数据一致。
       fields.authorName.value = data.post.author_name || DEFAULT_CREDIT_NAME;
@@ -461,7 +437,7 @@ async function savePost(status) {
       renderCoauthors(data.post.coauthors);
       fields.lastEditor.value = data.post.editor_name || DEFAULT_CREDIT_NAME;
       fields.tag.value = data.post.tag || defaultTag(state.editingKind);
-      fields.editorHeading.textContent = state.editingKind === "knowledge" ? "编辑知识库" : "编辑文章";
+      fields.editorHeading.textContent = "编辑文章";
       fields.editorState.textContent = `${statusLabel(data.post.status)} · 正在编辑：${data.post.slug}`;
       fields.message.textContent = data.post.status === "published" ? "已发布。" : "已保存为草稿。";
       updatePreview();
@@ -479,11 +455,11 @@ const deletingSlugs = new Set();
 
 async function deletePost(slug) {
   if (!slug || deletingSlugs.has(slug)) return;
-  const post = [...state.posts, ...state.knowledgePosts].find((item) => item.slug === slug);
+  const post = state.posts.find((item) => item.slug === slug);
   const title = post?.title || slug;
-  const noun = post?.kind === "knowledge" ? "知识库条目" : "文章";
+  const noun = "文章";
   if (!confirm(`确定删除${noun}「${title}」吗？此操作不可恢复。`)) return;
-  const messageEl = post?.kind === "knowledge" ? fields.knowledgeListMessage : fields.postListMessage;
+  const messageEl = fields.postListMessage;
 
   deletingSlugs.add(slug);
   try {
@@ -1346,9 +1322,9 @@ function renderObjectSamples(items, emptyText) {
   `).join("");
 }
 
-function resetEditor(kind = "article") {
+function resetEditor() {
   state.editingSlug = null;
-  state.editingKind = kind === "knowledge" ? "knowledge" : "article";
+  state.editingKind = "article";
   state.editingUpdatedAt = null;
   fields.title.value = "";
   fields.tag.value = defaultTag(state.editingKind);
@@ -1363,14 +1339,13 @@ function resetEditor(kind = "article") {
   fields.coverUrl.value = "";
   fields.coverFile.value = "";
   fields.markdown.value = "";
-  fields.editorHeading.textContent = state.editingKind === "knowledge" ? "新建知识库" : "新建文章";
+  fields.editorHeading.textContent = "新建文章";
   fields.editorState.textContent = "未保存";
   fields.message.textContent = "";
   updatePreview();
   renderAdminPostList();
-  renderKnowledgePostList();
   markEditorClean();
-  activateAdminTab(state.editingKind === "knowledge" ? "knowledge" : "posts");
+  activateAdminTab("posts");
   updateEditorUrl("", state.editingKind);
 }
 
@@ -1382,11 +1357,7 @@ function updateEditorUrl(slug, kind) {
   } else {
     url.searchParams.delete("slug");
   }
-  if (kind === "knowledge") {
-    url.searchParams.set("tab", "knowledge");
-  } else {
-    url.searchParams.delete("tab");
-  }
+  url.searchParams.delete("tab");
   history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
@@ -1545,10 +1516,6 @@ bind("[data-new]", "click", () => {
   resetEditor("article");
   openEditor();
 });
-bind("[data-new-knowledge]", "click", () => {
-  resetEditor("knowledge");
-  openEditor();
-});
 bindElement(fields.search, "input", () => {
   state.articlePage = 1;
   renderAdminPostList();
@@ -1557,14 +1524,6 @@ bindElement(fields.filterStatus, "change", () => {
   state.articlePage = 1;
   renderAdminPostList();
 }, "data-filter-status");
-bindElement(fields.knowledgeSearch, "input", () => {
-  state.knowledgePage = 1;
-  renderKnowledgePostList();
-}, "data-knowledge-search");
-bindElement(fields.knowledgeFilterStatus, "change", () => {
-  state.knowledgePage = 1;
-  renderKnowledgePostList();
-}, "data-knowledge-filter-status");
 bindElement(fields.title, "input", updatePreview, "data-title");
 bindElement(fields.tag, "input", updatePreview, "data-post-tag");
 bindElement(fields.authorName, "input", updatePreview, "data-author-name");

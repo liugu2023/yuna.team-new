@@ -936,117 +936,6 @@ function bindArticleFilters() {
   filter();
 }
 
-async function renderKnowledgeBase() {
-  const list = document.querySelector("[data-knowledge-list]");
-  if (!list) return;
-
-  const search = document.querySelector("[data-knowledge-search]");
-  const tagSelect = document.querySelector("[data-knowledge-tag]");
-  const summary = document.querySelector("[data-knowledge-summary]");
-  const empty = document.querySelector("[data-knowledge-empty]");
-  const pagination = document.querySelector("[data-knowledge-pagination]");
-  let posts = [];
-
-  try {
-    const data = await fetchJson("/api/posts?kind=knowledge");
-    posts = data.posts || [];
-  } catch (error) {
-    list.innerHTML = `<p class="empty-state error">${escapeHtml(error.message)}</p>`;
-    return;
-  }
-
-  const tags = postTags(posts);
-  if (tagSelect) {
-    const urlTag = new URLSearchParams(location.search).get("tag") || "";
-    const selected = tags.includes(urlTag) ? urlTag : "all";
-    tagSelect.innerHTML = [
-      '<option value="all">全部标签</option>',
-      ...tags.map((tag) => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`),
-    ].join("");
-    tagSelect.value = selected;
-  }
-
-  function render() {
-    const keyword = (search?.value || "").trim().toLowerCase();
-    const selectedTag = tagSelect?.value && tagSelect.value !== "all" ? tagSelect.value : "";
-    const filtered = posts.filter((post) => {
-      const haystack = `${post.title} ${post.tag || ""} ${post.excerpt || ""} ${postAuthorNames(post)}`.toLowerCase();
-      return (!keyword || haystack.includes(keyword)) && (!selectedTag || postTagList(post).includes(selectedTag));
-    });
-    const totalPages = Math.max(1, Math.ceil(filtered.length / LIST_PAGE_SIZE));
-    const page = Math.min(currentPageFromUrl(), totalPages);
-    const start = (page - 1) * LIST_PAGE_SIZE;
-    const pagePosts = filtered.slice(start, start + LIST_PAGE_SIZE);
-
-    if (summary) {
-      const tagCount = postTagCounts(posts).length;
-      const views = posts.reduce((sum, post) => sum + viewCount(post.view_count), 0);
-      summary.innerHTML = `
-        <div><strong>${posts.length.toLocaleString("zh-CN")}</strong><span>资料条目</span></div>
-        <div><strong>${tagCount.toLocaleString("zh-CN")}</strong><span>标签分类</span></div>
-        <div><strong>${views.toLocaleString("zh-CN")}</strong><span>累计阅读</span></div>
-      `;
-    }
-
-    if (!filtered.length) {
-      list.innerHTML = posts.length ? '<p class="empty-state">暂无匹配的知识库条目。</p>' : "";
-      if (empty) empty.hidden = posts.length > 0;
-      renderPagination(pagination, { page: 1, total: 0, onPage: render });
-      return;
-    }
-
-    if (empty) empty.hidden = true;
-    renderPagination(pagination, {
-      page,
-      total: filtered.length,
-      onPage: render,
-    });
-    list.innerHTML = pagePosts
-      .map(
-        (post) => `
-          <article class="card article-card knowledge-entry reveal visible" data-knowledge-card data-tags="${escapeHtml(postTagsDataValue(post))}">
-            <span class="flash"></span>
-            ${postCoverUrl(post) ? `<div class="article-cover"><img src="${escapeHtml(postCoverUrl(post))}" alt="" loading="lazy"></div>` : ""}
-            <div class="article-head">
-              <div class="meta">${postTimeMetaHtml(post)}<span>${formatViews(post.view_count)}</span></div>
-            </div>
-            <h2><a href="/post.html?slug=${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a></h2>
-            <p>${escapeHtml(post.excerpt || "")}</p>
-            <div class="card-footer">
-              <div class="contact-row">${postTagsHtml(post)}</div>
-              <a class="read-more" href="/post.html?slug=${encodeURIComponent(post.slug)}">查看资料 →</a>
-            </div>
-          </article>
-        `,
-      )
-      .join("");
-  }
-
-  if (search && !search.dataset.boundKnowledgeFilter) {
-    search.dataset.boundKnowledgeFilter = "1";
-    search.addEventListener("input", () => {
-      setPageParam("page", 1);
-      render();
-    });
-  }
-  if (tagSelect && !tagSelect.dataset.boundKnowledgeFilter) {
-    tagSelect.dataset.boundKnowledgeFilter = "1";
-    tagSelect.addEventListener("change", () => {
-      const url = new URL(location.href);
-      if (tagSelect.value && tagSelect.value !== "all") {
-        url.searchParams.set("tag", tagSelect.value);
-      } else {
-        url.searchParams.delete("tag");
-      }
-      url.searchParams.delete("page");
-      history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-      render();
-    });
-  }
-
-  render();
-}
-
 async function renderHomeHero() {
   const hero = document.querySelector("[data-home-hero]");
   if (!hero) return;
@@ -2884,7 +2773,6 @@ window.blog = {
   renderHomeHero,
   renderHomeNotice,
   renderFriendLinks,
-  renderKnowledgeBase,
   renderPost,
   renderUserNav,
   initFallbackLogin,

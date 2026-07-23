@@ -23,7 +23,7 @@
         <nav class="nav" aria-label="站点导航">
           <a href="/">首页</a>
           <a href="/articles.html">文章列表</a>
-          <a href="/knowledge.html">知识库</a>
+          <a href="https://docs.yuna.team/">知识库</a>
           <a href="/team.html">关于协会</a>
           <a class="active" href="/admin/">管理后台</a>
           <button type="button" data-logout>退出登录</button>
@@ -62,7 +62,7 @@
           <span class="tech-pill pill-a">Admin</span>
           <span class="tech-pill pill-b">Content</span>
           <span class="tech-pill pill-c">System</span>
-          <div class="data-stream"><span>YUNA · ADMIN CONSOLE · CONTENT PIPELINE ·</span><span>ARTICLE · MEMBER · KNOWLEDGE · GALLERY ·</span></div>
+          <div class="data-stream"><span>YUNA · ADMIN CONSOLE · CONTENT PIPELINE ·</span><span>ARTICLE · MEMBER · GALLERY ·</span></div>
         </div>
       </section>
     </div>
@@ -73,10 +73,6 @@
           <button type="button" class="admin-tab is-active" data-tab="posts" data-admin-tab="posts" aria-pressed="true">
             <span class="admin-tab-title">文章管理</span>
             <span class="admin-tab-desc">创建、编辑、发布、草稿、删除</span>
-          </button>
-          <button type="button" class="admin-tab" data-tab="knowledge" data-admin-tab="knowledge" aria-pressed="false">
-            <span class="admin-tab-title">知识库</span>
-            <span class="admin-tab-desc">资料、教程、下载入口</span>
           </button>
           <button type="button" class="admin-tab" data-tab="members" data-admin-tab="members" aria-pressed="false">
             <span class="admin-tab-title">协会成员</span>
@@ -113,30 +109,6 @@
             <p class="meta" aria-live="polite" data-post-list-message></p>
             <div class="admin-list admin-post-list" data-post-list></div>
             <div class="pagination" data-post-pagination></div>
-          </section>
-        </div>
-
-        <div class="admin-panel" data-panel="knowledge" data-admin-panel="knowledge" hidden>
-          <section class="editor-shell reveal admin-post-workspace">
-            <div class="admin-post-head">
-              <div>
-                <h2 class="panel-title">知识库管理</h2>
-                <p>维护教程、资料说明、下载入口和招新文档。知识库内容使用文章格式，但不会进入普通文章列表。</p>
-              </div>
-              <button class="btn primary" type="button" data-new-knowledge>新建知识库</button>
-            </div>
-            <div class="admin-post-summary" data-knowledge-summary aria-label="知识库统计"></div>
-            <div class="control-row">
-              <input class="search-input" data-knowledge-search placeholder="搜索标题、摘要、标签、作者或链接标识" aria-label="搜索知识库" />
-              <select class="select-input" data-knowledge-filter-status aria-label="按状态筛选知识库">
-                <option value="all">全部状态</option>
-                <option value="published">已发布</option>
-                <option value="draft">草稿</option>
-              </select>
-            </div>
-            <p class="meta" aria-live="polite" data-knowledge-list-message></p>
-            <div class="admin-list admin-post-list" data-knowledge-list></div>
-            <div class="pagination" data-knowledge-pagination></div>
           </section>
         </div>
 
