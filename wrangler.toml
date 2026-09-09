@@ -1,26 +1,26 @@
-name = "cloudflare-markdown-blog"
+name = "yuna-team"
 compatibility_date = "2026-06-19"
 pages_build_output_dir = "public"
 
 [[d1_databases]]
 binding = "BLOG_DB"
 database_name = "cloudflare_markdown_blog"
-database_id = "1e3e11b2-7954-4585-8cc6-23889af2447a"
+database_id = "c538b581-eb63-4507-ae2a-b720bbeabb67"
 
 [[r2_buckets]]
 binding = "BLOG_BUCKET"
 bucket_name = "cloudflare-markdown-blog"
 
 [vars]
-SITE_NAME = "YUNA 最新动态"
-PUBLIC_BASE_URL = "https://www.yuna.team"
+SITE_NAME = "YUNA blog"
+PUBLIC_BASE_URL = "https://yuna.team"
 ZITADEL_ISSUER = "https://sso.welain.com"
 ZITADEL_CLIENT_ID = "382015127156752388"
 ZITADEL_REDIRECT_PATH = "/auth/callback"
 
 # 额外允许的 SSO 登录回调域名(CNAME 到本站的域名),逗号分隔,可写主机名或完整 origin。
 # 每个域名的 https://<域名>/auth/callback 也要加进 Zitadel 应用的 Redirect URIs。
-SSO_ALLOWED_HOSTS = "https://yuna.liugu.cc/auth/callback,https://www.yuna.team/auth/callback,https://yuna-team-new.pages.dev/auth/callback"
+SSO_ALLOWED_HOSTS = "https://yuna.liugu.cc/auth/callback,https://www.yuna.team/auth/callback,https://yuna-team-new.pages.dev/auth/callback,https://yuna.team/auth/callback"
 
 # 拥有全部控制权限的 Zitadel 项目角色；留空则没有登录用户拥有控制权限。
 CONTROL_GROUP = "yuna-docs-edit"
