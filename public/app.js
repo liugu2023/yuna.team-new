@@ -2546,7 +2546,7 @@ async function attachLessonPlanEditor(container, plan) {
 
 function paintLessonPlan(container, plan) {
   if (!lessonPlanHasContent(plan)) {
-    container.innerHTML = lessonPlanEmptyHtml(plan);
+    container.innerHTML = lessonPlanEmptyHtml();
     return;
   }
 
@@ -2591,17 +2591,17 @@ function paintLessonPlan(container, plan) {
   container.querySelectorAll(".reveal").forEach((node) => node.classList.add("visible"));
 }
 
-function lessonPlanEmptyHtml(plan) {
+function lessonPlanEmptyHtml() {
   // 兜底文案：数据没入库时访客看到的是这段静态说明，管理员额外看到操作指引。
   return `
     <article class="card lesson-plan-empty reveal visible">
-      <h2>${escapeHtml(plan.title)}整理中。</h2>
-      <p>这一届的排课还没有进数据库：新学期的授课主题、时间和讲师确定后会在这里更新。想先看往期内容，可以前往知识库查阅历史授课资料与回放。</p>
+      <h2>还没排课。</h2>
+      <p>新学期的课表定下来就会更新在这一页。眼下想看点东西的话，往期的课件和录播都在知识库里。</p>
       <div class="hero-actions">
-        <a class="btn secondary magnetic" href="https://docs.yuna.team/" target="_blank" rel="noopener">前往知识库</a>
-        <a class="btn secondary magnetic" href="https://docs.yuna.team/" target="_blank" rel="noopener">历次录播</a>
+        <a class="btn primary magnetic" href="https://docs.yuna.team/" target="_blank" rel="noopener">去知识库看往期</a>
+        <a class="btn secondary magnetic" href="/departments.html">先看看各部门在做什么</a>
       </div>
-      <p class="lesson-plan-empty-hint" data-lesson-plan-empty-hint hidden>当前还没有授课计划数据，点右上角「编辑授课计划」添加第一批课次。</p>
+      <p class="lesson-plan-empty-hint" data-lesson-plan-empty-hint hidden>这个页面还没有数据。点右上角「编辑授课计划」排第一次课。</p>
     </article>
   `;
 }
