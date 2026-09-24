@@ -2601,7 +2601,7 @@ function lessonPlanEmptyHtml(plan) {
         <a class="btn secondary magnetic" href="https://docs.yuna.team/" target="_blank" rel="noopener">前往知识库</a>
         <a class="btn secondary magnetic" href="https://docs.yuna.team/" target="_blank" rel="noopener">历次录播</a>
       </div>
-      <p class="meta" data-lesson-plan-empty-hint hidden>当前还没有授课计划数据，点右上角「编辑授课计划」添加第一批课次。</p>
+      <p class="lesson-plan-empty-hint" data-lesson-plan-empty-hint hidden>当前还没有授课计划数据，点右上角「编辑授课计划」添加第一批课次。</p>
     </article>
   `;
 }
