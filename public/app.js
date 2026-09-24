@@ -2375,7 +2375,6 @@ const LESSON_STATUS_LABELS = {
 };
 // 协会四个部门加公开课，顺序与部门一览页一致。
 const LESSON_DEPARTMENTS = ["开发部", "网络安全部", "运维部", "组宣部", "公开课"];
-const LESSON_TIMELINE_LIMIT = 8;
 
 // D1 里没有记录（或内容为空/解析失败）时使用的兜底数据：标题是文案，terms 为空则渲染兜底提示。
 function defaultLessonPlan() {
@@ -2562,97 +2561,47 @@ function paintLessonPlan(container, plan) {
 
   container.innerHTML = `
     ${renderLessonHighlight(highlight)}
-    <div class="lesson-list-wrap">
-      <div class="lesson-list-main">
-        <div class="team-toolbar lesson-plan-toolbar">
-          <div class="team-term-switcher" role="group" aria-label="授课届次切换">
-            ${terms
-              .map((term) => {
-                const count = termLessonCount(term);
-                const active = term.label === activeTerm.label;
-                return `<button class="team-term-button${active ? " is-active" : ""}" type="button" data-lesson-term-button="${escapeHtml(encodeURIComponent(term.label))}" aria-pressed="${active ? "true" : "false"}">${escapeHtml(term.label)}<span>${count ? `${count.toLocaleString("zh-CN")} 次` : "暂无排课"}</span></button>`;
-              })
-              .join("")}
-          </div>
-          <label class="field-lite lesson-department-filter" data-lesson-department-filter>
-            <span>部门</span>
-            <select class="select-input" data-lesson-department-select aria-label="按部门筛选课次">
-              <option value="">全部部门</option>
-              ${LESSON_DEPARTMENTS.map((department) => `<option value="${escapeHtml(department)}">${escapeHtml(department)}</option>`).join("")}
-            </select>
-          </label>
-        </div>
-        <div data-lesson-term-panels>
-          ${terms
-            .map((term) => {
-              const active = term.label === activeTerm.label;
-              const lessons = sortedTermLessons(term);
-              return `
-                <section data-lesson-term-panel="${escapeHtml(term.label)}" ${active ? "" : "hidden"}>
-                  ${term.subtitle ? `<p class="meta lesson-term-note">${escapeHtml(term.subtitle)}</p>` : ""}
-                  ${
-                    lessons.length
-                      ? `<div class="member-grid refined-member-grid lesson-list">${lessons.map(renderLessonCard).join("")}</div>`
-                      : ""
-                  }
-                  <p class="empty-state lesson-term-empty" data-lesson-empty aria-live="polite" ${lessons.length ? "hidden" : ""}>这一届还没有安排课次。</p>
-                </section>
-              `;
-            })
-            .join("")}
-        </div>
+    <div class="team-toolbar lesson-plan-toolbar">
+      <div class="team-term-switcher" role="group" aria-label="授课届次切换">
+        ${terms
+          .map((term) => {
+            const count = termLessonCount(term);
+            const active = term.label === activeTerm.label;
+            return `<button class="team-term-button${active ? " is-active" : ""}" type="button" data-lesson-term-button="${escapeHtml(encodeURIComponent(term.label))}" aria-pressed="${active ? "true" : "false"}">${escapeHtml(term.label)}<span>${count ? `${count.toLocaleString("zh-CN")} 次` : "暂无排课"}</span></button>`;
+          })
+          .join("")}
       </div>
-      ${renderLessonTimeline(plan)}
+      <label class="field-lite lesson-department-filter" data-lesson-department-filter>
+        <span>部门</span>
+        <select class="select-input" data-lesson-department-select aria-label="按部门筛选课次">
+          <option value="">全部部门</option>
+          ${LESSON_DEPARTMENTS.map((department) => `<option value="${escapeHtml(department)}">${escapeHtml(department)}</option>`).join("")}
+        </select>
+      </label>
+    </div>
+    <div data-lesson-term-panels>
+      ${terms
+        .map((term) => {
+          const active = term.label === activeTerm.label;
+          const lessons = sortedTermLessons(term);
+          return `
+            <section data-lesson-term-panel="${escapeHtml(term.label)}" ${active ? "" : "hidden"}>
+              ${term.subtitle ? `<p class="meta lesson-term-note">${escapeHtml(term.subtitle)}</p>` : ""}
+              ${
+                lessons.length
+                  ? `<div class="member-grid refined-member-grid lesson-list">${lessons.map(renderLessonCard).join("")}</div>`
+                  : ""
+              }
+              <p class="empty-state lesson-term-empty" data-lesson-empty aria-live="polite" ${lessons.length ? "hidden" : ""}>这一届还没有安排课次。</p>
+            </section>
+          `;
+        })
+        .join("")}
     </div>
   `;
 
   bindLessonPlanFilters(container);
   container.querySelectorAll(".reveal").forEach((node) => node.classList.add("visible"));
-}
-
-// 侧边时间轴：按“时间 → 第几次课”倒序取最近若干次（没排时间的排在有时间的后面）。
-function lessonSortKey(lesson) {
-  if (lesson.date) return `${lesson.date}~`;
-  return `~~~~${String(lessonSessionNumber(lesson)).padStart(5, "0")}`;
-}
-
-function lessonSessionNumber(lesson) {
-  const matched = /(\d+)/.exec(String(lesson.session || ""));
-  return matched ? Number(matched[1]) : 0;
-}
-
-function sortedRecentLessons(plan, limit = LESSON_TIMELINE_LIMIT) {
-  return plan.terms
-    .flatMap((term) => term.lessons.map((lesson) => ({ ...lesson, termLabel: term.label })))
-    .sort((a, b) => lessonSortKey(b).localeCompare(lessonSortKey(a)))
-    .slice(0, limit);
-}
-
-function renderLessonTimeline(plan) {
-  const recent = sortedRecentLessons(plan);
-  if (!recent.length) return "";
-
-  return `
-    <aside class="lesson-timeline reveal visible" aria-label="最近几次课">
-      <h3>最近几次</h3>
-      <ol class="lesson-timeline-list">
-        ${recent
-          .map((lesson) => {
-            const when = lesson.date ? lessonDateWithWeekday(lesson.date) : (lesson.session || "时间待定");
-            return `
-              <li class="lesson-timeline-item">
-                <button type="button" class="lesson-timeline-button" data-lesson-jump-term="${escapeHtml(encodeURIComponent(lesson.termLabel))}" data-lesson-jump-department="${escapeHtml(lesson.department || "")}">
-                  <span class="lesson-timeline-when">${escapeHtml(when)}</span>
-                  <strong class="lesson-timeline-topic">${escapeHtml(lesson.topic)}</strong>
-                  <span class="lesson-timeline-meta">${escapeHtml([lesson.department, lesson.instructor].filter(Boolean).join(" · ") || "协会")}</span>
-                </button>
-              </li>
-            `;
-          })
-          .join("")}
-      </ol>
-    </aside>
-  `;
 }
 
 function lessonPlanEmptyHtml() {
@@ -2754,14 +2703,6 @@ function bindLessonPlanFilters(container) {
   const panels = Array.from(container.querySelectorAll("[data-lesson-term-panel]"));
   const departmentFilter = container.querySelector("[data-lesson-department-select]");
 
-  const setActiveTerm = (label) => {
-    buttons.forEach((item) => {
-      const active = decodeURIComponent(item.dataset.lessonTermButton || "") === label;
-      item.classList.toggle("is-active", active);
-      item.setAttribute("aria-pressed", active ? "true" : "false");
-    });
-  };
-
   // 届次与部门两个筛选条件叠加生效：先切届次，再在届次内按部门过滤课次。
   const applyFilters = () => {
     const activeTerm = buttons.find((button) => button.classList.contains("is-active"))?.dataset.lessonTermButton || "";
@@ -2801,19 +2742,6 @@ function bindLessonPlanFilters(container) {
     });
   });
   departmentFilter?.addEventListener("change", applyFilters);
-
-  // 时间轴点一下：切到那节课所在的届次、把部门筛成该课次的部门，再滚到那张卡。
-  container.querySelectorAll("[data-lesson-jump-term]").forEach((item) => {
-    item.addEventListener("click", () => {
-      const label = decodeURIComponent(item.dataset.lessonJumpTerm || "");
-      const department = item.dataset.lessonJumpDepartment || "";
-      setActiveTerm(label);
-      if (departmentFilter) departmentFilter.value = departmentFilter.querySelector(`option[value="${department}"]`) ? department : "";
-      applyFilters();
-      const panel = panels.find((node) => node.dataset.lessonTermPanel === label);
-      panel?.querySelectorAll("[data-lesson-department]").find((card) => !card.hidden)?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-    });
-  });
 
   applyFilters();
 }
