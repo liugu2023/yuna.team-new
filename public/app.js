@@ -2638,7 +2638,7 @@ function renderLessonHighlight(highlight) {
       <div class="lesson-facts">
         ${lesson.date ? `<span class="lesson-fact"><strong>时间</strong>${escapeHtml(lessonDateWithWeekday(lesson.date))}</span>` : ""}
         ${lesson.session ? `<span class="lesson-fact"><strong>第几次</strong>${escapeHtml(lesson.session)}</span>` : ""}
-        ${lesson.instructor ? `<span class="lesson-fact"><strong>讲师</strong>${escapeHtml(lesson.instructor)}</span>` : ""}
+        ${lesson.instructor ? `<span class="lesson-fact"><strong>授课人</strong>${escapeHtml(lesson.instructor)}</span>` : ""}
         ${lesson.location ? `<span class="lesson-fact"><strong>地点</strong>${escapeHtml(lesson.location)}</span>` : ""}
         <span class="lesson-fact"><strong>届次</strong>${escapeHtml(lesson.termLabel)}</span>
       </div>
@@ -2661,7 +2661,7 @@ function renderLessonCard(lesson) {
       ${
         lesson.instructor || lesson.location
           ? `<div class="lesson-facts">
-              ${lesson.instructor ? `<span class="lesson-fact"><strong>讲师</strong>${escapeHtml(lesson.instructor)}</span>` : ""}
+              ${lesson.instructor ? `<span class="lesson-fact"><strong>授课人</strong>${escapeHtml(lesson.instructor)}</span>` : ""}
               ${lesson.location ? `<span class="lesson-fact"><strong>地点</strong>${escapeHtml(lesson.location)}</span>` : ""}
             </div>`
           : ""
@@ -2787,7 +2787,7 @@ function lessonEditorRowHtml(lesson = {}) {
       </div>
       <label>主题<input class="admin-input" data-lesson-topic value="${escapeHtml(lesson.topic || "")}" placeholder="本次授课主题（必填）" /></label>
       <div class="grid">
-        <label>讲师<input class="admin-input" data-lesson-instructor value="${escapeHtml(lesson.instructor || "")}" placeholder="主讲人" /></label>
+        <label>授课人<input class="admin-input" data-lesson-instructor value="${escapeHtml(lesson.instructor || "")}" placeholder="授课人" /></label>
         <label>地点<input class="admin-input" data-lesson-location value="${escapeHtml(lesson.location || "")}" placeholder="东区办公室 / 线上" /></label>
       </div>
       <div class="grid">
