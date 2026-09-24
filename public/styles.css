@@ -2875,6 +2875,10 @@
       background:rgba(255,255,255,.66);
       border:1px solid rgba(177,204,231,.46);
     }
+    /* .grid 默认 align-items:stretch，同一行的下拉框会被旁边的多行 textarea 撑高。 */
+    .lesson-editor-row .grid{
+      align-items:start;
+    }
     .lesson-editor-row-actions,
     .lesson-editor-row .editor-actions{
       display:flex;

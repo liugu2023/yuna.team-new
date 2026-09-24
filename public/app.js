@@ -2386,6 +2386,8 @@ function normalizeLessonLinks(value) {
     .filter((link) => link.url);
 }
 
+// 授课时间不是必填：还没定哪天上课的课次也能先排进计划里，date 为空即“时间待定”。
+// 届次内的教学进度按“第几次课”记，不与学校教学周同步。
 function normalizeLessonPlan(value) {
   const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const terms = (Array.isArray(source.terms) ? source.terms : [])
@@ -2401,7 +2403,7 @@ function normalizeLessonPlan(value) {
             : "planned";
           return {
             date: lessonDateValue(rawLesson.date),
-            week: String(rawLesson.week || "").trim(),
+            session: String(rawLesson.session ?? rawLesson.week ?? "").trim(),
             topic,
             instructor: String(rawLesson.instructor || "").trim(),
             location: String(rawLesson.location || "").trim(),
@@ -2635,7 +2637,7 @@ function renderLessonHighlight(highlight) {
       <h2>${escapeHtml(lesson.topic)}</h2>
       <div class="lesson-facts">
         ${lesson.date ? `<span class="lesson-fact"><strong>时间</strong>${escapeHtml(lessonDateWithWeekday(lesson.date))}</span>` : ""}
-        ${lesson.week ? `<span class="lesson-fact"><strong>周次</strong>${escapeHtml(lesson.week)}</span>` : ""}
+        ${lesson.session ? `<span class="lesson-fact"><strong>第几次</strong>${escapeHtml(lesson.session)}</span>` : ""}
         ${lesson.instructor ? `<span class="lesson-fact"><strong>讲师</strong>${escapeHtml(lesson.instructor)}</span>` : ""}
         ${lesson.location ? `<span class="lesson-fact"><strong>地点</strong>${escapeHtml(lesson.location)}</span>` : ""}
         <span class="lesson-fact"><strong>届次</strong>${escapeHtml(lesson.termLabel)}</span>
@@ -2655,7 +2657,7 @@ function renderLessonCard(lesson) {
         <span class="lesson-status is-${escapeHtml(lesson.status)}">${escapeHtml(lessonStatusLabel(lesson.status))}</span>
       </div>
       <h3>${escapeHtml(topic)}</h3>
-      ${lesson.week ? `<p class="meta lesson-card-week">${escapeHtml(lesson.week)}</p>` : ""}
+      ${lesson.session ? `<p class="meta lesson-card-week">${escapeHtml(lesson.session)}</p>` : ""}
       ${
         lesson.instructor || lesson.location
           ? `<div class="lesson-facts">
@@ -2780,8 +2782,8 @@ function lessonEditorRowHtml(lesson = {}) {
   return `
     <div class="lesson-editor-row" data-lesson-row>
       <div class="grid">
-        <label>日期<input class="admin-input" data-lesson-date type="date" value="${escapeHtml(lesson.date || "")}" /></label>
-        <label>周次<input class="admin-input" data-lesson-week value="${escapeHtml(lesson.week || "")}" placeholder="第 3 周" /></label>
+        <label>授课时间（选填）<input class="admin-input" data-lesson-date type="date" value="${escapeHtml(lesson.date || "")}" /></label>
+        <label>第几次课<input class="admin-input" data-lesson-session value="${escapeHtml(lesson.session || "")}" placeholder="第 3 次" /></label>
       </div>
       <label>主题<input class="admin-input" data-lesson-topic value="${escapeHtml(lesson.topic || "")}" placeholder="本次授课主题（必填）" /></label>
       <div class="grid">
@@ -2942,7 +2944,7 @@ function openLessonPlanEditor(plan, onSaved) {
         }
         lessons.push({
           date,
-          week: row.querySelector("[data-lesson-week]").value.trim(),
+          session: row.querySelector("[data-lesson-session]").value.trim(),
           topic,
           instructor: row.querySelector("[data-lesson-instructor]").value.trim(),
           location: row.querySelector("[data-lesson-location]").value.trim(),
