@@ -2723,6 +2723,184 @@
       padding:24px 28px 28px;
       border-top:1px solid rgba(177,204,231,.34);
     }
+    /* ===== 授课计划页 ===== */
+    /* 只补课表特有的排版；卡片、胶囊标签、空态、弹窗全部复用上面的通用组件。 */
+    .lesson-plan-actions{
+      margin-top:20px;
+    }
+    .lesson-plan-actions[hidden]{
+      display:none!important;
+    }
+    .lesson-term-note{
+      margin-bottom:18px;
+    }
+    .lesson-list{
+      grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+    .lesson-card{
+      min-height:240px;
+      gap:10px;
+    }
+    .lesson-date{
+      font-size:13px;
+      font-weight:950;
+      letter-spacing:.04em;
+      color:#0a6fb1;
+    }
+    .lesson-status{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:950;
+      letter-spacing:.02em;
+      background:#eff6fb;
+      color:#54667d;
+    }
+    .lesson-status.is-planned{
+      background:#e6f5ff;
+      color:#0a6fb1;
+    }
+    .lesson-status.is-completed{
+      background:#e6f7f0;
+      color:#12805c;
+    }
+    .lesson-status.is-cancelled{
+      background:#f0f2f6;
+      color:#7b8798;
+    }
+    .lesson-facts{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px 16px;
+      margin-top:6px;
+      color:#54667d;
+      font-size:14px;
+      font-weight:800;
+    }
+    .lesson-fact{
+      display:inline-flex;
+      align-items:baseline;
+      gap:8px;
+    }
+    .lesson-fact strong{
+      color:#55708d;
+      font-size:12px;
+      font-weight:950;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .lesson-card-week{
+      margin:0;
+    }
+    .lesson-links{
+      gap:8px;
+    }
+    .lesson-highlight{
+      position:relative;
+      overflow:hidden;
+      margin-bottom:24px;
+      padding:28px;
+      border-radius:28px;
+      background:linear-gradient(135deg,rgba(230,245,255,.92),rgba(233,250,244,.78));
+      border:1px solid rgba(255,255,255,.44);
+      box-shadow:var(--soft);
+    }
+    .lesson-highlight-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    .lesson-highlight-head .eyebrow{
+      margin:0;
+    }
+    .lesson-highlight h2{
+      margin:10px 0 0;
+      font-size:clamp(26px,3.2vw,38px);
+      letter-spacing:-.04em;
+    }
+    .lesson-plan-empty{
+      padding:34px;
+    }
+    .lesson-plan-empty h2{
+      margin:0 0 14px;
+    }
+    /* 后台编辑弹窗 */
+    .lesson-plan-editor{
+      gap:18px;
+    }
+    .lesson-term-editor{
+      min-width:0;
+      margin:0;
+      padding:18px;
+      border:1px solid rgba(177,204,231,.62);
+      border-radius:20px;
+      background:rgba(255,255,255,.42);
+    }
+    .lesson-term-editor legend{
+      padding:0 8px;
+      color:#526a84;
+      font-weight:950;
+    }
+    .lesson-term-editor .grid{
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    }
+    .lesson-editor-list{
+      display:grid;
+      gap:14px;
+      margin:14px 0;
+    }
+    .lesson-editor-row{
+      min-width:0;
+      display:grid;
+      gap:12px;
+      padding:16px;
+      border-radius:18px;
+      background:rgba(255,255,255,.66);
+      border:1px solid rgba(177,204,231,.46);
+    }
+    .lesson-editor-row-actions,
+    .lesson-editor-row .editor-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .lesson-editor-empty{
+      margin:0;
+    }
+    .lesson-term-adder{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:14px;
+      align-items:end;
+      padding:18px;
+      border-radius:20px;
+      background:rgba(255,255,255,.42);
+      border:1px dashed rgba(10,141,219,.30);
+    }
+    [data-lesson-plan-message].error{
+      color:#b03030;
+    }
+    @media(max-width:1180px){
+      .lesson-list{
+        grid-template-columns:1fr 1fr;
+      }
+    }
+    @media(max-width:760px){
+      .lesson-list{
+        grid-template-columns:1fr;
+      }
+      .lesson-highlight{
+        padding:22px;
+      }
+      .lesson-plan-empty{
+        padding:22px;
+      }
+    }
     @media(max-width:760px){
       .team-disclosure-summary{
         min-height:92px;

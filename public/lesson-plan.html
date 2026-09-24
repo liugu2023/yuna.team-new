@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>授课计划 · YUNA.BLOG</title>
+  <meta name="description" content="燕山大学大学生网络信息协会授课计划：按届次查看本周与历次授课的时间、主题、讲师、地点、录播与课件资料。"/>
+  <meta property="og:site_name" content="YUNA.BLOG"/>
+  <meta property="og:title" content="授课计划 · YUNA.BLOG"/>
+  <meta property="og:description" content="燕山大学大学生网络信息协会授课计划：按届次查看本周与历次授课的时间、主题、讲师、地点、录播与课件资料。"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://www.yuna.team/lesson-plan"/>
+  <meta property="og:image" content="https://www.yuna.team/images/og-image.png"/>
+  <link rel="canonical" href="https://www.yuna.team/lesson-plan"/>
+  <link rel="preload" as="image" href="/images/campus-bg.webp"/>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml"/>
+  <link rel="stylesheet" href="/styles.css"/>
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+<noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载授课计划。</p></noscript>
+<div class="scroll-progress" id="scrollProgress"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+<canvas class="particle-canvas" id="particleCanvas"></canvas>
+<div class="aurora-layer"></div>
+<header class="topbar">
+  <div class="shell topbar-inner">
+    <a class="brand magnetic" href="/" aria-label="返回 YUNA.BLOG 首页"><img src="/images/logo.svg" alt=""/><span>YUNA.BLOG</span></a>
+    <nav class="nav" aria-label="站点导航">
+      <a href="/">首页</a>
+      <a href="/articles.html">文章列表</a>
+      <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
+      <a class="active" href="/lesson-plan.html" aria-current="page">授课计划</a>
+      <a href="/team.html">关于协会</a>
+      <a href="/join.html">加入我们</a>
+      <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
+    </nav>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="mist-top"></div>
+  <div class="mist-bottom"></div>
+  <div class="grid-overlay"></div>
+  <section class="shell page-hero">
+    <div class="reveal" data-editable-block="lesson-plan-hero" data-editable-title="授课计划主视觉文案">
+      <p class="eyebrow" data-block-field="eyebrow">Lesson Plan</p>
+      <h1 data-block-field="title">授课计划与往期回放。</h1>
+      <p class="lead" data-block-field="lead">协会按届次安排技术授课，每次课都记录主题、讲师、时间与资料。排课确定后会在这里更新，方便成员提前安排时间，也方便后来者按顺序补课。</p>
+      <div class="hero-actions">
+        <a class="btn primary magnetic" href="https://docs.yuna.team/" target="_blank" rel="noopener">查看历史授课资料</a>
+        <a class="btn secondary magnetic" href="/departments.html">了解部门方向</a>
+      </div>
+      <div class="lesson-plan-actions" data-lesson-plan-admin hidden></div>
+    </div>
+    <div class="page-visual reveal" aria-hidden="true">
+      <div class="tech-sweep"></div>
+      <div class="logo-holo-grid"></div>
+      <div class="scanlines"></div>
+      <div class="tech-web"></div>
+      <span class="pulse-ring p1"></span>
+      <span class="pulse-ring p2"></span>
+      <span class="pulse-ring p3"></span>
+      <span class="ring r1"></span>
+      <span class="ring r2"></span>
+      <div class="visual-orb"><img src="/images/logo.svg" alt=""/></div>
+      <span class="tech-pill pill-a">Schedule</span>
+      <span class="tech-pill pill-b">Replay</span>
+      <span class="tech-pill pill-c">Slides</span>
+      <div class="data-stream"><span>YUNA · LESSON PLAN · SCHEDULE · REPLAY ·</span><span>DEV · SECURITY · OPS · PUBLICITY · CAMPUS TECH COMMUNITY ·</span></div>
+    </div>
+  </section>
+</div>
+
+<main class="main page-main" id="content">
+  <section class="shell">
+    <div data-lesson-plan>
+      <p class="empty-state">正在加载授课计划。</p>
+    </div>
+  </section>
+</main>
+
+<footer class="shell footer">
+  <span>YUNA.BLOG · 授课计划</span>
+  <span>排课 · 回放 · 课件</span>
+</footer>
+<script src="/app.js"></script>
+<script>
+  window.blog.renderUserNav();
+  window.blog.renderEditableBlocks();
+  window.blog.renderLessonPlan();
+</script>
+<script src="/yuna-ui.js"></script>
+</body>
+</html>

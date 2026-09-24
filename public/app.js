@@ -2363,6 +2363,619 @@ function bindTeamMemberFilters(container) {
   applyFilters();
 }
 
+// ===== 授课计划 =====
+// 一条 site_records 记录（key: lesson-plan, kind: json）承载整页数据，前台直接渲染成课表。
+// 拆成两次赋值：先给 bindLessonPlanFilters 用，最后统一挂到 window.blog 上。
+const LESSON_PLAN_KEY = "lesson-plan";
+const DEFAULT_LESSON_PLAN_TITLE = "授课计划";
+const LESSON_STATUS_LABELS = {
+  planned: "待授课",
+  completed: "已完成",
+  cancelled: "已取消",
+};
+
+// D1 里没有记录（或内容为空/解析失败）时使用的兜底数据：标题是文案，terms 为空则渲染兜底提示。
+function defaultLessonPlan() {
+  return { title: DEFAULT_LESSON_PLAN_TITLE, terms: [] };
+}
+
+function normalizeLessonLinks(value) {
+  const list = Array.isArray(value) ? value : [];
+  return list
+    .map((link) => ({ label: String(link?.label || "").trim(), url: String(link?.url || "").trim() }))
+    .filter((link) => link.url);
+}
+
+function normalizeLessonPlan(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const terms = (Array.isArray(source.terms) ? source.terms : [])
+    .map((term) => {
+      const rawTerm = term && typeof term === "object" ? term : {};
+      const lessons = (Array.isArray(rawTerm.lessons) ? rawTerm.lessons : [])
+        .map((lesson) => {
+          const rawLesson = lesson && typeof lesson === "object" ? lesson : {};
+          const topic = String(rawLesson.topic || "").trim();
+          if (!topic) return null;
+          const status = LESSON_STATUS_LABELS[String(rawLesson.status || "").trim()]
+            ? String(rawLesson.status).trim()
+            : "planned";
+          return {
+            date: lessonDateValue(rawLesson.date),
+            week: String(rawLesson.week || "").trim(),
+            topic,
+            instructor: String(rawLesson.instructor || "").trim(),
+            location: String(rawLesson.location || "").trim(),
+            status,
+            links: normalizeLessonLinks(rawLesson.links),
+          };
+        })
+        .filter(Boolean);
+      return {
+        label: String(rawTerm.label || "").trim(),
+        subtitle: String(rawTerm.subtitle || "").trim(),
+        order: Number.isFinite(Number(rawTerm.order)) ? Number(rawTerm.order) : 0,
+        editedOrder: 0,
+        lessons,
+      };
+    })
+    .filter((term) => term.label);
+
+  return { title: String(source.title || "").trim() || DEFAULT_LESSON_PLAN_TITLE, terms };
+}
+
+// 只接受 YYYY-MM-DD：纯字典序即时间序，不受时区影响。
+function lessonDateValue(value) {
+  const raw = String(value || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const loose = /^(\d{4})[/.-](\d{1,2})[/.-](\d{1,2})$/.exec(raw);
+  if (!loose) return "";
+  return `${loose[1]}-${loose[2].padStart(2, "0")}-${loose[3].padStart(2, "0")}`;
+}
+
+// 排课用的是自然日，不是时刻，因此按字符串逐段比较，避免 UTC 解析把跨零点的课挪到前一天。
+function lessonToday() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function lessonDateWithWeekday(date) {
+  const parsed = new Date(`${date}T00:00:00+08:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  const weekday = new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", weekday: "short" }).format(parsed);
+  return `${date} ${weekday}`;
+}
+
+function lessonPlanHasContent(plan) {
+  return plan.terms.some((term) => term.lessons.length > 0);
+}
+
+function termLessonCount(term) {
+  return term.lessons.length;
+}
+
+function sortedLessonTerms(plan) {
+  return [...plan.terms].sort((a, b) => {
+    // editedOrder 是编辑弹窗里“从上到下”的序号（最上面最新），用于抵消标签的字典序。
+    if (a.editedOrder !== b.editedOrder) return (a.editedOrder ?? 0) - (b.editedOrder ?? 0);
+    if (a.order !== b.order) return (b.order || 0) - (a.order || 0);
+    return b.label.localeCompare(a.label, "zh-Hans-CN", { numeric: true });
+  });
+}
+
+// 每届内课次倒序（最近的在最前）；没有日期的排在有日期的后面，保持写入顺序。
+function sortedTermLessons(term) {
+  return [...term.lessons].sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return b.date.localeCompare(a.date);
+  });
+}
+
+async function loadLessonPlan() {
+  let record;
+  try {
+    const data = await fetchSiteRecord(LESSON_PLAN_KEY);
+    record = data.record;
+  } catch (error) {
+    // 记录不存在：按“还没排课”处理，页面继续显示兜底文案，不报错。
+    if (isNotFoundError(error)) return defaultLessonPlan();
+    throw error;
+  }
+  if (record?.kind !== "json") return defaultLessonPlan();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(record.content || "{}");
+  } catch {
+    // 内容损坏也走兜底：宁可显示“整理中”，也不要让整页只剩一条报错。
+    return defaultLessonPlan();
+  }
+
+  const plan = normalizeLessonPlan(parsed);
+  if (!lessonPlanHasContent(plan)) plan.title = String(record.title || "").trim() || plan.title;
+  return plan;
+}
+
+async function renderLessonPlan() {
+  const container = document.querySelector("[data-lesson-plan]");
+  if (!container) return;
+
+  let plan;
+  try {
+    plan = await loadLessonPlan();
+  } catch (error) {
+    container.innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
+    return;
+  }
+
+  paintLessonPlan(container, plan);
+  await attachLessonPlanEditor(container, plan);
+}
+
+async function attachLessonPlanEditor(container, plan) {
+  const slot = document.querySelector("[data-lesson-plan-admin]");
+  if (!slot) return;
+
+  let me;
+  try {
+    me = await currentUser();
+  } catch {
+    return;
+  }
+  if (!me.admin) {
+    slot.hidden = true;
+    return;
+  }
+
+  slot.hidden = false;
+  const emptyHint = container.querySelector("[data-lesson-plan-empty-hint]");
+  if (emptyHint) emptyHint.hidden = false;
+  slot.innerHTML = '<button type="button" class="btn secondary compact" data-edit-lesson-plan>编辑授课计划</button>';
+  slot.querySelector("[data-edit-lesson-plan]")?.addEventListener("click", () => {
+    openLessonPlanEditor(plan, (nextPlan) => {
+      plan = nextPlan;
+      paintLessonPlan(container, plan);
+    });
+  });
+}
+
+function paintLessonPlan(container, plan) {
+  if (!lessonPlanHasContent(plan)) {
+    container.innerHTML = lessonPlanEmptyHtml(plan);
+    return;
+  }
+
+  const terms = sortedLessonTerms(plan);
+  const activeTerm = terms[0];
+  const highlight = highlightLesson(plan);
+
+  container.innerHTML = `
+    ${renderLessonHighlight(highlight)}
+    <div class="team-toolbar lesson-plan-toolbar">
+      <div class="team-term-switcher" role="group" aria-label="授课届次切换">
+        ${terms
+          .map((term) => {
+            const count = termLessonCount(term);
+            const active = term.label === activeTerm.label;
+            return `<button class="team-term-button${active ? " is-active" : ""}" type="button" data-lesson-term-button="${escapeHtml(encodeURIComponent(term.label))}" aria-pressed="${active ? "true" : "false"}">${escapeHtml(term.label)}<span>${count ? `${count.toLocaleString("zh-CN")} 次` : "暂无排课"}</span></button>`;
+          })
+          .join("")}
+      </div>
+    </div>
+    <div data-lesson-term-panels>
+      ${terms
+        .map((term) => {
+          const active = term.label === activeTerm.label;
+          const lessons = sortedTermLessons(term);
+          return `
+            <section data-lesson-term-panel="${escapeHtml(term.label)}" ${active ? "" : "hidden"}>
+              ${term.subtitle ? `<p class="meta lesson-term-note">${escapeHtml(term.subtitle)}</p>` : ""}
+              ${
+                lessons.length
+                  ? `<div class="member-grid refined-member-grid lesson-list">${lessons.map(renderLessonCard).join("")}</div>`
+                  : '<p class="empty-state lesson-term-empty">这一届还没有安排课次。</p>'
+              }
+            </section>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+
+  bindLessonPlanFilters(container);
+  container.querySelectorAll(".reveal").forEach((node) => node.classList.add("visible"));
+}
+
+function lessonPlanEmptyHtml(plan) {
+  // 兜底文案：数据没入库时访客看到的是这段静态说明，管理员额外看到操作指引。
+  return `
+    <article class="card lesson-plan-empty reveal visible">
+      <h2>${escapeHtml(plan.title)}整理中。</h2>
+      <p>这一届的排课还没有进数据库：新学期的授课主题、时间和讲师确定后会在这里更新。想先看往期内容，可以前往知识库查阅历史授课资料与回放。</p>
+      <div class="hero-actions">
+        <a class="btn secondary magnetic" href="https://docs.yuna.team/" target="_blank" rel="noopener">前往知识库</a>
+        <a class="btn secondary magnetic" href="https://docs.yuna.team/" target="_blank" rel="noopener">历次录播</a>
+      </div>
+      <p class="meta" data-lesson-plan-empty-hint hidden>当前还没有授课计划数据，点右上角「编辑授课计划」添加第一批课次。</p>
+    </article>
+  `;
+}
+
+function lessonStatusLabel(status) {
+  return LESSON_STATUS_LABELS[status] || LESSON_STATUS_LABELS.planned;
+}
+
+// 置顶卡：先找最近一节未开始的课；如果本届课都上完了，就回落到最近一次已结束的课。
+function highlightLesson(plan) {
+  const candidates = plan.terms.flatMap((term) =>
+    term.lessons.map((lesson) => ({ ...lesson, termLabel: term.label })),
+  );
+  const today = lessonToday();
+  const dated = candidates.filter((lesson) => lesson.date);
+  const upcoming = dated.filter((lesson) => lesson.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
+  if (upcoming) return { lesson: upcoming, upcoming: true };
+  const latest = dated.filter((lesson) => lesson.date < today).sort((a, b) => b.date.localeCompare(a.date))[0];
+  return latest ? { lesson: latest, upcoming: false } : null;
+}
+
+function renderLessonHighlight(highlight) {
+  if (!highlight) return "";
+  const lesson = highlight.lesson;
+  return `
+    <article class="lesson-highlight reveal visible">
+      <div class="lesson-highlight-head">
+        <p class="eyebrow">${highlight.upcoming ? "Next Lesson" : "Latest Lesson"}</p>
+        <span class="lesson-status is-${escapeHtml(lesson.status)}">${escapeHtml(lessonStatusLabel(lesson.status))}</span>
+      </div>
+      <h2>${escapeHtml(lesson.topic)}</h2>
+      <div class="lesson-facts">
+        ${lesson.date ? `<span class="lesson-fact"><strong>时间</strong>${escapeHtml(lessonDateWithWeekday(lesson.date))}</span>` : ""}
+        ${lesson.week ? `<span class="lesson-fact"><strong>周次</strong>${escapeHtml(lesson.week)}</span>` : ""}
+        ${lesson.instructor ? `<span class="lesson-fact"><strong>讲师</strong>${escapeHtml(lesson.instructor)}</span>` : ""}
+        ${lesson.location ? `<span class="lesson-fact"><strong>地点</strong>${escapeHtml(lesson.location)}</span>` : ""}
+        <span class="lesson-fact"><strong>届次</strong>${escapeHtml(lesson.termLabel)}</span>
+      </div>
+      ${renderLessonLinks(lesson.links)}
+    </article>
+  `;
+}
+
+function renderLessonCard(lesson) {
+  const topic = lesson.topic || "未命名课次";
+  return `
+    <article class="member-card refined-member-card lesson-card reveal visible">
+      <span class="flash"></span>
+      <div class="member-card-top">
+        <span class="lesson-date">${escapeHtml(lesson.date ? lessonDateWithWeekday(lesson.date) : "时间待定")}</span>
+        <span class="lesson-status is-${escapeHtml(lesson.status)}">${escapeHtml(lessonStatusLabel(lesson.status))}</span>
+      </div>
+      <h3>${escapeHtml(topic)}</h3>
+      ${lesson.week ? `<p class="meta lesson-card-week">${escapeHtml(lesson.week)}</p>` : ""}
+      ${
+        lesson.instructor || lesson.location
+          ? `<div class="lesson-facts">
+              ${lesson.instructor ? `<span class="lesson-fact"><strong>讲师</strong>${escapeHtml(lesson.instructor)}</span>` : ""}
+              ${lesson.location ? `<span class="lesson-fact"><strong>地点</strong>${escapeHtml(lesson.location)}</span>` : ""}
+            </div>`
+          : ""
+      }
+      ${renderLessonLinks(lesson.links)}
+    </article>
+  `;
+}
+
+function renderLessonLinks(links) {
+  const items = (Array.isArray(links) ? links : [])
+    .map((link) => {
+      const href = safeContactLinkUrl(link);
+      if (!href) return "";
+      const external = /^https?:/i.test(href);
+      return `<a href="${escapeHtml(href)}"${external ? ' target="_blank" rel="noopener noreferrer"' : ""}>${escapeHtml(link.label || href)}</a>`;
+    })
+    .filter(Boolean);
+  return items.length ? `<div class="member-actions lesson-links">${items.join("")}</div>` : "";
+}
+
+function bindLessonPlanFilters(container) {
+  const buttons = Array.from(container.querySelectorAll("[data-lesson-term-button]"));
+  const panels = Array.from(container.querySelectorAll("[data-lesson-term-panel]"));
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const label = decodeURIComponent(button.dataset.lessonTermButton || "");
+      buttons.forEach((item) => {
+        const active = item === button;
+        item.classList.toggle("is-active", active);
+        item.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.lessonTermPanel !== label;
+      });
+    });
+  });
+}
+
+// ===== 授课计划：admin 内联编辑 =====
+// 结构与“编辑文案”弹窗保持一致，只是字段改成课次行，整份 JSON 一次保存。
+function ensureLessonPlanEditorModal() {
+  let modal = document.querySelector("[data-lesson-plan-editor]");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.dataset.lessonPlanEditor = "";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="授课计划编辑器">
+      <div class="modal-head">
+        <div>
+          <h2>编辑授课计划</h2>
+          <p class="meta">保存后写入 D1 数据库（lesson-plan 记录），并保留增量备份；前端页面直接读取这份数据。</p>
+        </div>
+        <button type="button" class="icon-button" data-lesson-plan-close aria-label="关闭编辑器">×</button>
+      </div>
+      <div class="modal-body">
+        <section class="editor-shell admin-form lesson-plan-editor">
+          <label>
+            页面标题
+            <input class="admin-input" data-lesson-plan-title placeholder="授课计划" />
+          </label>
+          <div data-lesson-plan-terms></div>
+          <div class="lesson-term-adder">
+            <label>
+              新增届次
+              <input class="admin-input" data-lesson-plan-new-term placeholder="例如：第十届 · 2026 春" />
+            </label>
+            <label>
+              届次说明（选填）
+              <input class="admin-input" data-lesson-plan-new-term-note placeholder="例如：每周六 19:00，线上腾讯会议" />
+            </label>
+            <button type="button" class="btn secondary compact" data-lesson-plan-add-term>添加届次</button>
+          </div>
+          <div class="editor-actions">
+            <button type="button" class="btn primary" data-lesson-plan-save>保存授课计划</button>
+          </div>
+          <p class="meta" aria-live="polite" data-lesson-plan-message></p>
+        </section>
+      </div>
+    </div>
+  `;
+  document.body.append(modal);
+  return modal;
+}
+
+function lessonEditorTermHtml(term) {
+  const lessons = Array.isArray(term?.lessons) ? term.lessons : [];
+  return `
+    <fieldset class="lesson-term-editor" data-lesson-term>
+      <legend>${escapeHtml(term?.label || "新届次")}</legend>
+      <div class="grid">
+        <label>届次名称<input class="admin-input" data-lesson-term-label value="${escapeHtml(term?.label || "")}" placeholder="第十届 · 2026 春" /></label>
+        <label>届次说明<input class="admin-input" data-lesson-term-note value="${escapeHtml(term?.subtitle || "")}" placeholder="选填，例如上课时间与平台" /></label>
+      </div>
+      <div class="lesson-editor-list" data-lesson-rows>
+        ${
+          lessons.length
+            ? lessons.map(lessonEditorRowHtml).join("")
+            : '<p class="meta lesson-editor-empty" data-lesson-empty>这一届还没有课次，点下方按钮添加。</p>'
+        }
+      </div>
+      <div class="editor-actions">
+        <button type="button" class="btn secondary compact" data-add-lesson>添加课次</button>
+        <button type="button" class="btn danger compact" data-remove-term>删除该届次</button>
+      </div>
+    </fieldset>
+  `;
+}
+
+function lessonEditorRowHtml(lesson = {}) {
+  const status = LESSON_STATUS_LABELS[lesson.status] ? lesson.status : "planned";
+  const links = normalizeLessonLinks(lesson.links)
+    .map((link) => `${link.label || "资料"}：${link.url}`)
+    .join("\n");
+  return `
+    <div class="lesson-editor-row" data-lesson-row>
+      <div class="grid">
+        <label>日期<input class="admin-input" data-lesson-date type="date" value="${escapeHtml(lesson.date || "")}" /></label>
+        <label>周次<input class="admin-input" data-lesson-week value="${escapeHtml(lesson.week || "")}" placeholder="第 3 周" /></label>
+      </div>
+      <label>主题<input class="admin-input" data-lesson-topic value="${escapeHtml(lesson.topic || "")}" placeholder="本次授课主题（必填）" /></label>
+      <div class="grid">
+        <label>讲师<input class="admin-input" data-lesson-instructor value="${escapeHtml(lesson.instructor || "")}" placeholder="主讲人" /></label>
+        <label>地点<input class="admin-input" data-lesson-location value="${escapeHtml(lesson.location || "")}" placeholder="东区办公室 / 线上" /></label>
+      </div>
+      <div class="grid">
+        <label>
+          状态
+          <select class="select-input" data-lesson-status>
+            <option value="planned"${status === "planned" ? " selected" : ""}>待授课</option>
+            <option value="completed"${status === "completed" ? " selected" : ""}>已完成</option>
+            <option value="cancelled"${status === "cancelled" ? " selected" : ""}>已取消</option>
+          </select>
+        </label>
+        <label>资源链接（每行一个，格式：名称：链接）<textarea class="admin-input" data-lesson-links rows="3" placeholder="录播：https://www.bilibili.com/video/BV...">${escapeHtml(links)}</textarea></label>
+      </div>
+      <div class="lesson-editor-row-actions">
+        <button type="button" class="btn secondary compact" data-lesson-move="up">上移</button>
+        <button type="button" class="btn secondary compact" data-lesson-move="down">下移</button>
+        <button type="button" class="btn danger compact" data-remove-lesson>删除课次</button>
+      </div>
+    </div>
+  `;
+}
+
+function openLessonPlanEditor(plan, onSaved) {
+  const modal = ensureLessonPlanEditorModal();
+  const titleInput = modal.querySelector("[data-lesson-plan-title]");
+  const termsContainer = modal.querySelector("[data-lesson-plan-terms]");
+  const newTermInput = modal.querySelector("[data-lesson-plan-new-term]");
+  const newTermNoteInput = modal.querySelector("[data-lesson-plan-new-term-note]");
+  const message = modal.querySelector("[data-lesson-plan-message]");
+  const saveButton = modal.querySelector("[data-lesson-plan-save]");
+
+  titleInput.value = plan.title || DEFAULT_LESSON_PLAN_TITLE;
+  // 倒序展示，和前台届次顺序一致，最新一届排在最前面。
+  termsContainer.innerHTML = sortedLessonTerms(plan)
+    .map((term) => lessonEditorTermHtml(term))
+    .join("");
+  newTermInput.value = "";
+  newTermNoteInput.value = "";
+  message.textContent = "";
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+
+  let teardownDismiss = () => {};
+  const close = () => {
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+    teardownDismiss();
+  };
+  teardownDismiss = setupModalDismiss(modal, close);
+
+  const setMessage = (text, isError = false) => {
+    message.textContent = text;
+    message.classList.toggle("error", isError);
+  };
+
+  const clearEmptyHint = (fieldset) => {
+    fieldset.querySelector("[data-lesson-empty]")?.remove();
+  };
+
+  const bindTermFieldset = (fieldset) => {
+    fieldset.querySelector("[data-add-lesson]").onclick = () => {
+      clearEmptyHint(fieldset);
+      fieldset.querySelector("[data-lesson-rows]").insertAdjacentHTML("beforeend", lessonEditorRowHtml());
+    };
+    fieldset.querySelector("[data-remove-term]").onclick = () => {
+      const rows = fieldset.querySelectorAll("[data-lesson-row]").length;
+      const label = fieldset.querySelector("[data-lesson-term-label]").value.trim() || "该届次";
+      if (rows && !confirm(`「${label}」下还有 ${rows} 个课次，删除后一并移除，确认删除？`)) return;
+      fieldset.remove();
+      setMessage("已移除该届次，记得点保存。");
+    };
+    fieldset.querySelector("[data-lesson-rows]").addEventListener("click", (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const row = target?.closest("[data-lesson-row]");
+      if (!row) return;
+      if (target.closest("[data-remove-lesson]")) {
+        const list = row.parentElement;
+        row.remove();
+        // 删掉最后一个课次后补回空态提示，否则这一届看起来像“坏了”。
+        if (list && !list.querySelector("[data-lesson-row]")) {
+          list.insertAdjacentHTML("beforeend", '<p class="meta lesson-editor-empty" data-lesson-empty>这一届还没有课次，点下方按钮添加。</p>');
+        }
+        setMessage("已移除该课次，记得点保存。");
+        return;
+      }
+      const move = target.closest("[data-lesson-move]")?.dataset.lessonMove;
+      if (move === "up" && row.previousElementSibling) {
+        row.parentElement.insertBefore(row, row.previousElementSibling);
+      } else if (move === "down" && row.nextElementSibling) {
+        row.parentElement.insertBefore(row.nextElementSibling, row);
+      }
+    });
+  };
+
+  termsContainer.querySelectorAll("[data-lesson-term]").forEach(bindTermFieldset);
+  modal.querySelector("[data-lesson-plan-add-term]").onclick = () => {
+    const label = newTermInput.value.trim();
+    if (!label) {
+      setMessage("请先填写届次名称。", true);
+      return;
+    }
+    if (Array.from(termsContainer.querySelectorAll("[data-lesson-term-label]")).some((input) => input.value.trim() === label)) {
+      setMessage(`届次「${label}」已存在，直接在里面添加课次即可。`, true);
+      return;
+    }
+    const holder = document.createElement("div");
+    holder.innerHTML = lessonEditorTermHtml({ label, subtitle: newTermNoteInput.value.trim(), lessons: [] });
+    const fieldset = holder.firstElementChild;
+    termsContainer.prepend(fieldset);
+    bindTermFieldset(fieldset);
+    newTermInput.value = "";
+    newTermNoteInput.value = "";
+    setMessage("已添加届次，记得点保存。");
+  };
+
+  modal.querySelector("[data-lesson-plan-close]").onclick = close;
+  saveButton.onclick = async () => {
+    if (saveButton.disabled) return;
+    const fieldsets = Array.from(termsContainer.querySelectorAll("[data-lesson-term]"));
+    if (!fieldsets.length) {
+      setMessage("至少保留一个届次。", true);
+      return;
+    }
+
+    const terms = [];
+    for (const fieldset of fieldsets) {
+      const label = fieldset.querySelector("[data-lesson-term-label]").value.trim();
+      if (!label) {
+        setMessage("届次名称不能为空。", true);
+        return;
+      }
+      const lessons = [];
+      for (const row of Array.from(fieldset.querySelectorAll("[data-lesson-row]"))) {
+        const topic = row.querySelector("[data-lesson-topic]").value.trim();
+        if (!topic) {
+          setMessage("每个课次都要填主题；不用的课次行请先删除。", true);
+          return;
+        }
+        const date = row.querySelector("[data-lesson-date]").value.trim();
+        if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+          setMessage(`课次「${topic}」的日期格式无效。`, true);
+          return;
+        }
+        const links = [];
+        for (const line of row.querySelector("[data-lesson-links]").value.split("\n").map((item) => item.trim()).filter(Boolean)) {
+          const separator = line.search(/[：:]/);
+          const linkLabel = (separator >= 0 ? line.slice(0, separator) : "").trim();
+          const url = (separator >= 0 ? line.slice(separator + 1) : line).trim();
+          if (!safeLinkUrl(url)) {
+            setMessage(`课次「${topic}」的资源链接无效：${line}。只支持 http(s)、站内 / 路径或 mailto。`, true);
+            return;
+          }
+          links.push({ label: linkLabel || "资料", url });
+        }
+        lessons.push({
+          date,
+          week: row.querySelector("[data-lesson-week]").value.trim(),
+          topic,
+          instructor: row.querySelector("[data-lesson-instructor]").value.trim(),
+          location: row.querySelector("[data-lesson-location]").value.trim(),
+          status: row.querySelector("[data-lesson-status]").value,
+          links,
+        });
+      }
+      terms.push({
+        label,
+        subtitle: fieldset.querySelector("[data-lesson-term-note]").value.trim(),
+        lessons,
+      });
+    }
+
+    // terms 的数组顺序就是页面顺序：编辑框里最上面那届排最前，存库后不会被标签字典序打乱。
+    const nextPlan = normalizeLessonPlan({ title: titleInput.value.trim(), terms });
+    nextPlan.terms.forEach((term, index) => {
+      term.order = nextPlan.terms.length - index;
+    });
+    setMessage("正在保存...");
+    saveButton.disabled = true;
+    try {
+      await saveSiteJsonRecord(LESSON_PLAN_KEY, nextPlan.title, nextPlan);
+      onSaved?.(nextPlan);
+      close();
+    } catch (error) {
+      setMessage(`保存失败：${error.message}。页面显示的仍是旧数据，请重试。`, true);
+    } finally {
+      saveButton.disabled = false;
+    }
+  };
+}
+
 function renderProfileCard(item) {
   const links = Array.isArray(item.links) ? item.links : [];
   const avatarText = (item.name || item.title || "Y").slice(0, 2).toUpperCase();
@@ -2762,6 +3375,7 @@ window.blog = {
   renderAdminOnlyActions,
   renderEditableBlocks,
   renderTeamRecords,
+  renderLessonPlan,
   renderDepartmentMarkdownPage,
   renderStaticPage,
 };
