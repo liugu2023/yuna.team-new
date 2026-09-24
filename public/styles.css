@@ -2798,8 +2798,96 @@
       letter-spacing:.08em;
       text-transform:uppercase;
     }
-    .lesson-card-week{
+    .lesson-card-tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:0 0 4px;
+    }
+    .lesson-department-filter .select-input{
+      width:100%;
+      min-width:0;
+    }
+    /* 课表主体 + 右侧最近几次课的时间轴 */
+    .lesson-list-wrap{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 300px;
+      gap:24px;
+      align-items:start;
+    }
+    .lesson-list-main{
+      min-width:0;
+    }
+    .lesson-timeline{
+      position:sticky;
+      top:96px;
+      padding:22px;
+      border-radius:26px;
+      background:rgba(255,255,255,.66);
+      border:1px solid rgba(255,255,255,.38);
+      box-shadow:var(--soft);
+    }
+    .lesson-timeline h3{
+      margin:0 0 16px;
+      font-size:20px;
+      letter-spacing:-.03em;
+    }
+    .lesson-timeline-list{
+      display:grid;
+      gap:12px;
       margin:0;
+      padding:0;
+      list-style:none;
+    }
+    .lesson-timeline-item{
+      position:relative;
+      padding-left:18px;
+    }
+    .lesson-timeline-item::before{
+      content:"";
+      position:absolute;
+      left:4px;
+      top:14px;
+      bottom:-12px;
+      width:1px;
+      background:linear-gradient(180deg,rgba(10,141,219,.28),transparent);
+    }
+    .lesson-timeline-item:last-child::before{
+      display:none;
+    }
+    .lesson-timeline-button{
+      width:100%;
+      display:grid;
+      gap:4px;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px solid rgba(177,204,231,.42);
+      background:rgba(255,255,255,.6);
+      text-align:left;
+      font:inherit;
+      cursor:pointer;
+      transition:.2s;
+    }
+    .lesson-timeline-button:hover,
+    .lesson-timeline-button:focus-visible{
+      background:#e6f5ff;
+      border-color:rgba(10,141,219,.28);
+    }
+    .lesson-timeline-when{
+      font-size:12px;
+      font-weight:950;
+      letter-spacing:.04em;
+      color:#0a6fb1;
+    }
+    .lesson-timeline-topic{
+      font-size:15px;
+      line-height:1.5;
+      color:var(--deep);
+    }
+    .lesson-timeline-meta{
+      font-size:12px;
+      font-weight:850;
+      color:var(--muted);
     }
     .lesson-links{
       gap:8px;
@@ -2904,6 +2992,13 @@
     @media(max-width:1180px){
       .lesson-list{
         grid-template-columns:1fr 1fr;
+      }
+      .lesson-list-wrap{
+        grid-template-columns:minmax(0,1fr);
+      }
+      .lesson-timeline{
+        position:relative;
+        top:0;
       }
     }
     @media(max-width:760px){
