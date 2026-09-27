@@ -1,0 +1,669 @@
+/* pages/team.css —— 关于协会（body.page-team）+ 固定页面（body.page-page，含 ?record=members 成员记录），
+   以及 team.js / pages.js 生成的成员卡与届次按钮。授课计划 / 后台不加载本文件（各自在 lesson.css / admin.css 里写）。
+   部门一览 / 部门详情见 pages/departments.css，加入我们见 pages/join.css。 */
+
+/* =========================================================
+   1. 共享：成员卡骨架、头像、届次按钮计数、筛选字段、编辑按钮行
+   （team.js / pages.js 生成）
+   ========================================================= */
+:where(.page-team, .page-page) .member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+:where(.page-team, .page-page) .member-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+:where(.page-team, .page-page) .member-card h3 { font-size: var(--fs-lg); }
+:where(.page-team, .page-page) .member-card > p:not(.meta) { color: var(--c-text-2); font-size: var(--fs-sm); line-height: 1.7; }
+:where(.page-team, .page-page) .profile-desc { white-space: pre-line; }
+:where(.page-team, .page-page) .refined-member-card { height: 100%; }
+:where(.page-team, .page-page) .member-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-1);
+}
+:where(.page-team, .page-page) .member-card-top .tag { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+:where(.page-team, .page-page) .member-card .contact-row { margin-top: var(--space-1); }
+:where(.page-team, .page-page) .member-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+:where(.page-team, .page-page) .member-actions a { font-size: var(--fs-sm); font-weight: 600; }
+
+/* 届次胶囊里的人数 / 次数 */
+:where(.page-team, .page-page) .team-term-button span {
+  margin-left: 6px;
+  color: var(--c-text-3);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+:where(.page-team, .page-page) .team-term-button.is-active span { color: var(--c-brand); }
+
+:where(.page-team, .page-page) .field-lite {
+  display: grid;
+  gap: 4px;
+  color: var(--c-text-3);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+
+/* pages.js：固定页正文上方的“编辑页面”按钮行 */
+:where(.page-team, .page-page) .article-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+/* =========================================================
+   2. 成员卡 v2（关于协会 / 固定页记录）
+   ========================================================= */
+:where(.page-team, .page-page) .profile-card {
+  gap: 6px;
+  padding: var(--space-5);
+}
+:where(.page-team, .page-page) .profile-card:hover {
+  border-color: var(--c-line-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+:where(.page-team, .page-page) .profile-card .member-card-top { margin-bottom: var(--space-3); }
+:where(.page-team, .page-page) .profile-card .avatar {
+  width: 52px;
+  height: 52px;
+  box-shadow: 0 0 0 3px var(--c-surface), 0 0 0 4px var(--c-line);
+  font-family: var(--font-display);
+  letter-spacing: -.02em;
+}
+:where(.page-team, .page-page) .profile-card.is-lead .avatar { box-shadow: 0 0 0 3px var(--c-surface), 0 0 0 4px rgba(var(--brand-rgb), .45); }
+:where(.page-team, .page-page) .profile-card.is-lead {
+  background:
+    radial-gradient(120% 70% at 100% 0%, rgba(var(--brand-rgb), .07), transparent 60%),
+    var(--c-surface);
+}
+:where(.page-team, .page-page) .profile-card > h3 {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -.01em;
+  overflow-wrap: anywhere;
+}
+:where(.page-team, .page-page) .profile-card > .meta {
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: .02em;
+}
+:where(.page-team, .page-page) .profile-card > .profile-desc {
+  display: -webkit-box;
+  margin-top: var(--space-1);
+  overflow: hidden;
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* 联系方式：带线条图标的小胶囊 */
+:where(.page-team, .page-page) .member-links {
+  gap: 6px;
+  padding-top: var(--space-4);
+}
+:where(.page-team, .page-page) .member-link {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  transition: color var(--motion), border-color var(--motion), background-color var(--motion);
+}
+:where(.page-team, .page-page) .member-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:where(.page-team, .page-page) .member-link-icon { flex: none; }
+:where(.page-team, .page-page) .member-link:hover {
+  border-color: rgba(var(--brand-rgb), .4);
+  background: var(--c-brand-soft);
+  color: var(--c-brand-strong);
+}
+
+/* 名人堂卡：居中、头像放大、序号作水印 */
+:where(.page-team, .page-page) .fame-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+:where(.page-team, .page-page) .fame-card {
+  align-items: center;
+  padding: var(--space-5) var(--space-5) var(--space-6);
+  text-align: center;
+}
+:where(.page-team, .page-page) .fame-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+:where(.page-team, .page-page) .fame-index {
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+:where(.page-team, .page-page) .fame-title {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  height: 24px;
+  padding: 0 10px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--c-brand-soft);
+  color: var(--c-brand-strong);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+:where(.page-team, .page-page) .fame-card .avatar {
+  width: 76px;
+  height: 76px;
+  margin-bottom: var(--space-3);
+  font-size: var(--fs-xl);
+  box-shadow: 0 0 0 4px var(--c-surface), 0 0 0 5px rgba(var(--brand-rgb), .35), 0 12px 28px -12px rgba(var(--brand-rgb), .45);
+}
+:where(.page-team, .page-page) .fame-card > h3 { font-size: var(--fs-lg); }
+:where(.page-team, .page-page) .fame-card .member-links { justify-content: center; }
+
+/* =========================================================
+   3. 关于协会（body.page-team）
+   ========================================================= */
+.page-team .main { padding-block: 0 var(--space-9); }
+.page-team .main > .section + .section { margin-top: 0; }
+.page-team .section { scroll-margin-top: var(--header-space); }
+.page-team .main > .team-depts { padding-top: var(--space-8); }
+/* 往届成员与名人堂两块折叠面板靠近排列 */
+.page-team .main > #members { padding-bottom: var(--space-4); }
+
+/* ---------- 页头 ---------- */
+.page-team .team-hero { padding-bottom: var(--space-8); }
+.page-team .team-hero h1 {
+  max-width: 13em;
+  font-size: clamp(38px, 6vw, 72px);
+  line-height: 1.1;
+  padding-bottom: .06em;
+  text-wrap: balance;
+  background: linear-gradient(180deg, var(--ink-900) 35%, var(--navy-700) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.page-team .team-kpi { margin-top: var(--space-8); }
+.page-team .team-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-7);
+}
+.page-team .team-jump a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 16px 0 12px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-pill);
+  background: var(--c-surface-glass);
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  box-shadow: var(--shadow-xs);
+  transition: color var(--motion), border-color var(--motion), transform var(--dur-3) var(--ease);
+}
+.page-team .team-jump a span {
+  color: var(--c-brand);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+}
+.page-team .team-jump a:hover {
+  border-color: var(--c-line-strong);
+  color: var(--c-text);
+  transform: translateY(-1px);
+}
+
+/* ---------- 区块头（section-title 放进 section-head 时去掉自身间距） ---------- */
+.page-team .section-head .section-title { margin-bottom: 0; }
+.page-team .section-head .section-title h2,
+.page-team .team-disclosure-summary .section-title h2 {
+  font-size: clamp(30px, 4.2vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -.03em;
+}
+
+/* ---------- 部门：四张紧凑卡 ---------- */
+.page-team .team-dept-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.page-team .team-dept-card {
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  border-radius: var(--r-xl);
+  /* 顶部品牌细线：悬停时从左向右展开 */
+  background:
+    linear-gradient(90deg, var(--c-brand), rgba(var(--glow-sky), 1)) 0 0 / 0 2px no-repeat,
+    var(--c-surface);
+  transition:
+    border-color var(--dur-3) var(--ease),
+    box-shadow var(--dur-3) var(--ease),
+    transform var(--dur-3) var(--ease),
+    background-size var(--dur-4) var(--ease);
+}
+.page-team .team-dept-card:hover {
+  border-color: var(--c-line-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  background-size: 100% 2px, auto;
+}
+.page-team .team-dept-kicker {
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.page-team .team-dept-card > h3 { font-size: clamp(20px, 1.9vw, 24px); letter-spacing: -.02em; }
+.page-team .team-dept-card > p { color: var(--c-text-2); font-size: var(--fs-sm); line-height: 1.75; }
+.page-team .team-dept-card .member-actions {
+  align-items: center;
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--c-line);
+}
+.page-team .team-dept-card .member-actions a { color: var(--c-text-2); font-weight: 500; transition: color var(--motion); }
+.page-team .team-dept-card .member-actions a:hover { color: var(--c-brand); }
+.page-team .team-dept-card .member-actions .team-dept-go { display: inline-flex; align-items: center; gap: 6px; color: var(--c-brand); font-weight: 600; }
+
+/* ---------- 往届成员 / 名人堂：折叠面板 ---------- */
+.page-team .team-disclosure {
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-xl);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow var(--dur-3) var(--ease), border-color var(--dur-3) var(--ease);
+}
+.page-team .team-disclosure:hover,
+.page-team .team-disclosure[open] { border-color: var(--c-line-strong); }
+.page-team .team-disclosure-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-7) var(--space-7);
+  cursor: pointer;
+  list-style: none;
+}
+.page-team .team-disclosure-summary::-webkit-details-marker { display: none; }
+.page-team .team-disclosure-summary:focus-visible { outline-offset: -2px; border-radius: var(--r-xl); }
+.page-team .team-disclosure-summary .section-title { margin-bottom: 0; }
+.page-team .team-disclosure-summary .section-title .eyebrow { margin-bottom: var(--space-3); }
+.page-team .team-disclosure-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  height: 40px;
+  padding: 0 16px 0 18px;
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  transition: background-color var(--dur-2) var(--ease), color var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+}
+.page-team .team-disclosure-summary:hover .team-disclosure-toggle {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+  color: #fff;
+}
+.page-team .team-disclosure-toggle i {
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform var(--dur-3) var(--ease);
+}
+.page-team .team-disclosure[open] .team-disclosure-toggle i { transform: translateY(2px) rotate(225deg); }
+.page-team .team-disclosure[open] .team-disclosure-toggle span { font-size: 0; }
+.page-team .team-disclosure[open] .team-disclosure-toggle span::after { content: "收起"; font-size: var(--fs-sm); }
+.page-team .team-disclosure-content {
+  padding: var(--space-6) var(--space-7) var(--space-7);
+  border-top: 1px solid var(--c-line);
+}
+.page-team .team-disclosure[open] .team-disclosure-content { animation: team-unfold var(--dur-4) var(--ease); }
+@keyframes team-unfold { from { opacity: 0; transform: translateY(-6px); } }
+
+/* 名人堂：浅色品牌面板（与首页加入带同一语气） */
+.page-team .team-fame .team-disclosure {
+  border-color: rgba(var(--brand-rgb), .16);
+  background:
+    radial-gradient(ellipse 60% 120% at 100% 0%, rgba(var(--brand-rgb), .09), transparent 70%),
+    linear-gradient(180deg, var(--blue-50), var(--c-surface) 70%);
+}
+.page-team .team-fame .team-disclosure-content { border-top-color: rgba(var(--brand-rgb), .12); }
+
+/* 届次 + 部门筛选 */
+.page-team .team-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.page-team .team-term-switcher { flex: 0 1 auto; min-width: 0; }
+.page-team .team-department-filter { flex: none; width: 200px; }
+.page-team .team-department-filter .select-input { width: 100%; }
+.page-team .team-filter-empty { margin-top: var(--space-4); }
+.page-team [data-team-term-panel] > .member-grid > .profile-card:nth-child(4n+2) { --reveal-delay: 50ms; }
+.page-team [data-team-term-panel] > .member-grid > .profile-card:nth-child(4n+3) { --reveal-delay: 100ms; }
+.page-team [data-team-term-panel] > .member-grid > .profile-card:nth-child(4n+4) { --reveal-delay: 150ms; }
+
+/* ---------- 办公室 ---------- */
+.page-team .office-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.page-team .office-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-3) var(--space-3) var(--space-6);
+  border-radius: var(--r-xl);
+}
+.page-team .office-card > h3,
+.page-team .office-card > .pipeline { margin-inline: var(--space-4); }
+.page-team .office-card > h3 { margin-top: var(--space-2); font-size: var(--fs-xl); letter-spacing: -.02em; }
+.page-team .office-card > .editable-block-actions { top: var(--space-5); right: var(--space-5); z-index: 3; }
+
+.page-team .office-note-card {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "icon title tags"
+    "icon body tags";
+  align-items: center;
+  column-gap: var(--space-5);
+  row-gap: 4px;
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--r-xl);
+  background: var(--c-surface-2);
+  box-shadow: none;
+}
+.page-team .office-note-icon {
+  grid-area: icon;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--c-line-strong);
+  border-radius: 50%;
+  background: var(--c-surface);
+}
+/* 线条“i” */
+.page-team .office-note-icon::before,
+.page-team .office-note-icon::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--c-brand);
+}
+.page-team .office-note-icon::before { top: 12px; height: 2px; }
+.page-team .office-note-icon::after { top: 17px; height: 14px; }
+.page-team .office-note-card > h3 { grid-area: title; font-size: var(--fs-base); }
+.page-team .office-note-card > p { grid-area: body; max-width: 640px; color: var(--c-text-2); font-size: var(--fs-sm); line-height: 1.7; }
+.page-team .office-note-card > .contact-row { grid-area: tags; justify-content: flex-end; max-width: 320px; }
+
+/* 地图（yuna-ui.js initOfficeMaps：3×3 瓦片居中 + 缩放按钮） */
+.page-team .office-map {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  min-height: 220px;
+  overflow: hidden;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  background: var(--c-surface-2);
+  touch-action: pan-x pan-y;
+}
+/* 标记点下的脉冲光圈 */
+.page-team .office-map::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  background: rgba(var(--brand-rgb), .22);
+  pointer-events: none;
+  --ping-from: .3;
+  --ping-to: 1.4;
+  --ping-alpha: .9;
+  animation: fx-ping 2.4s var(--ease) infinite;
+}
+.page-team .office-map-tiles {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  grid-template-columns: repeat(3, 256px);
+  width: 768px;
+  pointer-events: none;
+  user-select: none;
+  filter: saturate(.75);
+}
+.page-team .office-map-tiles img { width: 256px; height: 256px; max-width: none; }
+.page-team .office-map-marker {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  margin: -20px 0 0 -10px;
+  border: 2px solid var(--c-surface);
+  border-radius: 50% 50% 50% 0;
+  background: var(--c-brand);
+  box-shadow: var(--shadow-sm);
+  transform: rotate(-45deg);
+  pointer-events: none;
+}
+.page-team .office-map-badge {
+  position: absolute;
+  left: var(--space-3);
+  top: var(--space-3);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-pill);
+  background: var(--c-surface-glass);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--c-text-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.page-team .office-map-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-brand);
+}
+.page-team .office-map-zoom {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-sm);
+}
+.page-team .office-map-zoom button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-text);
+  font-size: var(--fs-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+.page-team .office-map-zoom button + button { border-top: 1px solid var(--c-line); }
+.page-team .office-map-zoom button:hover { background: var(--c-surface-2); }
+.page-team .office-map-zoom button:focus-visible { outline-offset: -2px; }
+
+/* =========================================================
+   4. 固定页面（body.page-page）：正文面板 + 侧栏；?record= 成员记录
+   ========================================================= */
+.page-page .static-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: clamp(24px, 4vw, 48px);
+}
+.page-page .static-main { min-width: 0; }
+.page-page [data-static-page] > .article-body,
+.page-page [data-static-page] > .record-view {
+  padding: clamp(24px, 4vw, 48px);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-xl);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-xs);
+}
+.page-page .static-aside {
+  position: sticky;
+  top: calc(var(--header-space) + var(--space-5));
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.page-page .static-note-card { background: var(--c-surface-2); box-shadow: none; }
+.page-page .static-note-card p { color: var(--c-text-2); font-size: var(--fs-sm); line-height: 1.7; }
+
+.page-page .record-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--c-line);
+}
+.page-page .record-title { font-size: clamp(24px, 3vw, 32px); letter-spacing: -.025em; }
+.page-page .record-head .inline-control { width: 200px; }
+.page-page .record-head .select-input { width: 100%; }
+.page-page .record-view > .member-grid { margin-top: var(--space-6); }
+.page-page .record-group-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: var(--space-7) 0 var(--space-4);
+  font-size: var(--fs-xl);
+  letter-spacing: -.02em;
+}
+.page-page .record-group-title span {
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* =========================================================
+   断点
+   ========================================================= */
+@media (max-width: 1024px) {
+  .page-team .team-dept-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-team .office-note-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "icon title"
+      "icon body"
+      "icon tags";
+  }
+  .page-team .office-note-card > .contact-row { justify-content: flex-start; max-width: none; margin-top: var(--space-2); }
+  .page-page .static-layout { grid-template-columns: minmax(0, 1fr); }
+  .page-page .static-aside { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+
+@media (max-width: 720px) {
+  .page-team .team-hero { padding-bottom: var(--space-7); }
+  .page-team .team-jump a { height: 32px; padding: 0 12px 0 10px; font-size: 13px; }
+  .page-team .team-dept-grid,
+  .page-team .office-grid { grid-template-columns: minmax(0, 1fr); }
+  .page-team .team-dept-card { padding: var(--space-5); border-radius: var(--r-lg); }
+  .page-team .team-disclosure,
+  .page-team .office-card,
+  .page-team .office-note-card { border-radius: var(--r-lg); }
+  .page-team .team-disclosure-summary { flex-wrap: wrap; padding: var(--space-5); }
+  .page-team .team-disclosure-content { padding: var(--space-5) var(--space-4) var(--space-5); }
+  .page-team .team-toolbar { flex-direction: column; align-items: stretch; }
+  .page-team .team-department-filter { width: 100%; }
+  .page-team .office-map { aspect-ratio: 1 / 1; }
+  .page-team .office-note-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "icon" "title" "body" "tags";
+    row-gap: var(--space-2);
+    padding: var(--space-5);
+  }
+  :where(.page-team, .page-page) .member-grid { grid-template-columns: minmax(0, 1fr); }
+  .page-page .static-aside { grid-template-columns: minmax(0, 1fr); }
+  .page-page .record-head .inline-control { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-team .office-map::after { display: none; }
+}

@@ -12,65 +12,46 @@
   <meta property="og:url" content="https://www.yuna.team/lesson-plan"/>
   <meta property="og:image" content="https://www.yuna.team/images/og-image.png"/>
   <link rel="canonical" href="https://www.yuna.team/lesson-plan"/>
-  <link rel="preload" as="image" href="/images/campus-bg.webp"/>
-  <link rel="icon" href="/logo.svg" type="image/svg+xml"/>
-  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="icon" href="/images/logo.svg" type="image/svg+xml"/>
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/components.css" />
+  <link rel="stylesheet" href="/styles/layout.css" />
+  <link rel="stylesheet" href="/styles/fx.css" />
+  <link rel="stylesheet" href="/styles/pages/lesson.css" />
   <script>document.documentElement.classList.add("js");</script>
 </head>
-<body>
+<body class="page-lesson">
+<a class="skip-link" href="#content">跳到正文</a>
 <noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载授课计划。</p></noscript>
-<div class="scroll-progress" id="scrollProgress"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-<div class="cursor-glow" id="cursorGlow"></div>
-<canvas class="particle-canvas" id="particleCanvas"></canvas>
-<div class="aurora-layer"></div>
 <header class="topbar">
   <div class="shell topbar-inner">
-    <a class="brand magnetic" href="/" aria-label="返回 YUNA.BLOG 首页"><img src="/images/logo.svg" alt=""/><span>YUNA.BLOG</span></a>
+    <a class="brand" href="/" aria-label="返回 YUNA.BLOG 首页"><img src="/images/logo.svg" alt=""/><span>YUNA.BLOG</span></a>
     <nav class="nav" aria-label="站点导航">
       <a href="/">首页</a>
       <a href="/articles.html">文章列表</a>
       <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
       <a class="active" href="/lesson-plan.html" aria-current="page">授课计划</a>
       <a href="/team.html">关于协会</a>
-      <a href="/join.html">加入我们</a>
+      <a class="nav-cta" href="/join.html">加入我们</a>
       <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
     </nav>
   </div>
 </header>
 
 <div class="page-wrap">
-  <div class="hero-bg" id="heroBg"></div>
-  <div class="mist-top"></div>
-  <div class="mist-bottom"></div>
-  <div class="grid-overlay"></div>
   <section class="shell page-hero">
     <div class="reveal" data-editable-block="lesson-plan-hero" data-editable-title="授课计划主视觉文案">
       <p class="eyebrow" data-block-field="eyebrow">Lesson Plan</p>
       <h1 data-block-field="title">这一届的课，都排在这里。</h1>
       <p class="lead" data-block-field="lead">哪天讲什么、谁来讲、课件放哪，都会在上课前更新。想提前空出时间，或者想把落下的课按顺序补回来，看这一页就够了。</p>
       <div class="hero-actions">
-        <a class="btn primary magnetic" href="https://docs.yuna.team/" target="_blank" rel="noopener">查看历史授课资料</a>
-        <a class="btn secondary magnetic" href="/departments.html">了解部门方向</a>
+        <a class="btn primary" href="https://docs.yuna.team/" target="_blank" rel="noopener" data-block-field="primaryAction" data-block-href data-block-label="主按钮">查看历史授课资料<span class="arrow" aria-hidden="true"></span></a>
+        <a class="btn secondary" href="/departments.html" data-block-field="secondaryAction" data-block-href data-block-label="次按钮">了解部门方向</a>
       </div>
-      <div class="lesson-plan-actions" data-lesson-plan-admin hidden></div>
+      <div class="hero-actions lesson-plan-actions" data-lesson-plan-admin hidden></div>
     </div>
-    <div class="page-visual reveal" aria-hidden="true">
-      <div class="tech-sweep"></div>
-      <div class="logo-holo-grid"></div>
-      <div class="scanlines"></div>
-      <div class="tech-web"></div>
-      <span class="pulse-ring p1"></span>
-      <span class="pulse-ring p2"></span>
-      <span class="pulse-ring p3"></span>
-      <span class="ring r1"></span>
-      <span class="ring r2"></span>
-      <div class="visual-orb"><img src="/images/logo.svg" alt=""/></div>
-      <span class="tech-pill pill-a">Schedule</span>
-      <span class="tech-pill pill-b">Replay</span>
-      <span class="tech-pill pill-c">Slides</span>
-      <div class="data-stream"><span>YUNA · LESSON PLAN · SCHEDULE · REPLAY ·</span><span>DEV · SECURITY · OPS · PUBLICITY · CAMPUS TECH COMMUNITY ·</span></div>
-    </div>
+    <div class="page-kpi lesson-kpi reveal" data-lesson-kpi hidden></div>
   </section>
 </div>
 
@@ -82,11 +63,51 @@
   </section>
 </main>
 
-<footer class="shell footer">
-  <span>YUNA.BLOG · 授课计划</span>
-  <span>排课 · 回放 · 课件</span>
+<footer class="site-footer">
+  <div class="shell site-footer-main">
+    <div class="site-footer-brand" data-editable-block="site-footer-brand" data-editable-title="页脚：协会简介">
+      <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+      <p data-block-field="body">燕山大学大学生网络信息协会。学习、实践、分享，把技术热情变成看得见的作品。</p>
+    </div>
+    <nav class="site-footer-nav" aria-label="页脚导航">
+      <div data-editable-block="site-footer-nav-content" data-editable-title="页脚链接栏：内容">
+        <h2 data-block-field="title">内容</h2>
+        <div data-block-links>
+          <a href="/articles.html">文章列表</a>
+          <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
+          <a href="/lesson-plan.html">授课计划</a>
+        </div>
+      </div>
+      <div data-editable-block="site-footer-nav-association" data-editable-title="页脚链接栏：协会">
+        <h2 data-block-field="title">协会</h2>
+        <div data-block-links>
+          <a href="/team.html">关于协会</a>
+          <a href="/departments.html">部门介绍</a>
+          <a href="/join.html">加入我们</a>
+        </div>
+      </div>
+      <div data-editable-block="site-footer-nav-departments" data-editable-title="页脚链接栏：部门">
+        <h2 data-block-field="title">部门</h2>
+        <div data-block-links>
+          <a href="/department-dev.html">开发部</a>
+          <a href="/department-ops.html">运维部</a>
+          <a href="/department-publicity.html">组宣部</a>
+          <a href="/department-security.html">网络安全部</a>
+        </div>
+      </div>
+    </nav>
+  </div>
+  <div class="shell footer">
+    <span>YUNA.BLOG · 授课计划</span>
+    <span>排课 · 回放 · 课件</span>
+  </div>
 </footer>
-<script src="/app.js"></script>
+<script src="/js/core.js"></script>
+<script src="/js/markdown.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/editable-blocks.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/lesson-plan.js"></script>
 <script>
   window.blog.renderUserNav();
   window.blog.renderEditableBlocks();

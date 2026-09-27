@@ -11,24 +11,25 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.yuna.team/" />
     <meta property="og:image" content="https://www.yuna.team/images/og-image.png" />
+    <meta name="theme-color" content="#f7f9fc" />
     <link rel="canonical" href="https://www.yuna.team/" />
-    <link rel="preload" as="image" href="/images/campus-bg.webp" />
-    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="/images/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles/tokens.css" />
+    <link rel="stylesheet" href="/styles/base.css" />
+    <link rel="stylesheet" href="/styles/components.css" />
+    <link rel="stylesheet" href="/styles/layout.css" />
+    <link rel="stylesheet" href="/styles/fx.css" />
+    <link rel="stylesheet" href="/styles/pages/home.css" />
     <meta name="google-site-verification" content="oZAeilMP_guBGCKdGDStjnpc0uLpBznYHDSWeM-d_Pk" />
     <script>document.documentElement.classList.add("js");</script>
   </head>
-  <body class="home-page">
+  <body class="page-home home-page">
+    <a class="skip-link" href="#content">跳到正文</a>
     <noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载文章与协会内容。</p></noscript>
-    <div class="scroll-progress" id="scrollProgress"></div>
-    <div class="cursor-ring" id="cursorRing"></div>
-    <div class="cursor-glow" id="cursorGlow"></div>
-    <canvas class="particle-canvas" id="particleCanvas"></canvas>
-    <div class="aurora-layer"></div>
 
     <header class="topbar">
       <div class="shell topbar-inner">
-        <a class="brand magnetic" href="/" aria-label="YUNA.BLOG 首页">
+        <a class="brand" href="/" aria-label="YUNA.BLOG 首页">
           <img src="/images/logo.svg" alt="" />
           <span>YUNA.BLOG</span>
         </a>
@@ -38,125 +39,306 @@
           <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
           <a href="/lesson-plan.html">授课计划</a>
           <a href="/team.html">关于协会</a>
-          <a href="/join.html">加入我们</a>
+          <a class="nav-cta" href="/join.html">加入我们</a>
           <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
         </nav>
       </div>
     </header>
 
+    <!-- 首页主视觉：点阵 + 漂移柔光；后台配置的头图写进 .hero-bg（home.js） -->
     <div class="hero-wrap" data-home-hero>
-      <div class="hero-bg" id="heroBg"></div>
-      <div class="mist-top"></div>
-      <div class="mist-bottom"></div>
-      <div class="grid-overlay"></div>
-      <section class="shell hero">
+      <div class="hero-bg" aria-hidden="true"></div>
+      <div class="hero-fx" aria-hidden="true">
+        <div class="fx-dots"></div>
+        <div class="fx-glow hero-glow-a"></div>
+        <div class="fx-glow is-sky hero-glow-b"></div>
+        <div class="hero-horizon"></div>
+      </div>
+
+      <section class="shell hero" aria-labelledby="home-hero-title">
         <div class="hero-copy reveal" data-editable-block="home-hero-copy" data-editable-title="首页主视觉文案">
-          <p class="eyebrow" data-block-field="eyebrow">Yanshan University Network Association</p>
-          <h1 data-block-field="title" data-block-multiline="breaks">把校园里的技术热情<br />连接成可见的作品</h1>
+          <p class="eyebrow hero-eyebrow" data-block-field="eyebrow">Yanshan University Network Association</p>
+          <h1 class="hero-title" id="home-hero-title" data-block-field="title" data-block-multiline="breaks">把校园里的技术热情<br />连接成可见的作品</h1>
+          <p class="hero-rotate">
+            <span data-block-field="rotatePrefix" data-block-label="轮换词前的文字">从</span><span class="rotator" data-rotator data-block-list="rotateWords" data-block-label="轮换关键词" aria-hidden="true"><span class="rotator-word">Web 开发</span><span class="rotator-word">系统运维</span><span class="rotator-word">网络安全</span><span class="rotator-word">视觉宣传</span><span class="rotator-word">技术分享</span></span><span class="sr-only" data-block-list-text="rotateWords">Web 开发、系统运维、网络安全、视觉宣传或技术分享</span><span data-block-field="rotateSuffix" data-block-label="轮换词后的文字">开始，和同伴一起动手。</span>
+          </p>
           <p class="lead" data-block-field="lead">YUNA.BLOG 是燕山大学大学生网络信息协会的内容与活动入口。这里记录技术文章、训练资料、部门动态、成员故事，也让想加入协会的同学快速了解我们正在做什么。</p>
           <div class="hero-actions">
-            <a class="btn primary magnetic" href="/articles.html">浏览最新文章</a>
-            <a class="btn secondary magnetic" href="https://docs.yuna.team/" target="_blank" rel="noopener">查看授课资料</a>
+            <a class="btn primary lg" href="/articles.html" data-block-field="primaryAction" data-block-href data-block-label="主按钮">浏览最新文章<span class="arrow" aria-hidden="true"></span></a>
+            <a class="btn secondary lg" href="https://docs.yuna.team/" target="_blank" rel="noopener" data-block-field="secondaryAction" data-block-href data-block-label="次按钮">查看授课资料</a>
           </div>
         </div>
-        <div class="hero-side reveal" aria-label="协会视觉标识">
-          <div class="logo-stage">
-            <div class="tech-sweep"></div>
-            <div class="logo-holo-grid"></div>
-            <div class="scanlines"></div>
-            <div class="tech-web"></div>
-            <span class="tech-pill pill-a">学习</span>
-            <span class="tech-pill pill-b">实践</span>
-            <span class="tech-pill pill-c">分享</span>
-            <span class="pulse-ring p1"></span>
-            <span class="pulse-ring p2"></span>
-            <span class="pulse-ring p3"></span>
-            <span class="ring r1"></span>
-            <span class="ring r2"></span>
-            <span class="ring r3"></span>
-            <span class="ring r4"></span>
-            <div class="big-logo magnetic">
-              <img src="/images/logo.svg" alt="燕山大学大学生网络信息协会标志" />
-              <span class="orbit-dot dot-a"></span>
-              <span class="orbit-dot dot-b"></span>
-              <span class="orbit-dot dot-c"></span>
-            </div>
-            <span class="float-chip chip-a">文章</span>
-            <span class="float-chip chip-b">活动</span>
-            <span class="float-chip chip-c">成员</span>
-            <div class="data-stream" aria-hidden="true">
-              <span>YUNA · NETWORK ASSOCIATION · CAMPUS TECH COMMUNITY ·</span>
-              <span>WEB · SECURITY · OPS · DESIGN · KNOWLEDGE SHARING ·</span>
-            </div>
+
+        <div class="hero-stats hero-index">
+          <div class="stat spotlight reveal" data-editable-block="home-stat-articles" data-editable-title="首页统计：文章">
+            <span class="stat-index" aria-hidden="true">01</span>
+            <strong data-block-field="title">文章</strong>
+            <span class="stat-body" data-block-field="body">技术笔记与项目复盘</span>
+            <a class="stat-link" href="/articles.html" aria-label="前往文章列表"><span class="arrow" aria-hidden="true"></span></a>
           </div>
-          <div class="hero-stats reveal">
-            <div class="stat" data-editable-block="home-stat-articles" data-editable-title="首页统计：文章"><strong data-block-field="title">文章</strong><span data-block-field="body">技术笔记与项目复盘</span></div>
-            <div class="stat" data-editable-block="home-stat-knowledge" data-editable-title="首页统计：资料"><strong data-block-field="title">资料</strong><span data-block-field="body">授课课件与学习路线</span></div>
-            <div class="stat" data-editable-block="home-stat-members" data-editable-title="首页统计：成员"><strong data-block-field="title">成员</strong><span data-block-field="body">部门介绍与协会故事</span></div>
+          <div class="stat spotlight reveal" data-editable-block="home-stat-knowledge" data-editable-title="首页统计：资料">
+            <span class="stat-index" aria-hidden="true">02</span>
+            <strong data-block-field="title">资料</strong>
+            <span class="stat-body" data-block-field="body">授课课件与学习路线</span>
+            <a class="stat-link" href="https://docs.yuna.team/" target="_blank" rel="noopener" aria-label="前往知识库查看授课资料"><span class="arrow" aria-hidden="true"></span></a>
+          </div>
+          <div class="stat spotlight reveal" data-editable-block="home-stat-members" data-editable-title="首页统计：成员">
+            <span class="stat-index" aria-hidden="true">03</span>
+            <strong data-block-field="title">成员</strong>
+            <span class="stat-body" data-block-field="body">部门介绍与协会故事</span>
+            <a class="stat-link" href="/team.html" aria-label="前往关于协会"><span class="arrow" aria-hidden="true"></span></a>
           </div>
         </div>
       </section>
     </div>
 
     <main class="main" id="content">
-      <div class="shell content-grid">
-        <section>
-          <div class="tabs reveal" data-home-post-tabs>
-            <button class="tab active" type="button" data-home-post-tag="all">全部文章</button>
+      <!-- 数字：前两项由 posts.js 按文章接口实时写入 data-count，后两项为固定事实 -->
+      <section class="shell home-stats" aria-label="协会数据">
+        <div class="stats">
+          <div class="stats-item reveal" data-editable-block="home-stats-posts" data-editable-title="首页数字行：文章数">
+            <div class="stats-value"><span data-home-count="posts">—</span><small data-block-field="unit">篇</small></div>
+            <p class="stats-label" data-block-field="label">已发布的技术文章与复盘</p>
           </div>
-          <div data-post-list data-post-list-mode="home">
-            <p class="empty-state">正在加载最新文章。</p>
+          <div class="stats-item reveal" data-editable-block="home-stats-views" data-editable-title="首页数字行：阅读数">
+            <div class="stats-value"><span data-home-count="views">—</span><small data-block-field="unit">次</small></div>
+            <p class="stats-label" data-block-field="label">文章累计阅读</p>
           </div>
-        </section>
-
-        <aside>
-          <section class="aside-card reveal" data-home-notice>
-            <h3 data-home-notice-title>协会公告</h3>
-            <div data-home-notice-content>
-              <p>招新答疑开放中，欢迎同学了解开发、安全、运维和组宣方向。</p>
-            </div>
-            <div class="aside-meta">燕山大学大学生网络信息协会</div>
-            <div class="home-notice-actions" data-home-notice-actions hidden></div>
-          </section>
-          <section class="aside-card reveal">
-            <h3>热门博客</h3>
-            <div class="aside-list hot-list" data-post-list data-post-list-mode="compact">
-              <a href="/articles.html">正在加载热门文章 <span>请稍候</span></a>
-            </div>
-          </section>
-        </aside>
-      </div>
-
-      <section class="shell home-knowledge-section">
-        <div class="section-title reveal" data-editable-block="home-knowledge-heading" data-editable-title="首页知识库区标题">
-          <p class="eyebrow" data-block-field="eyebrow">Knowledge Base</p>
-          <h2 data-block-field="title">文章、资料、项目统一沉淀。</h2>
+          <div class="stats-item reveal" data-editable-block="home-stats-departments" data-editable-title="首页数字行：部门">
+            <div class="stats-value"><span data-count="4" data-block-field="value">4</span><small data-block-field="unit">个</small></div>
+            <p class="stats-label" data-block-field="label">部门：开发 · 运维 · 组宣 · 网络安全</p>
+          </div>
+          <div class="stats-item reveal" data-editable-block="home-stats-offices" data-editable-title="首页数字行：办公室">
+            <div class="stats-value"><span data-count="2" data-block-field="value">2</span><small data-block-field="unit">处</small></div>
+            <p class="stats-label" data-block-field="label">校内办公室：东区 · 西区</p>
+          </div>
         </div>
-        <div class="knowledge-grid">
-          <article class="knowledge-card reveal" data-editable-block="home-knowledge-devops" data-editable-title="首页知识卡：运维与研发">
-            <div class="num">01</div>
-            <h3 data-block-field="title">运维与研发</h3>
-            <p data-block-field="body">服务器部署、Docker、CI/CD、前后端工程化。</p>
+      </section>
+
+      <!-- 最新文章 + 公告 -->
+      <section class="shell section home-latest" aria-labelledby="home-latest-title">
+        <div class="section-head reveal" data-editable-block="home-latest-heading" data-editable-title="首页最新文章区标题">
+          <div>
+            <p class="eyebrow" data-block-field="eyebrow">Latest</p>
+            <h2 id="home-latest-title" data-block-field="title">最新文章</h2>
+          </div>
+          <a class="arrow-link" href="/articles.html" data-block-field="moreLink" data-block-href data-block-label="右侧链接">查看全部文章<span class="arrow" aria-hidden="true"></span></a>
+        </div>
+
+        <div class="content-grid home-latest-grid">
+          <div class="home-latest-main">
+            <div class="tabs reveal" data-home-post-tabs>
+              <button class="tab active" type="button" data-home-post-tag="all">全部文章</button>
+            </div>
+            <div class="home-post-list" data-post-list data-post-list-mode="home">
+              <p class="empty-state">正在加载最新文章。</p>
+            </div>
+          </div>
+
+          <aside class="home-latest-aside">
+            <section class="aside-card home-notice reveal" data-home-notice data-editable-block="home-notice-frame" data-editable-title="首页公告卡：眉标与落款">
+              <p class="home-notice-label" data-block-field="label" data-block-label="眉标"><span class="pill-dot" aria-hidden="true"></span>Notice</p>
+              <h3 data-home-notice-title>协会公告</h3>
+              <div data-home-notice-content>
+                <p>招新答疑开放中，欢迎同学了解开发、安全、运维和组宣方向。</p>
+              </div>
+              <div class="aside-meta" data-block-field="meta" data-block-label="落款">燕山大学大学生网络信息协会</div>
+              <div class="home-notice-actions" data-home-notice-actions hidden></div>
+            </section>
+            <section class="aside-card home-hot reveal" data-editable-block="home-hot-card" data-editable-title="首页侧栏：热门博客">
+              <h3 data-block-field="title">热门博客</h3>
+              <div class="aside-list hot-list" data-post-list data-post-list-mode="compact">
+                <a href="/articles.html">正在加载热门文章 <span>请稍候</span></a>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <!-- 部门 Bento -->
+      <section class="shell section home-depts" aria-labelledby="home-depts-title">
+        <div class="section-head reveal" data-editable-block="home-departments-heading" data-editable-title="首页部门区标题">
+          <div>
+            <p class="eyebrow" data-block-field="eyebrow">Departments</p>
+            <h2 id="home-depts-title" data-block-field="title">四个部门，一张协作的网。</h2>
+            <p class="lead" data-block-field="lead">写代码的、守服务器的、拆题目的、讲故事的——分工不同，但作品都在同一个站点上长出来。</p>
+          </div>
+          <a class="arrow-link" href="/departments.html" data-block-field="moreLink" data-block-href data-block-label="右侧链接">了解全部部门<span class="arrow" aria-hidden="true"></span></a>
+        </div>
+
+        <div class="bento home-bento">
+          <article class="bento-card span-7 spotlight reveal home-dept is-dev" data-editable-block="team-dept-dev-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：开发部">
+            <div class="home-dept-top">
+              <span class="home-dept-kicker" data-block-field="kicker">01 / Dev</span>
+              <a class="home-dept-go" href="/department-dev.html" aria-label="了解开发部"><span class="arrow" aria-hidden="true"></span></a>
+            </div>
+            <h3 data-block-field="title">开发部</h3>
+            <p data-block-field="body">负责协会站点、校园工具、前后端实践和项目协作，把技术学习落到真实作品里。</p>
+            <div class="contact-row" data-block-tags><span class="tag">Web</span><span class="tag">产品实现</span><span class="tag">工程协作</span></div>
+            <div class="bento-visual" aria-hidden="true">
+              <div class="viz-window">
+                <div class="viz-window-bar"><i></i><i></i><i></i><span>yuna.team/src/build.js</span></div>
+                <pre class="viz-code"><code><span class="t-k">export function</span> <span class="t-f">build</span>(idea) {
+  <span class="t-k">const</span> team = <span class="t-s">"YUNA"</span>;
+  <span class="t-c">// 把想法做成作品</span>
+  <span class="t-k">return</span> <span class="t-f">ship</span>(idea, team);
+}</code></pre>
+              </div>
+            </div>
           </article>
-          <article class="knowledge-card reveal" data-editable-block="home-knowledge-security" data-editable-title="首页知识卡：网络安全">
-            <div class="num">02</div>
-            <h3 data-block-field="title">网络安全</h3>
-            <p data-block-field="body">CTF、逆向、渗透基础、校园网安全记录。</p>
+
+          <article class="bento-card span-5 spotlight reveal home-dept is-security" data-editable-block="team-dept-security-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：网络安全部">
+            <div class="home-dept-top">
+              <span class="home-dept-kicker" data-block-field="kicker">02 / Security</span>
+              <a class="home-dept-go" href="/department-security.html" aria-label="了解网络安全部"><span class="arrow" aria-hidden="true"></span></a>
+            </div>
+            <h3 data-block-field="title">网络安全部</h3>
+            <p data-block-field="body">组织 CTF、逆向、Web 安全和攻防基础训练，用复盘文章沉淀可继续学习的路线。</p>
+            <div class="contact-row" data-block-tags><span class="tag">CTF</span><span class="tag">逆向</span><span class="tag">训练营</span></div>
+            <div class="bento-visual" aria-hidden="true">
+              <div class="viz-term theme-dark">
+                <p><span class="t-p">$</span> ./challenge --level 1</p>
+                <p class="t-dim">[*] reading the source ...</p>
+                <p class="t-dim">[+] got it</p>
+                <p><span class="t-p">$</span> cat flag.txt</p>
+                <p class="t-flag">flag{keep_learning}<span class="fx-caret"></span></p>
+              </div>
+            </div>
           </article>
-          <article class="knowledge-card reveal" data-editable-block="home-knowledge-ai" data-editable-title="首页知识卡：数据与 AI">
-            <div class="num">03</div>
-            <h3 data-block-field="title">数据与 AI</h3>
-            <p data-block-field="body">Agent、知识库、多模态应用与团队工具链。</p>
+
+          <article class="bento-card span-5 spotlight reveal home-dept is-ops" data-editable-block="team-dept-ops-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：运维部">
+            <div class="home-dept-top">
+              <span class="home-dept-kicker" data-block-field="kicker">03 / Ops</span>
+              <a class="home-dept-go" href="/department-ops.html" aria-label="了解运维部"><span class="arrow" aria-hidden="true"></span></a>
+            </div>
+            <h3 data-block-field="title">运维部</h3>
+            <p data-block-field="body">维护站点服务、部署流程、域名证书和校园工具运行环境，保障协会内容长期可访问。</p>
+            <div class="contact-row" data-block-tags><span class="tag">部署</span><span class="tag">监控</span><span class="tag">服务维护</span></div>
+            <div class="bento-visual" aria-hidden="true">
+              <div class="viz-flow">
+                <span class="viz-node">build</span>
+                <span class="viz-link"><i></i></span>
+                <span class="viz-node">test</span>
+                <span class="viz-link"><i></i></span>
+                <span class="viz-node is-live">deploy</span>
+              </div>
+            </div>
           </article>
+
+          <article class="bento-card span-7 spotlight reveal home-dept is-publicity" data-editable-block="team-dept-publicity-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：组宣部">
+            <div class="home-dept-top">
+              <span class="home-dept-kicker" data-block-field="kicker">04 / Publicity</span>
+              <a class="home-dept-go" href="/department-publicity.html" aria-label="了解组宣部"><span class="arrow" aria-hidden="true"></span></a>
+            </div>
+            <h3 data-block-field="title">组宣部</h3>
+            <p data-block-field="body">负责协会活动记录、视觉物料、图文传播、成员资料和会议档案，让内容展示与日常协作更有秩序。</p>
+            <div class="contact-row" data-block-tags><span class="tag">活动记录</span><span class="tag">图文传播</span><span class="tag">档案流程</span></div>
+            <div class="bento-visual" aria-hidden="true">
+              <div class="viz-specimen">
+                <div class="viz-type"><span class="viz-aa">Aa</span><span class="viz-zh">网协</span></div>
+                <div class="viz-swatches"><i></i><i></i><i></i><i></i><i></i></div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- 知识库：左标题、右编号列表 -->
+      <section class="shell section home-knowledge-section" aria-label="知识库">
+        <div class="home-knowledge">
+          <div class="home-knowledge-intro" data-editable-block="home-knowledge-heading" data-editable-title="首页知识库区标题">
+            <div class="section-title reveal">
+              <p class="eyebrow" data-block-field="eyebrow">Knowledge Base</p>
+              <h2 data-block-field="title">文章、资料、项目统一沉淀。</h2>
+            </div>
+            <p class="home-knowledge-note reveal" data-block-field="note">课件、训练记录和踩过的坑都整理在知识库里，按方向就能找到下一步该读什么。</p>
+            <a class="btn secondary reveal" href="https://docs.yuna.team/" target="_blank" rel="noopener" data-block-field="cta" data-block-href data-block-label="按钮">打开知识库<span class="arrow" aria-hidden="true"></span></a>
+          </div>
+          <div class="knowledge-grid">
+            <article class="knowledge-card reveal" data-editable-block="home-knowledge-devops" data-editable-title="首页知识卡：运维与研发">
+              <div class="num">01</div>
+              <h3 data-block-field="title">运维与研发</h3>
+              <p data-block-field="body">服务器部署、Docker、CI/CD、前后端工程化。</p>
+            </article>
+            <article class="knowledge-card reveal" data-editable-block="home-knowledge-security" data-editable-title="首页知识卡：网络安全">
+              <div class="num">02</div>
+              <h3 data-block-field="title">网络安全</h3>
+              <p data-block-field="body">CTF、逆向、渗透基础、校园网安全记录。</p>
+            </article>
+            <article class="knowledge-card reveal" data-editable-block="home-knowledge-ai" data-editable-title="首页知识卡：数据与 AI">
+              <div class="num">03</div>
+              <h3 data-block-field="title">数据与 AI</h3>
+              <p data-block-field="body">Agent、知识库、多模态应用与团队工具链。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- 浅色品牌带：加入我们 -->
+      <section class="shell section home-join" aria-labelledby="home-join-title">
+        <div class="band is-brand home-join-band reveal is-scale" data-editable-block="home-join-cta" data-editable-title="首页加入我们">
+          <div class="fx-glow is-sky" aria-hidden="true"></div>
+          <p class="band-prompt" aria-hidden="true"><span>$</span> yuna join --with curiosity<span class="fx-caret"></span></p>
+          <div class="home-join-copy">
+            <h2 id="home-join-title" data-block-field="title">下一位同伴，也许就是你。</h2>
+            <p class="lead" data-block-field="lead">不需要已经很厉害。想写代码、想守好一台服务器、想拆开一道题，或者想把活动讲得更好看，带着好奇心来就够了。</p>
+          </div>
+          <div class="hero-actions home-join-actions">
+            <a class="btn primary lg" href="/join.html" data-block-field="primaryAction" data-block-href data-block-label="主按钮">了解加入方式<span class="arrow" aria-hidden="true"></span></a>
+            <a class="btn secondary lg" href="/team.html" data-block-field="secondaryAction" data-block-href data-block-label="次按钮">先认识协会</a>
+          </div>
         </div>
       </section>
     </main>
 
-    <footer class="shell footer">
-      <span>YUNA.BLOG · 燕山大学大学生网络信息协会</span>
-      <span>学习 · 实践 · 分享</span>
+    <footer class="site-footer">
+      <div class="shell site-footer-main">
+        <div class="site-footer-brand" data-editable-block="site-footer-brand" data-editable-title="页脚：协会简介">
+          <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+          <p data-block-field="body">燕山大学大学生网络信息协会。学习、实践、分享，把技术热情变成看得见的作品。</p>
+        </div>
+        <nav class="site-footer-nav" aria-label="页脚导航">
+          <div data-editable-block="site-footer-nav-content" data-editable-title="页脚链接栏：内容">
+            <h2 data-block-field="title">内容</h2>
+            <div data-block-links>
+              <a href="/articles.html">文章列表</a>
+              <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
+              <a href="/lesson-plan.html">授课计划</a>
+            </div>
+          </div>
+          <div data-editable-block="site-footer-nav-association" data-editable-title="页脚链接栏：协会">
+            <h2 data-block-field="title">协会</h2>
+            <div data-block-links>
+              <a href="/team.html">关于协会</a>
+              <a href="/departments.html">部门介绍</a>
+              <a href="/join.html">加入我们</a>
+            </div>
+          </div>
+          <div data-editable-block="site-footer-nav-departments" data-editable-title="页脚链接栏：部门">
+            <h2 data-block-field="title">部门</h2>
+            <div data-block-links>
+              <a href="/department-dev.html">开发部</a>
+              <a href="/department-ops.html">运维部</a>
+              <a href="/department-publicity.html">组宣部</a>
+              <a href="/department-security.html">网络安全部</a>
+            </div>
+          </div>
+        </nav>
+      </div>
+      <div class="shell footer">
+        <span>YUNA.BLOG · 燕山大学大学生网络信息协会</span>
+        <span>学习 · 实践 · 分享</span>
+      </div>
     </footer>
-    <script src="/app.js"></script>
+    <script src="/js/core.js"></script>
+    <script src="/js/markdown.js"></script>
+    <script src="/js/nav.js"></script>
+    <script src="/js/editable-blocks.js"></script>
+    <script src="/js/footer.js"></script>
+    <script src="/js/uploads.js"></script>
+    <script src="/js/page-editor.js"></script>
+    <script src="/js/posts.js"></script>
+    <script src="/js/home.js"></script>
     <script>
       window.blog.renderHomeHero();
       window.blog.renderHomeNotice();

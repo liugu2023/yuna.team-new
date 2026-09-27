@@ -1,0 +1,200 @@
+/* tokens.css —— YUNA v2 设计变量（说明见 .ui-notes/SYSTEM-v2.md）。
+   其它样式文件只引用这里的变量；页面 CSS 不要写新的硬编码色值。
+   语义变量（--c-*）在 .theme-dark 里整体重映射，组件因此能直接放进深色区块。 */
+:root {
+  /* ---------- 原色：品牌蓝色阶（#0a6fb1 = 600） ---------- */
+  --blue-50: #f0f7fc;
+  --blue-100: #dcecf8;
+  --blue-200: #b8d8ef;
+  --blue-300: #86bde3;
+  --blue-400: #4f9fd5;
+  --blue-500: #1f86c6;
+  --blue-600: #0a6fb1;
+  --blue-700: #085a90;
+  --blue-800: #094873;
+  --blue-900: #0a3656;
+
+  /* 同系深海军蓝（深色对比区块） */
+  --navy-700: #16395a;
+  --navy-800: #0f2a44;
+  --navy-900: #0b1f33;
+  --navy-950: #07141f;
+
+  /* 墨色（文字 / 细线的来源色） */
+  --ink-900: #0f1b2a;
+  --ink-700: #3a4a5c;
+  --ink-500: #5f6f82;
+  --ink-300: #a3afbd;
+  --ink-rgb: 15, 27, 42;
+  --brand-rgb: 10, 111, 177;
+
+  /* ---------- 语义色 ---------- */
+  --bg-rgb: 247, 249, 252;
+  --c-bg: #f7f9fc;
+  --c-bg-2: #eef3f8;
+  --c-surface: #ffffff;
+  --c-surface-2: #f2f5f9;
+  --c-surface-glass: rgba(255, 255, 255, .72);
+  --c-line: rgba(var(--ink-rgb), .08);
+  --c-line-strong: rgba(var(--ink-rgb), .14);
+  --c-border: #e3e8ef;
+  --c-border-strong: #cbd4df;
+  --c-text: var(--ink-900);
+  --c-text-2: var(--ink-700);
+  --c-text-3: var(--ink-500);
+  --c-brand: var(--blue-600);
+  --c-brand-hover: var(--blue-700);
+  --c-brand-soft: #eaf3fb;
+  --c-brand-strong: var(--blue-700);
+  --c-accent-a: var(--blue-600);
+  --c-accent-b: #3a9ad8;
+  --c-success: #1a7f5a;
+  --c-success-soft: #e6f4ee;
+  --c-warning: #9a6200;
+  --c-warning-soft: #fdf3e1;
+  --c-danger: #b33b2f;
+  --c-danger-soft: #fdecea;
+  --c-focus: var(--blue-600);
+
+  /* 组件级（深色主题会整体换掉） */
+  --btn-primary-bg: var(--blue-600);
+  --btn-primary-bg-hover: var(--blue-700);
+  --btn-primary-fg: #ffffff;
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 1px 2px rgba(var(--brand-rgb), .3), 0 6px 16px -6px rgba(var(--brand-rgb), .55);
+  --spot-color: rgba(var(--brand-rgb), .55);
+  --spot-fill: rgba(var(--brand-rgb), .06);
+  --grad-text: linear-gradient(100deg, var(--blue-700) 0%, var(--blue-600) 40%, var(--c-accent-b) 100%);
+  --grid-dot: rgba(var(--brand-rgb), .16);
+  --glass: rgba(255, 255, 255, .62);
+  --glass-strong: rgba(255, 255, 255, .8);
+  --glass-edge: rgba(255, 255, 255, .7);
+  --menu-bg: rgba(247, 249, 252, .96);
+  --scrim: rgba(11, 31, 51, .42);
+  --glow-sky: 108, 184, 234;
+
+  /* ---------- 字体 ---------- */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", monospace;
+
+  /* 字号阶梯 */
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 14px;
+  --fs-base: 16px;
+  --fs-md: 17px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+  --fs-3xl: clamp(30px, 3.6vw, 40px);
+  --fs-4xl: clamp(34px, 4.8vw, 56px);
+  --fs-display: clamp(44px, 7vw, 88px);
+
+  --lh-display: 1.05;
+  --lh-heading: 1.2;
+  --lh-body: 1.7;
+  --tracking-display: -.035em;
+  --tracking-heading: -.02em;
+  --tracking-eyebrow: .14em;
+
+  /* ---------- 间距（4 的倍数） ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 120px;
+  --section-y: 120px;
+
+  /* ---------- 圆角 ---------- */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+  /* 旧名（legacy 页面样式仍在用） */
+  --radius-sm: var(--r-xs);
+  --radius: var(--r-sm);
+  --radius-lg: var(--r-md);
+
+  /* ---------- 阴影（墨色、分层、极轻） ---------- */
+  --shadow-xs: 0 1px 2px rgba(var(--ink-rgb), .05);
+  --shadow-sm: 0 1px 2px rgba(var(--ink-rgb), .04), 0 2px 8px -2px rgba(var(--ink-rgb), .06);
+  --shadow-md: 0 1px 2px rgba(var(--ink-rgb), .04), 0 12px 32px -12px rgba(var(--ink-rgb), .16);
+  --shadow-lg: 0 2px 6px rgba(var(--ink-rgb), .04), 0 32px 64px -24px rgba(var(--ink-rgb), .28);
+  --shadow: var(--shadow-md);
+  --ring: 0 0 0 4px rgba(var(--brand-rgb), .16);
+
+  /* ---------- 尺寸 ---------- */
+  --max: 1200px;
+  --max-prose: 720px;
+  --gutter: 24px;
+  --topbar-h: 56px;
+  --topbar-offset: 12px;
+  --header-space: calc(var(--topbar-h) + var(--topbar-offset));
+
+  /* ---------- 动效 ---------- */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --dur-1: .15s;
+  --dur-2: .25s;
+  --dur-3: .4s;
+  --dur-4: .6s;
+  --motion: .2s var(--ease);
+
+  /* ---------- 层级 ---------- */
+  --z-raised: 2;
+  --z-topbar: 100;
+  --z-modal: 150;
+  --z-skip: 200;
+}
+
+@media (max-width: 1024px) {
+  :root { --section-y: 96px; }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --gutter: 16px;
+    --section-y: 72px;
+    --topbar-offset: 8px;
+  }
+}
+
+/* 深色主题：放在任意容器上，内部组件自动换成深底配色（首页加入我们带即此用法）。 */
+.theme-dark {
+  --c-bg: var(--navy-900);
+  --c-bg-2: var(--navy-800);
+  --c-surface: rgba(255, 255, 255, .04);
+  --c-surface-2: rgba(255, 255, 255, .07);
+  --c-surface-glass: rgba(11, 31, 51, .72);
+  --c-line: rgba(255, 255, 255, .09);
+  --c-line-strong: rgba(255, 255, 255, .16);
+  --c-border: rgba(255, 255, 255, .12);
+  --c-border-strong: rgba(255, 255, 255, .22);
+  --c-text: #eef4fa;
+  --c-text-2: #a9bccf;
+  --c-text-3: #8aa0b6;
+  --c-brand: #6cb8ea;
+  --c-brand-hover: #9ad0f3;
+  --c-brand-soft: rgba(108, 184, 234, .14);
+  --c-brand-strong: #9ad0f3;
+  --c-accent-b: #9ad0f3;
+  --c-focus: #9ad0f3;
+  --btn-primary-bg: #ffffff;
+  --btn-primary-bg-hover: #e4eef7;
+  --btn-primary-fg: var(--navy-900);
+  --btn-primary-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -8px rgba(108, 184, 234, .5);
+  --spot-color: rgba(108, 184, 234, .6);
+  --spot-fill: rgba(108, 184, 234, .07);
+  --grad-text: linear-gradient(100deg, #ffffff 0%, #cfe6f7 45%, #6cb8ea 100%);
+  --grid-dot: rgba(255, 255, 255, .09);
+  --ring: 0 0 0 4px rgba(108, 184, 234, .25);
+  color: var(--c-text);
+  background-color: var(--c-bg);
+}

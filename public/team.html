@@ -12,116 +12,105 @@
   <meta property="og:url" content="https://www.yuna.team/team"/>
   <meta property="og:image" content="https://www.yuna.team/images/og-image.png"/>
   <link rel="canonical" href="https://www.yuna.team/team"/>
-  <link rel="preload" as="image" href="/images/campus-bg.webp"/>
-  <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="icon" href="/images/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/components.css" />
+  <link rel="stylesheet" href="/styles/layout.css" />
+  <link rel="stylesheet" href="/styles/fx.css" />
+  <link rel="stylesheet" href="/styles/pages/team.css" />
     <script>document.documentElement.classList.add("js");</script>
 </head>
-<body>
+<body class="page-team">
+<a class="skip-link" href="#content">跳到正文</a>
 <noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载成员与协会内容。</p></noscript>
-<div class="scroll-progress" id="scrollProgress"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-<div class="cursor-glow" id="cursorGlow"></div>
-<canvas class="particle-canvas" id="particleCanvas"></canvas>
-<div class="aurora-layer"></div>
 <header class="topbar">
   <div class="shell topbar-inner">
-    <a class="brand magnetic" href="/" aria-label="返回 YUNA.BLOG 首页"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+    <a class="brand" href="/" aria-label="返回 YUNA.BLOG 首页"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
     <nav class="nav" aria-label="站点导航">
       <a href="/">首页</a>
       <a href="/articles.html">文章列表</a>
       <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
       <a href="/lesson-plan.html">授课计划</a>
       <a class="active" href="/team.html" aria-current="page">关于协会</a>
-      <a href="/join.html">加入我们</a>
+      <a class="nav-cta" href="/join.html">加入我们</a>
       <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
     </nav>
   </div>
 </header>
 
-<div class="page-wrap">
-  <div class="hero-bg" id="heroBg"></div>
-  <div class="mist-top"></div>
-  <div class="mist-bottom"></div>
-  <div class="grid-overlay"></div>
-  <section class="shell page-hero">
+<div class="page-wrap team-hero-wrap">
+  <section class="shell page-hero team-hero" aria-labelledby="team-hero-title">
     <div class="reveal" data-editable-block="team-hero-copy" data-editable-title="关于协会主视觉文案">
       <p class="eyebrow" data-block-field="eyebrow">About YUNA</p>
-      <h1 data-block-field="title">一群认真做技术的校园伙伴。</h1>
+      <h1 id="team-hero-title" data-block-field="title">一群认真做技术的校园伙伴。</h1>
       <p class="lead" data-block-field="lead">燕山大学大学生网络信息协会关注 Web 开发、网络安全、系统运维和校园数字服务。我们把学习资料、项目经验和活动记录沉淀下来，让后来者少走弯路。</p>
-      <div class="page-kpi" aria-label="协会方向">
-        <div data-editable-block="team-kpi-dev" data-editable-title="关于协会 KPI：开发"><strong data-block-field="title">开发</strong><span data-block-field="body">把想法做成产品</span></div>
-        <div data-editable-block="team-kpi-security" data-editable-title="关于协会 KPI：安全"><strong data-block-field="title">安全</strong><span data-block-field="body">训练攻防思维</span></div>
-        <div data-editable-block="team-kpi-ops" data-editable-title="关于协会 KPI：运维"><strong data-block-field="title">运维</strong><span data-block-field="body">维护稳定服务</span></div>
-      </div>
       <div class="hero-actions">
-        <a class="btn primary magnetic" href="/join.html">了解加入方式</a>
-        <a class="btn secondary magnetic" href="/articles.html">阅读协会文章</a>
+        <a class="btn primary lg" href="/join.html" data-block-field="primaryAction" data-block-href data-block-label="主按钮">了解加入方式<span class="arrow" aria-hidden="true"></span></a>
+        <a class="btn secondary lg" href="/articles.html" data-block-field="secondaryAction" data-block-href data-block-label="次按钮">阅读协会文章</a>
       </div>
     </div>
-    <div class="page-visual reveal" aria-hidden="true">
-      <div class="tech-sweep"></div>
-      <div class="logo-holo-grid"></div>
-      <div class="scanlines"></div>
-      <div class="tech-web"></div>
-      <span class="pulse-ring p1"></span>
-      <span class="pulse-ring p2"></span>
-      <span class="pulse-ring p3"></span>
-      <span class="ring r1"></span>
-      <span class="ring r2"></span>
-      <div class="visual-orb"><img src="/images/logo.svg" alt=""/></div>
-      <span class="tech-pill pill-a">学习</span>
-      <span class="tech-pill pill-b">项目</span>
-      <span class="tech-pill pill-c">分享</span>
-      <div class="data-stream"><span>YUNA · WEB · SECURITY · OPS · DESIGN ·</span><span>CAMPUS TECH COMMUNITY · NETWORK ASSOCIATION ·</span></div>
+    <div class="page-kpi team-kpi reveal" aria-label="协会方向">
+      <div data-editable-block="team-kpi-dev" data-editable-title="关于协会 KPI：开发"><strong data-block-field="title">开发</strong><span data-block-field="body">把想法做成产品</span></div>
+      <div data-editable-block="team-kpi-security" data-editable-title="关于协会 KPI：安全"><strong data-block-field="title">安全</strong><span data-block-field="body">训练攻防思维</span></div>
+      <div data-editable-block="team-kpi-ops" data-editable-title="关于协会 KPI：运维"><strong data-block-field="title">运维</strong><span data-block-field="body">维护稳定服务</span></div>
     </div>
+    <nav class="team-jump reveal" aria-label="本页目录" data-editable-block="team-jump-nav" data-editable-title="关于协会：本页目录">
+      <a href="#departments" data-block-field="departments" data-block-label="目录 01"><span>01</span>部门</a>
+      <a href="#members" data-block-field="members" data-block-label="目录 02"><span>02</span>往届成员</a>
+      <a href="#fame" data-block-field="fame" data-block-label="目录 03"><span>03</span>名人堂</a>
+      <a href="#office" data-block-field="office" data-block-label="目录 04"><span>04</span>办公室</a>
+    </nav>
   </section>
 </div>
 
 <main class="main page-main" id="content">
-  <section class="shell">
-    <div class="section-title reveal" data-editable-block="team-departments-heading" data-editable-title="关于协会：部门区标题">
-      <p class="eyebrow" data-block-field="eyebrow">Departments</p>
-      <h2 data-block-field="title">协会由这些方向一起支撑。</h2>
+  <section class="shell section team-depts" id="departments" aria-labelledby="team-depts-title">
+    <div class="section-head reveal" data-editable-block="team-departments-heading" data-editable-title="关于协会：部门区标题">
+      <div class="section-title">
+        <p class="eyebrow" data-block-field="eyebrow">Departments</p>
+        <h2 id="team-depts-title" data-block-field="title">协会由这些方向一起支撑。</h2>
+      </div>
+      <a class="arrow-link" href="/departments.html" data-block-field="moreLink" data-block-href data-block-label="右侧链接">部门一览<span class="arrow" aria-hidden="true"></span></a>
     </div>
 
-    <div class="member-grid refined-member-grid department-grid">
-      <article class="member-card reveal refined-member-card" data-editable-block="team-dept-dev-card" data-editable-title="部门卡片：开发部">
-        <span class="flash"></span>
+    <div class="team-dept-grid" data-spotlight>
+      <article class="member-card team-dept-card reveal" data-editable-block="team-dept-dev-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：开发部">
+        <span class="team-dept-kicker" aria-hidden="true" data-block-field="kicker">01 / Dev</span>
         <h3 data-block-field="title">开发部</h3>
         <p data-block-field="body">负责协会站点、校园工具、前后端实践和项目协作，把技术学习落到真实作品里。</p>
         <div class="contact-row" data-block-tags><span class="tag">Web</span><span class="tag">产品实现</span><span class="tag">工程协作</span></div>
-        <div class="member-actions"><a href="/department-dev.html">查看部门详情</a><a href="/articles.html?tag=%E5%BC%80%E5%8F%91%E9%83%A8">查看部门文章</a><a href="/admin/#members" data-admin-only hidden>编辑</a></div>
+        <div class="member-actions"><a class="team-dept-go" data-block-field="detailLink" data-block-href data-block-label="部门详情链接" href="/department-dev.html">部门详情<span class="arrow" aria-hidden="true"></span></a><a data-block-field="articlesLink" data-block-href data-block-label="部门文章链接" href="/articles.html?tag=%E5%BC%80%E5%8F%91%E9%83%A8">部门文章</a><a href="/admin/#members" data-admin-only hidden>编辑</a></div>
       </article>
 
-      <article class="member-card reveal refined-member-card" data-editable-block="team-dept-security-card" data-editable-title="部门卡片：网络安全部">
-        <span class="flash"></span>
+      <article class="member-card team-dept-card reveal" data-editable-block="team-dept-security-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：网络安全部">
+        <span class="team-dept-kicker" aria-hidden="true" data-block-field="kicker">02 / Security</span>
         <h3 data-block-field="title">网络安全部</h3>
         <p data-block-field="body">组织 CTF、逆向、Web 安全和攻防基础训练，用复盘文章沉淀可继续学习的路线。</p>
         <div class="contact-row" data-block-tags><span class="tag">CTF</span><span class="tag">逆向</span><span class="tag">训练营</span></div>
-        <div class="member-actions"><a href="/department-security.html">查看部门详情</a><a href="/articles.html?tag=%E7%BD%91%E5%AE%89%E9%83%A8">查看部门文章</a><a href="/admin/#members" data-admin-only hidden>编辑</a></div>
+        <div class="member-actions"><a class="team-dept-go" data-block-field="detailLink" data-block-href data-block-label="部门详情链接" href="/department-security.html">部门详情<span class="arrow" aria-hidden="true"></span></a><a data-block-field="articlesLink" data-block-href data-block-label="部门文章链接" href="/articles.html?tag=%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E9%83%A8">部门文章</a><a href="/admin/#members" data-admin-only hidden>编辑</a></div>
       </article>
 
-      <article class="member-card reveal refined-member-card" data-editable-block="team-dept-ops-card" data-editable-title="部门卡片：运维部">
-        <span class="flash"></span>
+      <article class="member-card team-dept-card reveal" data-editable-block="team-dept-ops-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：运维部">
+        <span class="team-dept-kicker" aria-hidden="true" data-block-field="kicker">03 / Ops</span>
         <h3 data-block-field="title">运维部</h3>
         <p data-block-field="body">维护站点服务、部署流程、域名证书和校园工具运行环境，保障协会内容长期可访问。</p>
         <div class="contact-row" data-block-tags><span class="tag">部署</span><span class="tag">监控</span><span class="tag">服务维护</span></div>
-        <div class="member-actions"><a href="/department-ops.html">查看部门详情</a><a href="/articles.html?tag=%E8%BF%90%E7%BB%B4%E9%83%A8">查看部门文章</a><a href="/admin/#members" data-admin-only hidden>编辑</a></div>
+        <div class="member-actions"><a class="team-dept-go" data-block-field="detailLink" data-block-href data-block-label="部门详情链接" href="/department-ops.html">部门详情<span class="arrow" aria-hidden="true"></span></a><a data-block-field="articlesLink" data-block-href data-block-label="部门文章链接" href="/articles.html?tag=%E8%BF%90%E7%BB%B4%E9%83%A8">部门文章</a><a href="/admin/#members" data-admin-only hidden>编辑</a></div>
       </article>
 
-      <article class="member-card reveal refined-member-card" data-editable-block="team-dept-publicity-card" data-editable-title="部门卡片：组宣部">
-        <span class="flash"></span>
+      <article class="member-card team-dept-card reveal" data-editable-block="team-dept-publicity-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：组宣部">
+        <span class="team-dept-kicker" aria-hidden="true" data-block-field="kicker">04 / Publicity</span>
         <h3 data-block-field="title">组宣部</h3>
         <p data-block-field="body">负责协会活动记录、视觉物料、图文传播、成员资料和会议档案，让内容展示与日常协作更有秩序。</p>
         <div class="contact-row" data-block-tags><span class="tag">活动记录</span><span class="tag">图文传播</span><span class="tag">档案流程</span></div>
-        <div class="member-actions"><a href="/department-publicity.html">查看部门详情</a><a href="/articles.html?tag=%E7%BB%84%E5%AE%A3%E9%83%A8">查看部门文章</a><a href="/admin/#members" data-admin-only hidden>编辑</a></div>
+        <div class="member-actions"><a class="team-dept-go" data-block-field="detailLink" data-block-href data-block-label="部门详情链接" href="/department-publicity.html">部门详情<span class="arrow" aria-hidden="true"></span></a><a data-block-field="articlesLink" data-block-href data-block-label="部门文章链接" href="/articles.html?tag=%E7%BB%84%E5%AE%A3%E9%83%A8">部门文章</a><a href="/admin/#members" data-admin-only hidden>编辑</a></div>
       </article>
     </div>
   </section>
 
-  <section class="shell team-section team-collapsible-section" id="members">
-    <details class="team-disclosure" data-team-disclosure>
+  <section class="shell section team-section team-collapsible-section" id="members" aria-label="往届成员">
+    <details class="team-disclosure">
       <summary class="team-disclosure-summary">
         <div class="section-title reveal" data-editable-block="team-members-heading" data-editable-title="关于协会：往届成员区标题">
           <p class="eyebrow" data-block-field="eyebrow">Members</p>
@@ -135,8 +124,8 @@
     </details>
   </section>
 
-  <section class="shell team-section team-collapsible-section" id="fame">
-    <details class="team-disclosure" data-team-disclosure>
+  <section class="shell section team-section team-collapsible-section team-fame" id="fame" aria-label="网协名人堂">
+    <details class="team-disclosure">
       <summary class="team-disclosure-summary">
         <div class="section-title reveal" data-editable-block="team-fame-heading" data-editable-title="关于协会：名人堂区标题">
           <p class="eyebrow" data-block-field="eyebrow">Hall of Fame</p>
@@ -150,35 +139,40 @@
     </details>
   </section>
 
-  <section class="shell team-section" id="office">
-    <div class="section-title reveal" data-editable-block="team-office-heading" data-editable-title="关于协会：办公室区标题">
-      <p class="eyebrow" data-block-field="eyebrow">Office</p>
-      <h2 data-block-field="title">东西区办公室位置。</h2>
+  <section class="shell section team-section team-office" id="office" aria-labelledby="team-office-title">
+    <div class="section-head reveal">
+      <div class="section-title" data-editable-block="team-office-heading" data-editable-title="关于协会：办公室区标题">
+        <p class="eyebrow" data-block-field="eyebrow">Office</p>
+        <h2 id="team-office-title" data-block-field="title">东西区办公室位置。</h2>
+      </div>
     </div>
-    <div class="service-strip">
-      <article class="visual-card reveal" data-editable-block="team-office-east" data-editable-title="东区办公室信息">
+    <div class="office-grid">
+      <article class="visual-card office-card reveal" data-editable-block="team-office-east" data-editable-title="东区办公室信息">
+        <div class="office-map is-real" data-office-map data-map-lat="39.903517" data-map-lng="119.534340" data-zoom="17" aria-label="东区办公室高德瓦片地图">
+          <div class="office-map-tiles" aria-hidden="true"></div>
+          <span class="office-map-marker" aria-hidden="true"></span>
+          <span class="office-map-badge" aria-hidden="true">East</span>
+        </div>
         <h3 data-block-field="title">东区办公室</h3>
         <div class="pipeline" data-block-rows>
           <div class="pipeline-row" data-block-row><strong>位置</strong><span>四舍与五舍间平房102（雁鸣湖餐厅对面）</span></div>
           <div class="pipeline-row" data-block-row><strong>开放时间</strong><span>待补充</span></div>
         </div>
-        <div class="office-map is-real" data-office-map data-lat="39.903517" data-lng="119.534340" data-map-lat="39.903517" data-map-lng="119.534340" data-zoom="17" aria-label="东区办公室高德瓦片地图">
+      </article>
+      <article class="visual-card office-card reveal" data-editable-block="team-office-west" data-editable-title="西区办公室信息">
+        <div class="office-map is-real" data-office-map data-map-lat="39.913213" data-map-lng="119.519506" data-zoom="17" aria-label="西区办公室高德瓦片地图">
           <div class="office-map-tiles" aria-hidden="true"></div>
           <span class="office-map-marker" aria-hidden="true"></span>
+          <span class="office-map-badge" aria-hidden="true">West</span>
         </div>
-      </article>
-      <article class="visual-card reveal" data-editable-block="team-office-west" data-editable-title="西区办公室信息">
         <h3 data-block-field="title">西区办公室</h3>
         <div class="pipeline" data-block-rows>
           <div class="pipeline-row" data-block-row><strong>位置</strong><span>美术馆 A503</span></div>
           <div class="pipeline-row" data-block-row><strong>开放时间</strong><span>待补充</span></div>
         </div>
-        <div class="office-map is-real" data-office-map data-lat="39.911964" data-lng="119.513502" data-map-lat="39.913213" data-map-lng="119.519506" data-zoom="17" aria-label="西区办公室高德瓦片地图">
-          <div class="office-map-tiles" aria-hidden="true"></div>
-          <span class="office-map-marker" aria-hidden="true"></span>
-        </div>
       </article>
-      <article class="visual-card reveal office-note-card" data-editable-block="team-office-note" data-editable-title="到访说明">
+      <article class="visual-card office-note-card reveal" data-editable-block="team-office-note" data-editable-title="到访说明">
+        <span class="office-note-icon" aria-hidden="true"></span>
         <h3 data-block-field="title">到访说明</h3>
         <p data-block-field="body">办公室主要用于值班、交流和活动准备。到访前建议先确认当日值班安排；临时调整以协会公告或负责人通知为准。</p>
         <div class="contact-row" data-block-tags><span class="tag">提前确认</span><span class="tag">按值班开放</span><span class="tag">公告为准</span></div>
@@ -188,11 +182,51 @@
 
 </main>
 
-<footer class="shell footer">
-  <span>YUNA.BLOG · 关于协会</span>
-  <span>学习 · 实践 · 分享</span>
+<footer class="site-footer">
+  <div class="shell site-footer-main">
+    <div class="site-footer-brand" data-editable-block="site-footer-brand" data-editable-title="页脚：协会简介">
+      <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+      <p data-block-field="body">燕山大学大学生网络信息协会。学习、实践、分享，把技术热情变成看得见的作品。</p>
+    </div>
+    <nav class="site-footer-nav" aria-label="页脚导航">
+      <div data-editable-block="site-footer-nav-content" data-editable-title="页脚链接栏：内容">
+        <h2 data-block-field="title">内容</h2>
+        <div data-block-links>
+          <a href="/articles.html">文章列表</a>
+          <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
+          <a href="/lesson-plan.html">授课计划</a>
+        </div>
+      </div>
+      <div data-editable-block="site-footer-nav-association" data-editable-title="页脚链接栏：协会">
+        <h2 data-block-field="title">协会</h2>
+        <div data-block-links>
+          <a href="/team.html">关于协会</a>
+          <a href="/departments.html">部门介绍</a>
+          <a href="/join.html">加入我们</a>
+        </div>
+      </div>
+      <div data-editable-block="site-footer-nav-departments" data-editable-title="页脚链接栏：部门">
+        <h2 data-block-field="title">部门</h2>
+        <div data-block-links>
+          <a href="/department-dev.html">开发部</a>
+          <a href="/department-ops.html">运维部</a>
+          <a href="/department-publicity.html">组宣部</a>
+          <a href="/department-security.html">网络安全部</a>
+        </div>
+      </div>
+    </nav>
+  </div>
+  <div class="shell footer">
+    <span>YUNA.BLOG · 关于协会</span>
+    <span>学习 · 实践 · 分享</span>
+  </div>
 </footer>
-<script src="/app.js"></script>
+<script src="/js/core.js"></script>
+<script src="/js/markdown.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/editable-blocks.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/team.js"></script>
 <script>
   window.blog.renderUserNav();
   window.blog.renderAdminOnlyActions();

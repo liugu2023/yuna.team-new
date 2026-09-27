@@ -12,98 +12,135 @@
     <meta property="og:url" content="https://www.yuna.team/articles" />
     <meta property="og:image" content="https://www.yuna.team/images/og-image.png" />
     <link rel="canonical" href="https://www.yuna.team/articles" />
-    <link rel="preload" as="image" href="/images/campus-bg.webp" />
-    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="/images/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles/tokens.css" />
+    <link rel="stylesheet" href="/styles/base.css" />
+    <link rel="stylesheet" href="/styles/components.css" />
+    <link rel="stylesheet" href="/styles/layout.css" />
+    <link rel="stylesheet" href="/styles/fx.css" />
+    <link rel="stylesheet" href="/styles/pages/articles.css" />
     <script>document.documentElement.classList.add("js");</script>
   </head>
-  <body>
+  <body class="page-articles">
+    <a class="skip-link" href="#content">跳到正文</a>
     <noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载文章列表。</p></noscript>
-    <div class="scroll-progress" id="scrollProgress"></div>
-    <div class="cursor-ring" id="cursorRing"></div>
-    <div class="cursor-glow" id="cursorGlow"></div>
-    <canvas class="particle-canvas" id="particleCanvas"></canvas>
-    <div class="aurora-layer"></div>
 
     <header class="topbar">
       <div class="shell topbar-inner">
-        <a class="brand magnetic" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+        <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
         <nav class="nav" aria-label="站点导航">
           <a href="/">首页</a>
           <a class="active" href="/articles.html" aria-current="page">文章列表</a>
           <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
           <a href="/lesson-plan.html">授课计划</a>
           <a href="/team.html">关于协会</a>
-          <a href="/join.html">加入我们</a>
+          <a class="nav-cta" href="/join.html">加入我们</a>
           <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
         </nav>
       </div>
     </header>
 
-    <div class="page-wrap">
-      <div class="hero-bg" id="heroBg"></div>
-      <div class="mist-top"></div>
-      <div class="mist-bottom"></div>
-      <div class="grid-overlay"></div>
-      <section class="shell page-hero">
+    <div class="page-wrap articles-hero-wrap">
+      <div class="fx-glow is-sky articles-hero-glow" aria-hidden="true"></div>
+      <section class="shell page-hero articles-hero">
         <div class="reveal" data-editable-block="articles-hero-copy" data-editable-title="文章列表主视觉文案">
           <p class="eyebrow" data-block-field="eyebrow">Articles</p>
           <h1 data-block-field="title">协会文章与学习记录。</h1>
           <p class="lead" data-block-field="lead">集中浏览协会近期文章、训练复盘与活动公告。按方向筛选，快速找到适合继续阅读的内容。</p>
-          <div class="page-kpi">
-            <div data-editable-block="articles-kpi-posts" data-editable-title="文章列表 KPI：文章"><strong data-block-field="title">文章</strong><span data-block-field="body">技术笔记</span></div>
-            <div data-editable-block="articles-kpi-notice" data-editable-title="文章列表 KPI：公告"><strong data-block-field="title">公告</strong><span data-block-field="body">活动信息</span></div>
-            <div data-editable-block="articles-kpi-knowledge" data-editable-title="文章列表 KPI：资料"><strong data-block-field="title">资料</strong><span data-block-field="body">学习路线</span></div>
-          </div>
         </div>
-        <div class="page-visual reveal" aria-hidden="true">
-          <div class="tech-sweep"></div>
-          <div class="logo-holo-grid"></div>
-          <div class="scanlines"></div>
-          <div class="tech-web"></div>
-          <div class="visual-lines"></div>
-          <span class="pulse-ring p1"></span>
-          <span class="pulse-ring p2"></span>
-          <span class="pulse-ring p3"></span>
-          <span class="ring r1"></span>
-          <span class="ring r2"></span>
-          <div class="visual-orb"><img src="/images/logo.svg" alt="YUNA" /></div>
-          <span class="tech-pill pill-a">Article</span>
-          <span class="tech-pill pill-b">Campus</span>
-          <span class="tech-pill pill-c">System</span>
-          <div class="data-stream"><span>YUNA · ARTICLE STREAM · CAMPUS DATA ·</span><span>BLOG INDEX · KNOWLEDGE BASE · SECURITY WEB AI ·</span></div>
+        <div class="articles-search reveal">
+          <label class="input-affix articles-search-field">
+            <span class="articles-search-icon" aria-hidden="true"></span>
+            <input class="search-input" type="search" data-article-search data-hotkey="/" placeholder="搜索标题、摘要、标签或作者" aria-label="搜索文章" autocomplete="off" />
+            <kbd>/</kbd>
+          </label>
+          <select class="select-input" data-article-tag aria-label="按标签筛选文章" hidden>
+            <option value="all">全部标签</option>
+          </select>
+        </div>
+        <div class="page-kpi reveal">
+          <div data-editable-block="articles-kpi-posts" data-editable-title="文章列表 KPI：文章"><strong data-block-field="title">文章</strong><span data-block-field="body">技术笔记</span></div>
+          <div data-editable-block="articles-kpi-notice" data-editable-title="文章列表 KPI：公告"><strong data-block-field="title">公告</strong><span data-block-field="body">活动信息</span></div>
+          <div data-editable-block="articles-kpi-knowledge" data-editable-title="文章列表 KPI：资料"><strong data-block-field="title">资料</strong><span data-block-field="body">学习路线</span></div>
         </div>
       </section>
     </div>
 
     <main class="main page-main" id="content">
-      <section class="shell content-grid">
-        <div>
-          <div class="control-row reveal">
-            <input class="search-input" data-article-search placeholder="搜索标题、摘要或标签" aria-label="搜索文章" />
-            <select class="select-input" data-article-tag aria-label="按标签筛选文章">
-              <option value="all">全部标签</option>
-            </select>
+      <section class="shell content-grid articles-layout" aria-label="文章列表">
+        <div class="articles-main">
+          <div class="articles-toolbar">
+            <div class="filter-chips articles-chips" data-article-tag-chips role="group" aria-label="按标签筛选"></div>
+            <p class="articles-count" data-article-count aria-live="polite"></p>
           </div>
           <div class="article-list" data-post-list data-post-list-mode="articles">
             <p class="empty-state">正在加载文章。</p>
           </div>
+          <p class="empty-state" data-article-empty hidden>没有找到匹配的文章，换个关键词试试？</p>
           <div class="pagination" data-article-pagination></div>
-          <p class="empty-state" data-article-empty hidden>没有匹配的文章。</p>
         </div>
-        <aside>
-          <section class="aside-card reveal">
-            <h3>热门标签</h3>
+        <aside class="articles-aside">
+          <section class="aside-card reveal" data-editable-block="articles-tags-card" data-editable-title="文章列表侧栏：热门标签">
+            <h3 data-block-field="title">热门标签</h3>
             <div class="aside-list" data-post-tag-stats>
               <a href="/articles.html">正在统计标签 <span>请稍候</span></a>
             </div>
+          </section>
+          <section class="aside-card articles-docs-card reveal" data-editable-block="articles-docs-card" data-editable-title="文章列表侧栏：知识库入口">
+            <p class="articles-docs-kicker" data-block-field="eyebrow">Knowledge Base</p>
+            <h3 data-block-field="title">想系统地学？</h3>
+            <p data-block-field="body">课件、训练记录和学习路线整理在知识库里，按方向就能找到下一步。</p>
+            <a class="arrow-link" href="https://docs.yuna.team/" target="_blank" rel="noopener" data-block-field="cta" data-block-href data-block-label="按钮">打开知识库<span class="arrow" aria-hidden="true"></span></a>
           </section>
         </aside>
       </section>
     </main>
 
-    <footer class="shell footer"><span>YUNA.BLOG · 文章列表</span><span>技术笔记与活动公告</span></footer>
-    <script src="/app.js"></script>
+    <footer class="site-footer">
+      <div class="shell site-footer-main">
+        <div class="site-footer-brand" data-editable-block="site-footer-brand" data-editable-title="页脚：协会简介">
+          <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+          <p data-block-field="body">燕山大学大学生网络信息协会。学习、实践、分享，把技术热情变成看得见的作品。</p>
+        </div>
+        <nav class="site-footer-nav" aria-label="页脚导航">
+          <div data-editable-block="site-footer-nav-content" data-editable-title="页脚链接栏：内容">
+            <h2 data-block-field="title">内容</h2>
+            <div data-block-links>
+              <a href="/articles.html">文章列表</a>
+              <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
+              <a href="/lesson-plan.html">授课计划</a>
+            </div>
+          </div>
+          <div data-editable-block="site-footer-nav-association" data-editable-title="页脚链接栏：协会">
+            <h2 data-block-field="title">协会</h2>
+            <div data-block-links>
+              <a href="/team.html">关于协会</a>
+              <a href="/departments.html">部门介绍</a>
+              <a href="/join.html">加入我们</a>
+            </div>
+          </div>
+          <div data-editable-block="site-footer-nav-departments" data-editable-title="页脚链接栏：部门">
+            <h2 data-block-field="title">部门</h2>
+            <div data-block-links>
+              <a href="/department-dev.html">开发部</a>
+              <a href="/department-ops.html">运维部</a>
+              <a href="/department-publicity.html">组宣部</a>
+              <a href="/department-security.html">网络安全部</a>
+            </div>
+          </div>
+        </nav>
+      </div>
+      <div class="shell footer">
+        <span>YUNA.BLOG · 文章列表</span>
+        <span>技术笔记与活动公告</span>
+      </div>
+    </footer>
+    <script src="/js/core.js"></script>
+    <script src="/js/markdown.js"></script>
+    <script src="/js/nav.js"></script>
+    <script src="/js/editable-blocks.js"></script>
+    <script src="/js/footer.js"></script>
+    <script src="/js/posts.js"></script>
     <script>
       window.blog.renderPostList();
       window.blog.renderUserNav();

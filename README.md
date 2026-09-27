@@ -32,8 +32,9 @@
 ```text
 public/                 前台页面、后台页面、静态资源
 public/admin/           管理后台
-public/styles.css       全局样式
-public/app.js           前台交互逻辑
+public/styles/          全局样式：tokens → base → components → layout → fx 为全站基础层，pages/*.css 为页面样式（按 body class 限定作用域），<link> 顺序即层叠顺序；约定见 .ui-notes/SYSTEM-v2.md
+public/js/              前台交互逻辑，按功能拆成 core、markdown、nav 等模块，各页面只引用自己需要的
+public/admin/js/        管理后台交互逻辑（state → editor → post-list → fixed-records → site-tools → main）
 functions/              Cloudflare Pages Functions
 functions/_shared/      鉴权、会话、D1、R2、HTTP 等共享逻辑
 migrations/             D1 数据库迁移脚本
@@ -105,6 +106,23 @@ http://localhost:8788/admin/
 ```
 
 `wrangler pages dev` 会同时启动静态页面、Functions、D1 和 R2 绑定。只打开 HTML 文件无法完整预览后台和接口功能。
+
+### 本地模拟数据
+
+```bash
+npm run db:migrate:local
+npm run db:seed:local   # 重置本地 posts / site_records 并写入模拟数据，可重复执行
+npm run dev
+```
+
+`scripts/seed-local.mjs` 会生成 `scripts/seed-local.sql` 并写入本地 D1，同时往本地 R2 放入若干 PNG 占位图和附件（`/media/seed/...`）。数据包括：20 篇文章（含 2 篇草稿、2 篇 knowledge、两篇“样式全集”`style-gallery-a` / `style-gallery-b`）、首页公告与背景、首页/加入我们部分可编辑块、各页页脚、友链、三届成员与名人堂、三届授课计划、四个部门详情页，以及固定页面 `/page.html?p=about/yuna`（样式全集）和 `/page.html?p=guide/new-member`。
+
+注意：该脚本会**清空本地** `posts`、`site_records`、`site_record_backups`，只作用于 `.wrangler/state`，不影响线上。
+
+本地管理员登录（生产走 Zitadel，本地不可用），二选一：
+
+- seed 会插入一条有效期到 2100 年、属于 `CONTROL_GROUP` 的会话，并在结束时打印一行 `document.cookie = "yuna_session=..."`。在 `http://127.0.0.1:8788` 的 DevTools 控制台执行它后刷新即可（Cookie 按主机区分，用 `localhost` 访问就在 `localhost` 下执行）。签名依赖 `.dev.vars` 的 `SESSION_SECRET`，改了 secret 需重新 seed 获取新值。
+- 若 `.dev.vars` 配置了 `FALLBACK_ADMIN_USER` / `FALLBACK_ADMIN_PASSWORD`，也可以直接在 `/admin-login.html` 用备用账密登录。
 
 ## Cloudflare 资源
 
@@ -341,7 +359,7 @@ npm run media:migrate     # 旧媒体文件迁移到 R2
 
 - `GET /api/posts`：获取已发布文章列表。
 - `GET /api/posts/:slug`：获取文章详情和 Markdown 正文。
-- `GET /api/site/:key`：获取固定页面或结构化站点记录。
+- `GET /api/site?keys=a,b,c`：批量获取固定页面或结构化站点记录，缺失的 key 返回 null。
 - `GET /media/:path`：读取 R2 媒体文件。
 
 鉴权接口：

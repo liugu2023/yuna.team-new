@@ -5,25 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>管理后台 · YUNA.BLOG</title>
     <meta name="robots" content="noindex" />
-    <link rel="preload" as="image" href="/images/campus-bg.webp" />
-    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="/images/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles/tokens.css" />
+    <link rel="stylesheet" href="/styles/base.css" />
+    <link rel="stylesheet" href="/styles/components.css" />
+    <link rel="stylesheet" href="/styles/layout.css" />
+    <link rel="stylesheet" href="/styles/fx.css" />
+    <link rel="stylesheet" href="/styles/pages/admin.css" />
     <script>document.documentElement.classList.add("js");</script>
   </head>
-  <body>
-    <div class="scroll-progress" id="scrollProgress"></div>
-    <div class="cursor-ring" id="cursorRing"></div>
-    <div class="cursor-glow" id="cursorGlow"></div>
-    <canvas class="particle-canvas" id="particleCanvas"></canvas>
-    <div class="aurora-layer"></div>
+  <body class="page-admin">
+    <a class="skip-link" href="#content">跳到正文</a>
+    <noscript><p class="empty-state">管理后台需要启用 JavaScript，开一下再回来吧。</p></noscript>
 
     <header class="topbar">
       <div class="shell topbar-inner">
-        <a class="brand magnetic" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.ADMIN</span></a>
+        <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.ADMIN</span></a>
         <nav class="nav" aria-label="站点导航">
           <a href="/">首页</a>
           <a href="/articles.html">文章列表</a>
-          <a href="https://docs.yuna.team/">知识库</a>
+          <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
           <a href="/lesson-plan.html">授课计划</a>
           <a href="/team.html">关于协会</a>
           <a class="active" href="/admin/">管理后台</a>
@@ -32,228 +33,263 @@
       </div>
     </header>
 
-    <div class="page-wrap">
-      <div class="hero-bg" id="heroBg"></div>
-      <div class="mist-top"></div>
-      <div class="mist-bottom"></div>
-      <div class="grid-overlay"></div>
-      <section class="shell page-hero">
-        <div class="reveal">
-          <p class="eyebrow">Admin Console</p>
-          <h1>内容维护工作台。</h1>
-          <p class="lead">用于维护协会官网内容：文章发布、成员信息、名人堂、学习资料和首页图片。所有按钮都会给出清楚的操作反馈。</p>
-          <div class="page-kpi">
-            <div><strong>文章</strong><span>发布 / 草稿 / 删除</span></div>
-            <div><strong>成员</strong><span>名册 / 名人堂</span></div>
-            <div><strong>资料</strong><span>备份 / 导入 / 上传</span></div>
+    <div class="admin-app">
+      <div class="admin-app-bg" aria-hidden="true"></div>
+      <div class="shell admin-shell">
+        <aside class="admin-sidebar" aria-label="后台导航">
+          <div class="admin-sidebar-head">
+            <p class="admin-sidebar-kicker">Console</p>
+            <p class="admin-sidebar-title">内容工作台</p>
           </div>
-        </div>
-        <div class="page-visual reveal" aria-hidden="true">
-          <div class="tech-sweep"></div>
-          <div class="logo-holo-grid"></div>
-          <div class="scanlines"></div>
-          <div class="tech-web"></div>
-          <div class="visual-lines"></div>
-          <span class="pulse-ring p1"></span>
-          <span class="pulse-ring p2"></span>
-          <span class="pulse-ring p3"></span>
-          <span class="ring r1"></span>
-          <span class="ring r2"></span>
-          <div class="visual-orb"><img src="/images/logo.svg" alt="YUNA" /></div>
-          <span class="tech-pill pill-a">Admin</span>
-          <span class="tech-pill pill-b">Content</span>
-          <span class="tech-pill pill-c">System</span>
-          <div class="data-stream"><span>YUNA · ADMIN CONSOLE · CONTENT PIPELINE ·</span><span>ARTICLE · MEMBER · GALLERY ·</span></div>
-        </div>
-      </section>
-    </div>
+          <nav class="admin-tabs" aria-label="管理功能">
+            <button type="button" class="admin-tab is-active" data-admin-tab="posts" aria-pressed="true">
+              <span class="admin-tab-index" aria-hidden="true">01</span>
+              <span class="admin-tab-title">文章</span>
+              <span class="admin-tab-desc">发布、草稿与删除</span>
+            </button>
+            <button type="button" class="admin-tab" data-admin-tab="members" aria-pressed="false">
+              <span class="admin-tab-index" aria-hidden="true">02</span>
+              <span class="admin-tab-title">协会成员</span>
+              <span class="admin-tab-desc">届数、部门、职位</span>
+            </button>
+            <button type="button" class="admin-tab" data-admin-tab="fame" aria-pressed="false">
+              <span class="admin-tab-index" aria-hidden="true">03</span>
+              <span class="admin-tab-title">名人堂</span>
+              <span class="admin-tab-desc">履历与联系方式</span>
+            </button>
+            <button type="button" class="admin-tab" data-admin-tab="site" aria-pressed="false">
+              <span class="admin-tab-index" aria-hidden="true">04</span>
+              <span class="admin-tab-title">站点维护</span>
+              <span class="admin-tab-desc">用量、备份与导入</span>
+            </button>
+          </nav>
+          <div class="admin-sidebar-foot">
+            <a href="/" target="_blank" rel="noopener">查看站点<span class="arrow" aria-hidden="true"></span></a>
+            <a href="/lesson-plan.html">授课计划<span class="arrow" aria-hidden="true"></span></a>
+          </div>
+        </aside>
 
-    <main class="main page-main" id="content">
-      <section class="shell">
-        <nav class="admin-tabs reveal" aria-label="管理功能">
-          <button type="button" class="admin-tab is-active" data-tab="posts" data-admin-tab="posts" aria-pressed="true">
-            <span class="admin-tab-title">文章管理</span>
-            <span class="admin-tab-desc">创建、编辑、发布、草稿、删除</span>
-          </button>
-          <button type="button" class="admin-tab" data-tab="members" data-admin-tab="members" aria-pressed="false">
-            <span class="admin-tab-title">协会成员</span>
-            <span class="admin-tab-desc">届数、部门、职位、头像</span>
-          </button>
-          <button type="button" class="admin-tab" data-tab="fame" data-admin-tab="fame" aria-pressed="false">
-            <span class="admin-tab-title">名人堂</span>
-            <span class="admin-tab-desc">履历、联系方式与头像</span>
-          </button>
-          <button type="button" class="admin-tab" data-tab="site" data-admin-tab="site" aria-pressed="false">
-            <span class="admin-tab-title">站点维护</span>
-            <span class="admin-tab-desc">备份、导入、同步</span>
-          </button>
-        </nav>
+        <main class="admin-main" id="content">
+          <div class="admin-panel" data-admin-panel="posts">
+            <section class="admin-post-workspace" aria-labelledby="admin-posts-title">
+              <header class="admin-panel-head">
+                <div>
+                  <p class="admin-crumb">后台 / 文章</p>
+                  <h1 class="panel-title" id="admin-posts-title">文章管理</h1>
+                  <p>维护文章的发布状态、标签、摘要、正文图片与附件。编辑器在弹窗中打开，左侧写作、右侧实时预览。</p>
+                </div>
+                <button class="btn primary" type="button" data-new>新建文章<span class="arrow" aria-hidden="true"></span></button>
+              </header>
+              <div class="admin-post-summary" data-post-summary aria-label="文章统计"></div>
+              <div class="admin-table">
+                <div class="control-row admin-toolbar">
+                  <label class="input-affix">
+                    <input class="search-input" data-search data-hotkey="/" placeholder="搜索标题、摘要、标签、作者或链接标识" aria-label="搜索文章" />
+                    <kbd>/</kbd>
+                  </label>
+                  <select class="select-input" data-filter-status aria-label="按状态筛选文章">
+                    <option value="all">全部状态</option>
+                    <option value="published">已发布</option>
+                    <option value="draft">草稿</option>
+                  </select>
+                </div>
+                <p class="meta admin-list-message" aria-live="polite" data-post-list-message></p>
+                <div class="admin-list admin-post-list" data-post-list></div>
+              </div>
+              <div class="pagination" data-post-pagination></div>
+            </section>
+          </div>
 
-        <div class="admin-panel" data-panel="posts" data-admin-panel="posts">
-          <section class="editor-shell reveal admin-post-workspace">
-            <div class="admin-post-head">
+          <div class="admin-panel" data-admin-panel="members" hidden>
+            <header class="admin-panel-head">
               <div>
-                <h2 class="panel-title">文章管理</h2>
-                <p>集中维护文章的发布状态、标签、摘要、正文图片和附件下载链接。编辑会在弹窗中打开。</p>
+                <p class="admin-crumb">后台 / 协会成员</p>
+                <h2 class="panel-title">协会成员</h2>
+                <p>填写后保存即出现在关于协会页；点右侧列表的「编辑」载入已有成员。</p>
               </div>
-              <button class="btn primary" type="button" data-new>新建文章</button>
+            </header>
+            <div class="admin-layout">
+              <section class="editor-shell admin-card">
+                <div class="admin-form">
+                  <fieldset class="admin-fieldset">
+                    <legend>归属</legend>
+                    <div class="grid">
+                      <label>届数<input class="admin-input" data-member-term placeholder="第九届" /></label>
+                      <label>
+                        部门
+                        <select class="select-input" data-member-department>
+                          <option value="主席团">主席团</option>
+                          <option value="开发部">开发部</option>
+                          <option value="网络安全部">网络安全部</option>
+                          <option value="运维部">运维部</option>
+                          <option value="组宣部">组宣部</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="grid">
+                      <label>
+                        职级
+                        <select class="select-input" data-member-role>
+                          <option value="主席">主席</option>
+                          <option value="副主席">副主席</option>
+                          <option value="部长">部长</option>
+                          <option value="成员">成员</option>
+                          <option value="技术支持">技术支持</option>
+                        </select>
+                      </label>
+                      <label>姓名<input class="admin-input" data-member-name placeholder="成员姓名" /></label>
+                    </div>
+                  </fieldset>
+                  <fieldset class="admin-fieldset">
+                    <legend>资料</legend>
+                    <div class="inline-uploader">
+                      <label>头像（选择后自动上传）<input class="admin-input" data-member-image-file type="file" accept="image/*" /></label>
+                      <input data-member-avatar type="hidden" />
+                    </div>
+                    <label>简介<textarea class="admin-input" data-member-desc placeholder="成员简介"></textarea></label>
+                  </fieldset>
+                  <fieldset class="admin-fieldset">
+                    <legend>联系方式</legend>
+                    <div class="grid">
+                      <label>
+                        类型
+                        <select class="select-input" data-member-contact-label>
+                          <option value="GitHub">GitHub</option>
+                          <option value="Email">Email</option>
+                          <option value="QQ">QQ</option>
+                          <option value="个人主页">个人主页</option>
+                        </select>
+                      </label>
+                      <label>地址<input class="admin-input" data-member-contact-url placeholder="https://github.com/yuna2017" /></label>
+                    </div>
+                  </fieldset>
+                  <div class="admin-form-foot">
+                    <p class="meta" aria-live="polite" data-member-message></p>
+                    <div class="editor-actions"><button class="btn primary" type="button" data-save-member-entry>保存成员</button></div>
+                  </div>
+                </div>
+              </section>
+              <aside class="aside-card admin-side-list">
+                <h3>成员列表</h3>
+                <div class="admin-list" data-member-list></div>
+              </aside>
             </div>
-            <div class="admin-post-summary" data-post-summary aria-label="文章统计"></div>
-            <div class="control-row">
-              <input class="search-input" data-search placeholder="搜索标题、摘要、标签、作者或链接标识" aria-label="搜索文章" />
-              <select class="select-input" data-filter-status aria-label="按状态筛选文章">
-                <option value="all">全部状态</option>
-                <option value="published">已发布</option>
-                <option value="draft">草稿</option>
-              </select>
+          </div>
+
+          <div class="admin-panel" data-admin-panel="fame" hidden>
+            <header class="admin-panel-head">
+              <div>
+                <p class="admin-crumb">后台 / 名人堂</p>
+                <h2 class="panel-title">名人堂</h2>
+                <p>记录往届成员的履历与去向；头像选择文件后会自动上传。</p>
+              </div>
+            </header>
+            <div class="admin-layout">
+              <section class="editor-shell admin-card">
+                <div class="admin-form">
+                  <fieldset class="admin-fieldset">
+                    <legend>基本信息</legend>
+                    <div class="grid">
+                      <label>名称<input class="admin-input" data-fame-name placeholder="姓名或展示名称" /></label>
+                      <label>职位 / 身份<input class="admin-input" data-fame-title placeholder="第六届主席 / 竞赛获奖成员" /></label>
+                    </div>
+                    <div class="inline-uploader">
+                      <label>头像（选择后自动上传）<input class="admin-input" data-fame-image-file type="file" accept="image/*" /></label>
+                      <input data-fame-avatar type="hidden" />
+                    </div>
+                    <label>履历<textarea class="admin-input" data-fame-desc placeholder="保研、竞赛、工作去向等履历"></textarea></label>
+                  </fieldset>
+                  <fieldset class="admin-fieldset">
+                    <legend>联系方式</legend>
+                    <div class="grid">
+                      <label>
+                        类型
+                        <select class="select-input" data-fame-contact-label>
+                          <option value="GitHub">GitHub</option>
+                          <option value="Email">Email</option>
+                          <option value="个人主页">个人主页</option>
+                        </select>
+                      </label>
+                      <label>地址<input class="admin-input" data-fame-contact-url placeholder="https://github.com/yuna2017" /></label>
+                    </div>
+                  </fieldset>
+                  <div class="admin-form-foot">
+                    <p class="meta" aria-live="polite" data-fame-message></p>
+                    <div class="editor-actions"><button class="btn primary" type="button" data-save-fame-entry>保存条目</button></div>
+                  </div>
+                </div>
+              </section>
+              <aside class="aside-card admin-side-list">
+                <h3>名人堂条目</h3>
+                <div class="admin-list" data-fame-list></div>
+              </aside>
             </div>
-            <p class="meta" aria-live="polite" data-post-list-message></p>
-            <div class="admin-list admin-post-list" data-post-list></div>
-            <div class="pagination" data-post-pagination></div>
-          </section>
-        </div>
-
-        <div class="admin-panel" data-panel="members" data-admin-panel="members" hidden>
-          <div class="admin-layout">
-            <section class="editor-shell reveal">
-              <h2 class="panel-title">保存成员</h2>
-              <div class="admin-form">
-                <div class="grid">
-                  <label>届数<input class="admin-input" data-member-term placeholder="第九届" /></label>
-                  <label>
-                    部门
-                    <select class="select-input" data-member-department>
-                      <option value="主席团">主席团</option>
-                      <option value="开发部">开发部</option>
-                      <option value="网络安全部">网络安全部</option>
-                      <option value="运维部">运维部</option>
-                      <option value="组宣部">组宣部</option>
-                    </select>
-                  </label>
-                </div>
-                <div class="grid">
-                  <label>
-                    职级
-                    <select class="select-input" data-member-role>
-                      <option value="主席">主席</option>
-                      <option value="副主席">副主席</option>
-                      <option value="部长">部长</option>
-                      <option value="成员">成员</option>
-                      <option value="技术支持">技术支持</option>
-                    </select>
-                  </label>
-                  <label>姓名<input class="admin-input" data-member-name placeholder="成员姓名" /></label>
-                </div>
-                <div class="inline-uploader">
-                  <label>头像<input class="admin-input" data-member-image-file type="file" accept="image/*" /></label>
-                  <input data-member-avatar type="hidden" />
-                </div>
-                <label>简介<textarea class="admin-input" data-member-desc placeholder="成员简介"></textarea></label>
-                <div class="grid">
-                  <label>
-                    联系方式类型
-                    <select class="select-input" data-member-contact-label>
-                      <option value="GitHub">GitHub</option>
-                      <option value="Email">Email</option>
-                      <option value="QQ">QQ</option>
-                      <option value="个人主页">个人主页</option>
-                    </select>
-                  </label>
-                  <label>联系方式<input class="admin-input" data-member-contact-url placeholder="https://github.com/yuna2017" /></label>
-                </div>
-                <div class="editor-actions"><button class="btn primary" type="button" data-save-member-entry>保存成员</button></div>
-                <p class="meta" aria-live="polite" data-member-message></p>
-              </div>
-            </section>
-            <aside class="aside-card reveal">
-              <h3>成员预览</h3>
-              <div class="admin-list" data-member-list></div>
-            </aside>
           </div>
-        </div>
 
-        <div class="admin-panel" data-panel="fame" data-admin-panel="fame" hidden>
-          <div class="admin-layout">
-            <section class="editor-shell reveal">
-              <h2 class="panel-title">维护名人堂</h2>
-              <div class="admin-form">
-                <div class="grid">
-                  <label>名称<input class="admin-input" data-fame-name placeholder="姓名或展示名称" /></label>
-                  <label>职位 / 身份<input class="admin-input" data-fame-title placeholder="第六届主席 / 竞赛获奖成员" /></label>
-                </div>
-                <div class="inline-uploader">
-                  <label>头像<input class="admin-input" data-fame-image-file type="file" accept="image/*" /></label>
-                  <input data-fame-avatar type="hidden" />
-                </div>
-                <label>履历<textarea class="admin-input" data-fame-desc placeholder="保研、竞赛、工作去向等履历"></textarea></label>
-                <div class="grid">
-                  <label>
-                    联系方式类型
-                    <select class="select-input" data-fame-contact-label>
-                      <option value="GitHub">GitHub</option>
-                      <option value="Email">Email</option>
-                      <option value="个人主页">个人主页</option>
-                    </select>
-                  </label>
-                  <label>联系方式<input class="admin-input" data-fame-contact-url placeholder="https://github.com/yuna2017" /></label>
-                </div>
-                <div class="editor-actions"><button class="btn primary" type="button" data-save-fame-entry>保存条目</button></div>
-                <p class="meta" aria-live="polite" data-fame-message></p>
+          <div class="admin-panel" data-admin-panel="site" hidden>
+            <header class="admin-panel-head">
+              <div>
+                <p class="admin-crumb">后台 / 站点维护</p>
+                <h2 class="panel-title">站点维护</h2>
+                <p>查看存储用量、清理无人引用的媒体、备份与恢复站点数据。</p>
               </div>
-            </section>
-            <aside class="aside-card reveal">
-              <h3>名人堂条目</h3>
-              <div class="admin-list" data-fame-list></div>
-            </aside>
+            </header>
+            <div class="tool-grid">
+              <section class="tool-card">
+                <div class="tool-card-head">
+                  <h3>容量检测</h3>
+                  <p>D1 各表记录数与占用估算，R2 存储桶对象数量与已用空间。</p>
+                </div>
+                <div class="usage-panel" data-usage-summary>
+                  <p class="empty-state">还没检测过，点下面的按钮看看。</p>
+                </div>
+                <div class="editor-actions tool-card-foot">
+                  <button class="btn primary compact" type="button" data-refresh-usage>检测当前用量</button>
+                </div>
+                <p class="meta" aria-live="polite" data-usage-message></p>
+              </section>
+              <section class="tool-card">
+                <div class="tool-card-head">
+                  <h3>R2 引用清理</h3>
+                  <p>对比 R2 对象和数据库引用，找出没有被文章、知识库、页面文案或历史备份引用的媒体文件。</p>
+                </div>
+                <div class="usage-panel" data-orphan-summary>
+                  <p class="empty-state">先检测一次，再决定要不要删。</p>
+                </div>
+                <div class="editor-actions tool-card-foot">
+                  <button class="btn secondary compact" type="button" data-scan-orphans>检测引用情况</button>
+                  <button class="btn danger compact" type="button" data-delete-orphans>检测并删除可清理对象</button>
+                </div>
+                <p class="meta" aria-live="polite" data-orphan-message></p>
+              </section>
+              <section class="tool-card">
+                <div class="tool-card-head">
+                  <h3>内容备份</h3>
+                  <p>保存文章、固定页面或导入数据后，可手动把 Markdown 同步到 GitHub，留一份可追踪的备份。</p>
+                </div>
+                <div class="editor-actions tool-card-foot">
+                  <button class="btn primary compact" type="button" data-sync-markdown>立即同步到 GitHub</button>
+                </div>
+                <p class="meta" aria-live="polite" data-sync-message></p>
+              </section>
+              <section class="tool-card">
+                <div class="tool-card-head">
+                  <h3>站点数据备份</h3>
+                  <p>导出当前站点数据；默认不含历史快照，避免多次编辑产生大量重复内容。</p>
+                </div>
+                <div class="editor-actions tool-card-foot">
+                  <a class="btn primary compact" href="/api/admin/export?download=1" data-export-db>导出站点数据</a>
+                  <a class="btn secondary compact" href="/api/admin/export?download=1&history=1" data-export-db>含历史导出</a>
+                  <button class="btn danger compact" type="button" data-import-db>强制导入</button>
+                </div>
+                <p class="meta" aria-live="polite" data-export-message></p>
+                <p class="meta" aria-live="polite" data-import-message></p>
+              </section>
+            </div>
           </div>
-        </div>
-
-        <div class="admin-panel" data-panel="site" data-admin-panel="site" hidden>
-          <div class="tool-grid">
-            <section class="tool-card reveal">
-              <h3>容量检测</h3>
-              <p>检测 D1 数据表记录数量、数据库占用估算，以及 R2 存储桶对象数量和已用空间。</p>
-              <div class="usage-panel" data-usage-summary>
-                <p class="empty-state">点击检测后显示当前用量。</p>
-              </div>
-              <div class="editor-actions">
-                <button class="btn primary" type="button" data-refresh-usage>检测当前用量</button>
-              </div>
-              <p class="meta" aria-live="polite" data-usage-message></p>
-            </section>
-            <section class="tool-card reveal">
-              <h3>R2 引用清理</h3>
-              <p>对比 R2 对象和数据库引用，找出未被文章、知识库、页面文案或历史备份引用的媒体文件。</p>
-              <div class="usage-panel" data-orphan-summary>
-                <p class="empty-state">点击检测后显示可清理对象。</p>
-              </div>
-              <div class="editor-actions">
-                <button class="btn secondary" type="button" data-scan-orphans>检测引用情况</button>
-                <button class="btn danger" type="button" data-delete-orphans>检测并删除可清理对象</button>
-              </div>
-              <p class="meta" aria-live="polite" data-orphan-message></p>
-            </section>
-            <section class="tool-card reveal">
-              <h3>内容备份</h3>
-              <p>保存文章、固定页面或导入数据后，可手动生成一份可追踪的内容备份。</p>
-              <button class="btn primary" type="button" data-sync-markdown>立即同步到 GitHub</button>
-              <p class="meta" aria-live="polite" data-sync-message></p>
-            </section>
-            <section class="tool-card reveal">
-              <h3>站点数据备份</h3>
-              <p>导出当前站点数据；默认不包含历史快照，避免多次编辑产生的大量重复内容。</p>
-              <div class="editor-actions">
-                <a class="btn primary" href="/api/admin/export?download=1" data-export-db>导出站点数据</a>
-                <a class="btn secondary" href="/api/admin/export?download=1&history=1" data-export-db>含历史导出</a>
-                <button class="btn danger" type="button" data-import-db>强制导入</button>
-              </div>
-              <p class="meta" aria-live="polite" data-export-message></p>
-              <p class="meta" aria-live="polite" data-import-message></p>
-            </section>
-          </div>
-        </div>
-      </section>
-    </main>
+        </main>
+      </div>
+    </div>
 
     <div class="modal-overlay" data-import-modal hidden>
       <div class="modal" role="dialog" aria-modal="true" aria-label="强制导入站点数据">
@@ -290,63 +326,96 @@
           <button type="button" class="icon-button" data-editor-close aria-label="关闭编辑器">×</button>
         </div>
         <div class="modal-body">
-          <div class="admin-layout" data-editor>
-            <section class="editor-shell">
+          <div class="admin-layout admin-editor" data-editor>
+            <section class="editor-shell admin-editor-form">
               <div class="admin-form">
-                <label>标题<input class="admin-input" data-title placeholder="文章标题" /></label>
-                <label>标签<input class="admin-input" data-post-tag placeholder="协会动态, 技术笔记, 活动公告" /></label>
-                <label>主要作者<input class="admin-input" data-author-name placeholder="默认为网络信息协会" /></label>
-                <label>作者跳转链接<input class="admin-input" data-author-url type="url" placeholder="https://example.com/profile" /></label>
-                <label>头像网页地址（直接读取）<input class="admin-input" data-author-avatar type="url" placeholder="https://example.com/avatar.jpg" /></label>
-                <div class="inline-uploader">
-                  <label>GitHub 用户名<input class="admin-input" data-author-github placeholder="例如 octocat" autocomplete="off" /></label>
-                  <button class="btn secondary" type="button" data-use-github-avatar>读取 GitHub 头像</button>
-                </div>
-                <div class="inline-uploader">
-                  <label>本地作者头像<input class="admin-input" data-author-avatar-file type="file" accept="image/png,image/jpeg,image/gif,image/webp" /></label>
-                  <button class="btn secondary" type="button" data-upload-author-avatar>上传并设为头像</button>
-                </div>
-                <fieldset class="coauthor-editor">
-                  <legend>协同作者</legend>
-                  <p class="meta">可添加多位协同作者；主页和头像均为选填。</p>
-                  <div class="coauthor-list" data-coauthors-list></div>
-                  <button class="btn secondary compact" type="button" data-add-coauthor>添加协同作者</button>
+                <fieldset class="admin-fieldset">
+                  <legend>基本信息</legend>
+                  <label>标题<input class="admin-input admin-title-input" data-title placeholder="文章标题" /></label>
+                  <div class="grid">
+                    <label>标签<input class="admin-input" data-post-tag placeholder="协会动态, 技术笔记" /></label>
+                    <label>摘要<input class="admin-input" data-excerpt placeholder="文章简短摘要" /></label>
+                  </div>
                 </fieldset>
-                <label>最后编辑人<input class="admin-input" data-last-editor placeholder="默认为网络信息协会" /></label>
-                <label>摘要<input class="admin-input" data-excerpt placeholder="文章简短摘要" /></label>
-                <input data-cover-url type="hidden" />
-                <div class="inline-uploader">
-                  <label>封面图<input class="admin-input" data-cover-file type="file" accept="image/*" /></label>
-                  <button class="btn secondary" type="button" data-upload-cover>上传并设为封面</button>
-                </div>
-                <label>Markdown 内容（可粘贴或拖拽图片）<textarea class="admin-input" data-markdown placeholder="# Hello"></textarea></label>
-                <div class="inline-uploader">
-                  <label>文章图片<input class="admin-input" data-post-image-file type="file" accept="image/*" /></label>
-                  <button class="btn secondary" type="button" data-upload-post-image>上传图片</button>
-                </div>
-                <div class="inline-uploader">
-                  <label>附件资料<input class="admin-input" data-post-file type="file" multiple /></label>
-                  <button class="btn secondary" type="button" data-upload-post-file>上传附件并插入下载链接</button>
-                </div>
-                <div class="editor-actions">
-                  <button class="btn primary" type="button" data-publish>发布</button>
-                  <button class="btn secondary" type="button" data-save-draft>保存为草稿</button>
-                </div>
-                <p class="meta" aria-live="polite" data-message></p>
+                <fieldset class="admin-fieldset">
+                  <legend>正文</legend>
+                  <label>Markdown（可粘贴或拖拽图片）<textarea class="admin-input" data-markdown placeholder="# Hello"></textarea></label>
+                  <div class="inline-uploader">
+                    <label>文章图片<input class="admin-input" data-post-image-file type="file" accept="image/*" /></label>
+                    <button class="btn secondary compact" type="button" data-upload-post-image>上传图片</button>
+                  </div>
+                  <div class="inline-uploader">
+                    <label>附件资料<input class="admin-input" data-post-file type="file" multiple /></label>
+                    <button class="btn secondary compact" type="button" data-upload-post-file>上传并插入下载链接</button>
+                  </div>
+                </fieldset>
+                <fieldset class="admin-fieldset">
+                  <legend>封面</legend>
+                  <input data-cover-url type="hidden" />
+                  <div class="inline-uploader">
+                    <label>封面图<input class="admin-input" data-cover-file type="file" accept="image/*" /></label>
+                    <button class="btn secondary compact" type="button" data-upload-cover>上传并设为封面</button>
+                  </div>
+                </fieldset>
+                <fieldset class="admin-fieldset">
+                  <legend>署名</legend>
+                  <div class="grid">
+                    <label>主要作者<input class="admin-input" data-author-name placeholder="默认为网络信息协会" /></label>
+                    <label>最后编辑人<input class="admin-input" data-last-editor placeholder="默认为网络信息协会" /></label>
+                  </div>
+                  <label>作者跳转链接<input class="admin-input" data-author-url type="url" placeholder="https://example.com/profile" /></label>
+                  <label>头像网页地址（直接读取）<input class="admin-input" data-author-avatar type="url" placeholder="https://example.com/avatar.jpg" /></label>
+                  <div class="inline-uploader">
+                    <label>GitHub 用户名<input class="admin-input" data-author-github placeholder="例如 octocat" autocomplete="off" /></label>
+                    <button class="btn secondary compact" type="button" data-use-github-avatar>读取 GitHub 头像</button>
+                  </div>
+                  <div class="inline-uploader">
+                    <label>本地作者头像<input class="admin-input" data-author-avatar-file type="file" accept="image/png,image/jpeg,image/gif,image/webp" /></label>
+                    <button class="btn secondary compact" type="button" data-upload-author-avatar>上传并设为头像</button>
+                  </div>
+                  <fieldset class="coauthor-editor">
+                    <legend>协同作者</legend>
+                    <p class="meta">可添加多位协同作者；主页和头像均为选填。</p>
+                    <div class="coauthor-list" data-coauthors-list></div>
+                    <button class="btn secondary compact" type="button" data-add-coauthor>添加协同作者</button>
+                  </fieldset>
+                </fieldset>
               </div>
             </section>
             <aside class="editor-shell preview">
-              <p class="meta">实时预览</p>
+              <p class="admin-preview-label">实时预览</p>
               <div class="mini-preview article-body" data-preview></div>
             </aside>
+          </div>
+        </div>
+        <div class="modal-foot admin-editor-foot">
+          <p class="meta" aria-live="polite" data-message></p>
+          <div class="editor-actions">
+            <button class="btn secondary" type="button" data-save-draft>保存为草稿</button>
+            <button class="btn primary" type="button" data-publish>发布</button>
           </div>
         </div>
       </div>
     </div>
 
-    <footer class="shell footer"><span>YUNA.ADMIN · 管理后台</span><span>内容维护工作台</span></footer>
-    <script src="/app.js"></script>
-    <script src="/admin/admin.js"></script>
+    <footer class="site-footer admin-footer">
+      <div class="shell footer">
+        <span>YUNA.ADMIN · 管理后台</span>
+        <span>内容维护工作台</span>
+      </div>
+    </footer>
+    <script src="/js/core.js"></script>
+    <script src="/js/markdown.js"></script>
+    <script src="/js/nav.js"></script>
+    <script src="/js/footer.js"></script>
+    <script src="/js/posts.js"></script>
+    <script src="/js/uploads.js"></script>
+    <script src="/admin/js/state.js"></script>
+    <script src="/admin/js/editor.js"></script>
+    <script src="/admin/js/post-list.js"></script>
+    <script src="/admin/js/fixed-records.js"></script>
+    <script src="/admin/js/site-tools.js"></script>
+    <script src="/admin/js/main.js"></script>
     <script src="/yuna-ui.js"></script>
   </body>
 </html>

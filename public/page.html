@@ -10,88 +10,67 @@
     <meta property="og:description" content="燕山大学大学生网络信息协会的固定页面：授课资料、招新流程与常用服务。" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://www.yuna.team/images/og-image.png" />
-    <link rel="preload" as="image" href="/images/campus-bg.webp" />
-    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="/images/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles/tokens.css" />
+    <link rel="stylesheet" href="/styles/base.css" />
+    <link rel="stylesheet" href="/styles/components.css" />
+    <link rel="stylesheet" href="/styles/layout.css" />
+    <link rel="stylesheet" href="/styles/fx.css" />
+    <link rel="stylesheet" href="/styles/pages/team.css" />
     <script>document.documentElement.classList.add("js");</script>
   </head>
-  <body>
+  <body class="page-page">
+    <a class="skip-link" href="#content">跳到正文</a>
     <noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载页面内容。</p></noscript>
-    <div class="scroll-progress" id="scrollProgress"></div>
-    <div class="cursor-ring" id="cursorRing"></div>
-    <div class="cursor-glow" id="cursorGlow"></div>
-    <canvas class="particle-canvas" id="particleCanvas"></canvas>
-    <div class="aurora-layer"></div>
 
     <header class="topbar">
       <div class="shell topbar-inner">
-        <a class="brand magnetic" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+        <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
         <nav class="nav" aria-label="站点导航">
           <a href="/">首页</a>
           <a href="/articles.html">文章列表</a>
           <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
           <a href="/lesson-plan.html">授课计划</a>
           <a href="/team.html">关于协会</a>
-          <a href="/join.html">加入我们</a>
+          <a class="nav-cta" href="/join.html">加入我们</a>
           <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
         </nav>
       </div>
     </header>
 
     <div class="page-wrap">
-      <div class="hero-bg" id="heroBg"></div>
-      <div class="mist-top"></div>
-      <div class="mist-bottom"></div>
-      <div class="grid-overlay"></div>
-      <section class="shell page-hero">
-        <div class="reveal">
-          <p class="eyebrow" data-page-hero-eyebrow>Knowledge Base</p>
+      <section class="shell page-hero static-hero">
+        <div class="reveal" data-editable-block="page-hero-copy" data-editable-title="固定页面主视觉：眉标与导语">
+          <p class="eyebrow" data-page-hero-eyebrow data-block-field="eyebrow">Knowledge Base</p>
           <h1 data-page-hero-title>学习资料与加入入口。</h1>
-          <p class="lead" data-page-hero-lead>这里整理授课资料、招新流程、联系方式和协会常用服务，方便新成员从一页开始了解方向与路径。</p>
+          <p class="lead" data-page-hero-lead data-block-field="lead">这里展示协会整理的 Markdown 资料与固定页面内容。</p>
           <div class="page-kpi">
             <div data-editable-block="page-kpi-lessons" data-editable-title="固定页面 KPI：授课"><strong data-block-field="title">授课</strong><span data-block-field="body">课件与练习</span></div>
             <div data-editable-block="page-kpi-join" data-editable-title="固定页面 KPI：招新"><strong data-block-field="title">招新</strong><span data-block-field="body">方向与流程</span></div>
             <div data-editable-block="page-kpi-contact" data-editable-title="固定页面 KPI：联系"><strong data-block-field="title">联系</strong><span data-block-field="body">社群与活动</span></div>
           </div>
         </div>
-        <div class="page-visual reveal" aria-hidden="true">
-          <div class="tech-sweep"></div>
-          <div class="logo-holo-grid"></div>
-          <div class="scanlines"></div>
-          <div class="tech-web"></div>
-          <div class="visual-lines"></div>
-          <span class="pulse-ring p1"></span>
-          <span class="pulse-ring p2"></span>
-          <span class="pulse-ring p3"></span>
-          <span class="ring r1"></span>
-          <span class="ring r2"></span>
-          <div class="visual-orb"><img src="/images/logo.svg" alt="YUNA" /></div>
-          <span class="tech-pill pill-a">Lessons</span>
-          <span class="tech-pill pill-b">Join</span>
-          <span class="tech-pill pill-c">Contact</span>
-          <div class="data-stream"><span>YUNA · KNOWLEDGE BASE · LESSON INDEX ·</span><span>COURSE NOTES · JOIN GUIDE · CAMPUS TECH COMMUNITY ·</span></div>
-        </div>
       </section>
     </div>
 
     <main class="main page-main" id="content">
-      <section class="shell article-layout">
-        <article class="reveal" data-static-page>
+      <section class="shell static-layout">
+        <article class="static-main reveal" data-static-page>
           <div class="article-body">
             <p class="empty-state">正在加载...</p>
           </div>
         </article>
-        <aside class="toc">
+        <aside class="static-aside">
           <section class="aside-card reveal" data-editable-block="page-nav-card" data-editable-title="固定页面：站点导航">
             <h3 data-block-field="title">站点导航</h3>
             <div class="aside-list" data-block-links>
-              <a href="https://docs.yuna.team/">授课链接</a>
+              <a href="https://docs.yuna.team/" target="_blank" rel="noopener">授课链接</a>
               <a href="/join.html">加入我们</a>
               <a href="/join.html#contact">联系我们</a>
               <a href="/team.html">关于协会</a>
             </div>
           </section>
-          <section class="aside-card reveal" data-editable-block="page-maintenance-card" data-editable-title="固定页面：内容维护">
+          <section class="aside-card static-note-card reveal" data-editable-block="page-maintenance-card" data-editable-title="固定页面：内容维护">
             <h3 data-block-field="title">内容维护</h3>
             <p data-block-field="body">有编辑权限的成员可以在页面正文上方打开编辑器，更新固定页面内容。</p>
           </section>
@@ -99,8 +78,54 @@
       </section>
     </main>
 
-    <footer class="shell footer"><span>YUNA.BLOG · 固定页面</span><span>资料与协会信息</span></footer>
-    <script src="/app.js"></script>
+<footer class="site-footer">
+      <div class="shell site-footer-main">
+        <div class="site-footer-brand" data-editable-block="site-footer-brand" data-editable-title="页脚：协会简介">
+          <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+          <p data-block-field="body">燕山大学大学生网络信息协会。学习、实践、分享，把技术热情变成看得见的作品。</p>
+        </div>
+        <nav class="site-footer-nav" aria-label="页脚导航">
+          <div data-editable-block="site-footer-nav-content" data-editable-title="页脚链接栏：内容">
+            <h2 data-block-field="title">内容</h2>
+            <div data-block-links>
+              <a href="/articles.html">文章列表</a>
+              <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
+              <a href="/lesson-plan.html">授课计划</a>
+            </div>
+          </div>
+          <div data-editable-block="site-footer-nav-association" data-editable-title="页脚链接栏：协会">
+            <h2 data-block-field="title">协会</h2>
+            <div data-block-links>
+              <a href="/team.html">关于协会</a>
+              <a href="/departments.html">部门介绍</a>
+              <a href="/join.html">加入我们</a>
+            </div>
+          </div>
+          <div data-editable-block="site-footer-nav-departments" data-editable-title="页脚链接栏：部门">
+            <h2 data-block-field="title">部门</h2>
+            <div data-block-links>
+              <a href="/department-dev.html">开发部</a>
+              <a href="/department-ops.html">运维部</a>
+              <a href="/department-publicity.html">组宣部</a>
+              <a href="/department-security.html">网络安全部</a>
+            </div>
+          </div>
+        </nav>
+      </div>
+      <div class="shell footer">
+        <span>YUNA.BLOG · 固定页面</span>
+        <span>资料与协会信息</span>
+      </div>
+    </footer>
+    <script src="/js/core.js"></script>
+    <script src="/js/markdown.js"></script>
+    <script src="/js/nav.js"></script>
+    <script src="/js/editable-blocks.js"></script>
+    <script src="/js/footer.js"></script>
+    <script src="/js/uploads.js"></script>
+    <script src="/js/page-editor.js"></script>
+    <script src="/js/team.js"></script>
+    <script src="/js/pages.js"></script>
     <script>
       window.blog.renderStaticPage();
       window.blog.renderUserNav();

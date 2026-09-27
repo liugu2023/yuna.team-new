@@ -1,0 +1,610 @@
+/* pages/lesson.css —— 授课计划（body.page-lesson），v2。
+   结构：页头（+ KPI）→ 下一次课大卡（日期大字 + 倒计时）→ 届次/部门胶囊 → 课程时间线 → 编辑弹窗。
+   状态只用品牌蓝阶与灰阶区分：待授课 = 空心蓝、已完成 = 实心浅蓝、已取消 = 灰 + 删除线。 */
+
+/* =========================================================
+   页头
+   ========================================================= */
+.page-lesson .page-hero { padding-bottom: var(--space-7); }
+.page-lesson .lesson-plan-actions { margin-top: var(--space-4); }
+.page-lesson .lesson-kpi strong { font-variant-numeric: tabular-nums; }
+.page-lesson .page-main { padding-top: var(--space-5); }
+
+/* =========================================================
+   下一次课大卡：浅色品牌带
+   ========================================================= */
+.page-lesson .lesson-highlight {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: center;
+  margin-bottom: var(--space-8);
+  padding: clamp(24px, 4vw, 40px);
+  border: 1px solid rgba(var(--brand-rgb), .14);
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(ellipse 60% 90% at 15% 0%, rgba(var(--brand-rgb), .10), transparent 70%),
+    linear-gradient(180deg, var(--blue-50), var(--c-surface));
+  box-shadow: var(--shadow-sm);
+}
+/* 右侧淡点阵 */
+.page-lesson .lesson-highlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(var(--grid-dot) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 50% 90% at 100% 0%, #000 10%, transparent 70%);
+  mask-image: radial-gradient(ellipse 50% 90% at 100% 0%, #000 10%, transparent 70%);
+  pointer-events: none;
+}
+
+/* 日期牌：月份眉标 / 日期大字 / 星期 / 倒计时胶囊 */
+.page-lesson .lesson-highlight-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-5) var(--space-4);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.page-lesson .lesson-highlight-month {
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+.page-lesson .lesson-highlight-day {
+  margin-top: var(--space-1);
+  padding-bottom: .1em;
+  font-family: var(--font-display);
+  font-size: clamp(64px, 8vw, 88px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: var(--tracking-display);
+  font-variant-numeric: tabular-nums;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.page-lesson .lesson-highlight-weekday {
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+.page-lesson .lesson-highlight-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  margin-top: var(--space-4);
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.page-lesson .lesson-highlight.is-upcoming .lesson-highlight-countdown {
+  background: var(--c-brand-soft);
+  color: var(--c-brand-strong);
+}
+.page-lesson .lesson-highlight.is-upcoming .lesson-highlight-countdown::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-brand);
+  animation: fx-halo 2.4s var(--ease) infinite;
+}
+
+.page-lesson .lesson-highlight-body { display: grid; gap: var(--space-4); min-width: 0; }
+.page-lesson .lesson-highlight-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.page-lesson .lesson-highlight-head .eyebrow { margin: 0; }
+.page-lesson .lesson-highlight h2 {
+  font-size: clamp(26px, 3.4vw, 40px);
+  line-height: 1.15;
+  letter-spacing: var(--tracking-heading);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.page-lesson .lesson-highlight .lesson-facts {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--c-line);
+}
+.page-lesson .lesson-highlight .lesson-fact { flex-direction: column; gap: 2px; }
+
+/* =========================================================
+   状态胶囊
+   ========================================================= */
+.page-lesson .lesson-status {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.page-lesson .lesson-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.page-lesson .lesson-status.is-planned {
+  border-color: rgba(var(--brand-rgb), .3);
+  color: var(--c-brand-strong);
+}
+.page-lesson .lesson-status.is-planned::before { border: 1.5px solid var(--c-brand); }
+.page-lesson .lesson-status.is-completed {
+  border-color: transparent;
+  background: var(--c-brand-soft);
+  color: var(--c-brand-strong);
+}
+.page-lesson .lesson-status.is-completed::before { background: var(--c-brand); }
+.page-lesson .lesson-status.is-cancelled {
+  background: var(--c-surface-2);
+  color: var(--c-text-3);
+}
+.page-lesson .lesson-status.is-cancelled::before { background: var(--c-text-3); opacity: .6; }
+
+/* =========================================================
+   「标签：值」信息（dl）
+   ========================================================= */
+.page-lesson .lesson-facts {
+  display: grid;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+}
+.page-lesson .lesson-fact { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.page-lesson .lesson-fact dt {
+  flex: none;
+  color: var(--c-text-3);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+.page-lesson .lesson-fact dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   资源链接：小号胶囊 + 箭头
+   ========================================================= */
+.page-lesson .lesson-links { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.page-lesson .lesson-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  max-width: 100%;
+  white-space: nowrap;
+  transition: border-color var(--motion), color var(--motion), background-color var(--motion);
+}
+.page-lesson .lesson-link-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.page-lesson .lesson-links a:hover {
+  border-color: rgba(var(--brand-rgb), .4);
+  background: var(--c-brand-soft);
+  color: var(--c-brand-strong);
+}
+
+/* =========================================================
+   工具栏：届次分段胶囊 + 部门筛选胶囊
+   ========================================================= */
+.page-lesson .lesson-plan-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-7);
+}
+.page-lesson .lesson-toolbar-group { display: grid; gap: var(--space-2); min-width: 0; max-width: 100%; }
+/* 中文标签用正文字体：等宽字体没有中文字形，小字号下会发虚 */
+.page-lesson .lesson-toolbar-label {
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.page-lesson .team-term-button { gap: 8px; height: 36px; padding: 0 16px; }
+.page-lesson .team-term-button > span {
+  color: var(--c-text-3);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.page-lesson .team-term-button.is-active > span { color: var(--c-brand); }
+
+/* 部门筛选：.filter-chips / .filter-chip 在 components.css */
+
+/* =========================================================
+   届次面板
+   ========================================================= */
+.page-lesson .lesson-term-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--c-line);
+}
+.page-lesson .lesson-term-head h2 {
+  font-size: var(--fs-2xl);
+  letter-spacing: var(--tracking-heading);
+}
+.page-lesson .lesson-term-note { color: var(--c-text-2); font-size: var(--fs-sm); }
+.page-lesson .lesson-term-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-left: auto;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+.page-lesson .lesson-term-stats > span + span::before { content: "·"; margin-right: 12px; opacity: .6; }
+.page-lesson .lesson-term-empty { margin-top: var(--space-4); }
+
+/* =========================================================
+   课程时间线：日期列 / 节点 + 竖线 / 卡片
+   ========================================================= */
+.page-lesson .lesson-timeline {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.page-lesson .lesson-timeline::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 123px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--c-line-strong), var(--c-line) 85%, transparent);
+}
+.page-lesson .lesson-card {
+  display: grid;
+  grid-template-columns: 104px 40px minmax(0, 1fr);
+  align-items: start;
+}
+.page-lesson .lesson-when {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  padding-top: 18px;
+  text-align: right;
+}
+.page-lesson .lesson-date {
+  color: var(--c-text);
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.page-lesson .lesson-date.is-tbd { color: var(--c-text-3); font-size: var(--fs-lg); }
+.page-lesson .lesson-weekday {
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  white-space: nowrap;
+}
+
+/* 节点：待授课空心 / 已完成实心 / 已取消灰 / 下一次带光圈 */
+.page-lesson .lesson-node {
+  position: relative;
+  z-index: 1;
+  justify-self: center;
+  width: 11px;
+  height: 11px;
+  margin-top: 25px;
+  border: 2px solid var(--c-brand);
+  border-radius: 50%;
+  background: var(--c-surface);
+}
+.page-lesson .lesson-card.is-completed .lesson-node { background: var(--c-brand); }
+.page-lesson .lesson-card.is-cancelled .lesson-node { border-color: var(--c-line-strong); background: var(--c-surface-2); }
+.page-lesson .lesson-card.is-next .lesson-node {
+  background: var(--c-brand);
+  box-shadow: 0 0 0 4px rgba(var(--brand-rgb), .15);
+  animation: fx-halo 2.4s var(--ease) infinite;
+}
+
+.page-lesson .lesson-card-body {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--dur-3) var(--ease), box-shadow var(--dur-3) var(--ease), transform var(--dur-3) var(--ease);
+}
+.page-lesson .lesson-card-body:hover {
+  border-color: var(--c-line-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.page-lesson .lesson-card.is-next .lesson-card-body {
+  border-color: rgba(var(--brand-rgb), .35);
+  background: linear-gradient(180deg, var(--blue-50), var(--c-surface) 70%);
+  box-shadow: var(--shadow-sm), 0 0 0 3px rgba(var(--brand-rgb), .08);
+}
+.page-lesson .lesson-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.page-lesson .lesson-card-tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-width: 0; }
+.page-lesson .lesson-card-tags:empty { display: none; }
+.page-lesson .lesson-session {
+  color: var(--c-brand-strong);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.page-lesson .lesson-card-body > h3 {
+  font-size: var(--fs-lg);
+  line-height: 1.4;
+  letter-spacing: -.01em;
+  overflow-wrap: anywhere;
+}
+.page-lesson .lesson-card-body > .lesson-facts { display: flex; flex-wrap: wrap; }
+.page-lesson .lesson-card-body > .lesson-links {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--c-line);
+}
+
+/* 已取消：弱化 + 删除线 */
+.page-lesson .lesson-card.is-cancelled .lesson-card-body {
+  background: var(--c-surface-2);
+  box-shadow: none;
+}
+.page-lesson .lesson-card.is-cancelled .lesson-card-body > h3 { color: var(--c-text-3); }
+.page-lesson .lesson-card.is-cancelled .lesson-card-body > h3 s { text-decoration-thickness: 1px; }
+.page-lesson .lesson-card.is-cancelled .lesson-date,
+.page-lesson .lesson-card.is-cancelled .lesson-fact dd { color: var(--c-text-3); }
+
+/* =========================================================
+   整体空状态
+   ========================================================= */
+.page-lesson .lesson-plan-empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: 720px;
+  margin-inline: auto;
+  padding: clamp(40px, 6vw, 72px) var(--space-5);
+  border: 1px dashed var(--c-line-strong);
+  border-radius: var(--r-xl);
+  background: linear-gradient(180deg, var(--blue-50), var(--c-surface));
+  text-align: center;
+}
+/* 线条小日历 */
+.page-lesson .lesson-plan-empty-mark {
+  position: relative;
+  width: 44px;
+  height: 40px;
+  margin-bottom: var(--space-2);
+  border: 1.5px solid var(--c-brand);
+  border-top-width: 6px;
+  border-radius: 8px;
+  opacity: .7;
+}
+.page-lesson .lesson-plan-empty-mark::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 10px;
+  height: 1.5px;
+  background: var(--c-brand);
+  box-shadow: 0 8px 0 var(--c-brand);
+  opacity: .6;
+}
+.page-lesson .lesson-plan-empty h2 { font-size: var(--fs-2xl); letter-spacing: var(--tracking-heading); }
+.page-lesson .lesson-plan-empty > p { max-width: 520px; color: var(--c-text-2); }
+.page-lesson .lesson-plan-empty .hero-actions { justify-content: center; margin-top: var(--space-3); }
+.page-lesson .lesson-plan-empty-hint {
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid rgba(var(--brand-rgb), .2);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  color: var(--c-brand-strong);
+  font-size: var(--fs-sm);
+}
+
+/* =========================================================
+   编辑弹窗
+   ========================================================= */
+.page-lesson .modal-overlay[data-lesson-plan-editor] .modal { max-width: 900px; }
+.page-lesson .lesson-plan-editor [data-lesson-plan-terms] { display: grid; gap: var(--space-5); }
+
+.page-lesson .lesson-term-editor {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-xs);
+}
+.page-lesson .lesson-term-editor legend {
+  padding: 0 var(--space-2);
+  color: var(--c-text);
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+.page-lesson .lesson-term-editor .grid,
+.page-lesson .lesson-editor-row .grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.page-lesson .lesson-editor-list { display: grid; gap: var(--space-3); counter-reset: lesson-row; }
+.page-lesson .lesson-editor-row {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+  counter-increment: lesson-row;
+}
+.page-lesson .lesson-editor-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--c-line);
+}
+.page-lesson .lesson-editor-row-index::before {
+  content: "课次 " counter(lesson-row, decimal-leading-zero);
+  color: var(--c-brand-strong);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: .06em;
+}
+.page-lesson .lesson-editor-row .select-input { width: 100%; min-width: 0; }
+.page-lesson .lesson-editor-row textarea.admin-input { min-height: 80px; }
+.page-lesson .lesson-editor-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+.page-lesson .lesson-editor-empty {
+  padding: var(--space-4);
+  border: 1px dashed var(--c-line-strong);
+  border-radius: var(--r-md);
+  text-align: center;
+}
+
+.page-lesson .lesson-term-adder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed rgba(var(--brand-rgb), .3);
+  border-radius: var(--r-lg);
+  background: var(--blue-50);
+}
+.page-lesson .lesson-term-adder .btn { height: 40px; }
+.page-lesson .lesson-plan-editor [data-lesson-plan-message]:empty { display: none; }
+
+/* =========================================================
+   断点
+   ========================================================= */
+@media (max-width: 1024px) {
+  .page-lesson .lesson-highlight { grid-template-columns: 180px minmax(0, 1fr); }
+  .page-lesson .lesson-term-adder { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .page-lesson .lesson-term-adder .btn { grid-column: 1 / -1; justify-self: start; }
+}
+
+@media (max-width: 720px) {
+  .page-lesson .lesson-highlight {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+    margin-bottom: var(--space-7);
+    padding: var(--space-4);
+    border-radius: var(--r-lg);
+  }
+  .page-lesson .lesson-highlight-date {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "day month" "day weekday" "day countdown";
+    justify-items: start;
+    column-gap: var(--space-4);
+    padding: var(--space-4);
+    text-align: left;
+  }
+  .page-lesson .lesson-highlight-day { grid-area: day; margin: 0; font-size: 64px; }
+  .page-lesson .lesson-highlight-month { grid-area: month; align-self: end; }
+  .page-lesson .lesson-highlight-weekday { grid-area: weekday; }
+  .page-lesson .lesson-highlight-countdown { grid-area: countdown; margin-top: var(--space-1); }
+
+  .page-lesson .lesson-plan-toolbar { flex-direction: column; align-items: stretch; }
+
+  .page-lesson .lesson-term-stats { margin-left: 0; }
+
+  .page-lesson .lesson-timeline::before { left: 9px; }
+  .page-lesson .lesson-card {
+    grid-template-columns: 20px minmax(0, 1fr);
+    grid-template-areas: "node when" ". body";
+    column-gap: var(--space-3);
+    row-gap: var(--space-2);
+  }
+  .page-lesson .lesson-node { grid-area: node; margin-top: 6px; }
+  .page-lesson .lesson-when {
+    grid-area: when;
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding-top: 0;
+  }
+  .page-lesson .lesson-date { font-size: var(--fs-lg); }
+  .page-lesson .lesson-card-body { grid-area: body; padding: var(--space-4); }
+  .page-lesson .lesson-card-top { flex-wrap: wrap; }
+
+  .page-lesson .lesson-plan-empty .hero-actions { width: 100%; }
+  .page-lesson .lesson-term-editor { padding: var(--space-3); }
+  .page-lesson .lesson-editor-row { padding: var(--space-3); }
+  .page-lesson .lesson-term-editor .grid,
+  .page-lesson .lesson-editor-row .grid,
+  .page-lesson .lesson-term-adder { grid-template-columns: 1fr; }
+  .page-lesson .lesson-term-adder .btn { justify-self: stretch; }
+  .page-lesson .lesson-editor-row-head { flex-direction: column; align-items: flex-start; }
+  .page-lesson .lesson-editor-row-actions { justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-lesson .lesson-card.is-next .lesson-node,
+  .page-lesson .lesson-highlight.is-upcoming .lesson-highlight-countdown::before { animation: none !important; }
+  .page-lesson .lesson-card-body:hover { transform: none; }
+}

@@ -1,0 +1,149 @@
+/* base.css —— reset、排版、可访问性、通用工具类。组件见 components.css，外壳见 layout.css。 */
+
+/* ---------- reset ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-space) + var(--space-4));
+  color-scheme: light;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
+}
+img, svg, video, canvas { display: block; max-width: 100%; }
+img { height: auto; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+table { border-collapse: collapse; }
+::selection { background: rgba(var(--brand-rgb), .18); color: var(--c-text); }
+
+/* hidden 属性永远优先（弹窗、面板、管理员专属元素都靠它开合） */
+[hidden] { display: none !important; }
+
+/* ---------- 排版 ---------- */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  color: var(--c-text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: var(--tracking-heading);
+}
+h1 { font-size: var(--fs-4xl); line-height: 1.1; letter-spacing: -.03em; }
+h2 { font-size: var(--fs-3xl); line-height: var(--lh-heading); }
+h3 { font-size: var(--fs-xl); line-height: 1.35; font-weight: 600; letter-spacing: -.01em; }
+h4 { font-size: var(--fs-lg); line-height: 1.45; font-weight: 600; letter-spacing: 0; }
+h5, h6 { font-size: var(--fs-base); line-height: 1.5; font-weight: 600; letter-spacing: 0; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 1.4em; }
+strong, b { font-weight: 600; }
+small { font-size: var(--fs-xs); }
+code, kbd, pre, samp { font-family: var(--font-mono); font-size: .92em; }
+hr { border: 0; border-top: 1px solid var(--c-line); margin: var(--space-6) 0; }
+
+a {
+  color: var(--c-brand);
+  text-decoration: none;
+  transition: color var(--motion);
+}
+a:hover { color: var(--c-brand-hover); }
+
+/* 眉标：等宽大写小字，前面一小段品牌线 */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 var(--space-4);
+  color: var(--c-brand);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  flex: none;
+  background: currentColor;
+  opacity: .6;
+}
+.eyebrow.is-plain::before { display: none; }
+
+/* 展示级标题 */
+.display {
+  font-size: var(--fs-display);
+  font-weight: 700;
+  line-height: var(--lh-display);
+  letter-spacing: var(--tracking-display);
+}
+/* 渐变高光文字（只用于个别关键词） */
+.text-gradient {
+  /* background-clip:text 只在盒内着色：留一点下沿，避免字形底部被裁 */
+  padding-bottom: .1em;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.lead {
+  max-width: 640px;
+  margin-top: var(--space-5);
+  color: var(--c-text-2);
+  font-size: var(--fs-lg);
+  line-height: 1.75;
+}
+.meta { color: var(--c-text-3); font-size: var(--fs-sm); }
+.muted { color: var(--c-text-2); }
+.error { color: var(--c-danger); }
+.mono { font-family: var(--font-mono); }
+.num-tabular { font-variant-numeric: tabular-nums; }
+
+/* ---------- 可访问性 ---------- */
+.skip-link {
+  position: fixed;
+  left: var(--space-4);
+  top: -60px;
+  z-index: var(--z-skip);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--r-pill);
+  background: var(--ink-900);
+  color: #fff;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: top var(--motion);
+}
+.skip-link:focus { top: var(--space-3); color: #fff; }
+
+:focus-visible { outline: 2px solid var(--c-focus); outline-offset: 2px; }
+:focus:not(:focus-visible) { outline: none; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 打开弹窗 / 移动端菜单时锁住页面滚动 */
+body.modal-open,
+body.menu-open { overflow: hidden; }

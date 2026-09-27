@@ -1,45 +1,320 @@
-const root=document.documentElement;const finePointer=matchMedia('(hover:hover) and (pointer:fine)');const glow=document.getElementById('cursorGlow');const heroBg=document.getElementById('heroBg');const cursorRing=document.getElementById('cursorRing');const scrollProgress=document.getElementById('scrollProgress');
-    // 光标跟随用 rAF 插值:旧版每次 pointermove 起一段 260/500ms 的 WAAPI 动画,
-    // 光环永远慢半拍,是桌面端"不跟手"的主因。插值系数让光环基本贴住鼠标、光晕留一点拖尾。
-    let ptrX=innerWidth/2,ptrY=innerHeight/2,glowX=ptrX,glowY=ptrY,ringX=ptrX,ringY=ptrY,followRunning=false;
-    const followCursor=()=>{ringX+=(ptrX-ringX)*.6;ringY+=(ptrY-ringY)*.6;glowX+=(ptrX-glowX)*.28;glowY+=(ptrY-glowY)*.28;if(cursorRing)cursorRing.style.transform=`translate(${ringX-17}px,${ringY-17}px)`;if(glow)glow.style.transform=`translate(${glowX-140}px,${glowY-140}px)`;if(Math.abs(ptrX-ringX)+Math.abs(ptrY-ringY)+Math.abs(ptrX-glowX)+Math.abs(ptrY-glowY)>.5){requestAnimationFrame(followCursor)}else{followRunning=false}};
-    window.addEventListener('pointermove',(e)=>{const x=e.clientX,y=e.clientY;root.style.setProperty('--mx',`${x}px`);root.style.setProperty('--my',`${y}px`);ptrX=x;ptrY=y;if((glow||cursorRing)&&finePointer.matches&&!followRunning){followRunning=true;requestAnimationFrame(followCursor)}if(heroBg){const tx=(window.innerWidth/2-x)*.006,ty=(window.innerHeight/2-y)*.006;heroBg.style.setProperty('--bg-x',`${tx}px`);heroBg.style.setProperty('--bg-y',`${ty}px`)}},{passive:true});
-    // 滚动进度条 + 移动端顶栏收放:下滑让出屏幕,上滑或回到页首立即呼出;菜单展开时不收。
-    const topbarEl=document.querySelector('.topbar');const compactNav=matchMedia('(max-width:760px)');let lastScrollY=scrollY;
-    const updateScroll=()=>{const max=document.documentElement.scrollHeight-innerHeight;const pct=max>0?(scrollY/max)*100:0;if(scrollProgress)scrollProgress.style.width=`${pct}%`;document.body.classList.toggle('scrolled',scrollY>18);if(topbarEl){const y=scrollY;if(!compactNav.matches||topbarEl.classList.contains('nav-open')||y<=70){topbarEl.classList.remove('topbar-hide')}else if(y>lastScrollY+4){topbarEl.classList.add('topbar-hide')}else if(y<lastScrollY-4){topbarEl.classList.remove('topbar-hide')}lastScrollY=y}};updateScroll();addEventListener('scroll',updateScroll,{passive:true});
-    // 磁吸只在精准指针(鼠标)下启用:触屏上 pointermove 会把按钮拽着跑,点按不跟手。
-    if(finePointer.matches)document.querySelectorAll('.magnetic').forEach(el=>{el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect();el.style.setProperty('--mag-x',`${(e.clientX-r.left-r.width/2)*.08}px`);el.style.setProperty('--mag-y',`${(e.clientY-r.top-r.height/2)*.08}px`)});el.addEventListener('pointerleave',()=>{el.style.setProperty('--mag-x','0px');el.style.setProperty('--mag-y','0px')})});
-    // 聚光/涟漪/悬停光标改为事件委托：动态渲染出来的卡片（文章列表、成员卡）也能拿到同一套交互。
-    const SPOT_SELECTOR='.btn,.card,.knowledge-card,.resource-card,.member-card,.aside-card,.visual-card,.login-card,.stat';
-    const HOVER_SELECTOR='a,button,.card,.knowledge-card,.resource-card,.member-card,.aside-card,.big-logo,.logo-stage,.visual-card,.login-card';
-    document.addEventListener('pointermove',e=>{const el=e.target instanceof Element?e.target.closest(SPOT_SELECTOR):null;if(!el)return;const r=el.getBoundingClientRect();el.style.setProperty('--spot-x',`${e.clientX-r.left}px`);el.style.setProperty('--spot-y',`${e.clientY-r.top}px`)},{passive:true});
-    document.addEventListener('click',e=>{const el=e.target instanceof Element?e.target.closest(SPOT_SELECTOR):null;if(!el)return;const r=el.getBoundingClientRect();const s=document.createElement('span');s.className='ripple';s.style.left=`${e.clientX-r.left}px`;s.style.top=`${e.clientY-r.top}px`;el.appendChild(s);setTimeout(()=>s.remove(),760)});
-    document.addEventListener('pointerover',e=>{const el=e.target instanceof Element?e.target.closest(HOVER_SELECTOR):null;document.body.classList.toggle('cursor-active',Boolean(el))});
-    document.documentElement.addEventListener('pointerleave',()=>document.body.classList.remove('cursor-active'));
-    // 移动端汉堡导航:按钮由这里注入(全部页面共用),开合状态挂在 .topbar 的 nav-open 上;
-    // 点链接、点面板外、按 Esc、窗口回到桌面宽度时都自动收起。
-    const topbar=document.querySelector('.topbar');const topbarInner=topbar?topbar.querySelector('.topbar-inner'):null;const siteNav=topbarInner?topbarInner.querySelector('.nav'):null;
-    if(topbar&&topbarInner&&siteNav){
-      if(!siteNav.id)siteNav.id='siteNav';
-      const navToggle=document.createElement('button');navToggle.type='button';navToggle.className='nav-toggle';navToggle.setAttribute('aria-controls',siteNav.id);navToggle.setAttribute('aria-expanded','false');navToggle.setAttribute('aria-label','打开导航菜单');navToggle.innerHTML='<span></span><span></span><span></span>';
-      topbarInner.appendChild(navToggle);
-      const setNavOpen=(open)=>{topbar.classList.toggle('nav-open',open);if(open)topbar.classList.remove('topbar-hide');navToggle.setAttribute('aria-expanded',String(open));navToggle.setAttribute('aria-label',open?'关闭导航菜单':'打开导航菜单')};
-      navToggle.addEventListener('click',()=>setNavOpen(!topbar.classList.contains('nav-open')));
-      siteNav.addEventListener('click',e=>{if(e.target instanceof Element&&e.target.closest('a,button'))setNavOpen(false)});
-      document.addEventListener('click',e=>{if(topbar.classList.contains('nav-open')&&e.target instanceof Element&&!topbar.contains(e.target))setNavOpen(false)});
-      addEventListener('keydown',e=>{if(e.key==='Escape')setNavOpen(false)});
-      const desktopNav=matchMedia('(min-width:761px)');desktopNav.addEventListener?.('change',e=>{if(e.matches)setNavOpen(false)});
+// 全站交互与小巧思：无依赖、空值安全；prefers-reduced-motion 下关闭所有动效类效果。
+//   1. 顶栏：滚动收紧 .is-scrolled、≤1024px 下滑隐藏 .topbar-hide、汉堡全屏菜单 .nav-open、当前页滑动指示器 .nav-indicator
+//   2. .reveal 入场：进入视口加 .visible，同一批进入的元素自动错开（--reveal-delay）；之后动态插入的 .reveal 也会被接管
+//   3. 横滑标签条：右侧还有内容时加 .scroll-more
+//   4. 聚光：.spotlight 或 [data-spotlight] 的直接子元素，pointermove 写 --x / --y（rAF 节流）
+//   5. 计数：[data-count="数字"] 进入视口后滚动到目标值；data-count 之后被改写（如 posts.js 写入实时数）会重新计数
+//   6. 关键词轮换：[data-rotator] > .rotator-word × N
+//   7. 快捷键：[data-hotkey="/"] 在非输入状态按下该键时聚焦元素
+//   8. 阅读进度：[data-scroll-progress] 写 --progress（0–1）；属性值可填选择器，只统计该元素范围
+//   9. 正文增强：所有 .article-body 自动调用 markdown.js 的 enhanceArticleBody（标题锚点、代码块头栏与复制）
+//  10. 后台标签页、办公室地图（原有功能）
+// 所有选择器与 API 说明见 .ui-notes/SYSTEM-v2.md。
+(function(){
+  const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)");
+  const compactNav=matchMedia("(max-width:1024px)");
+  const finePointer=matchMedia("(hover:hover) and (pointer:fine)");
+  const hasIO="IntersectionObserver" in window;
+
+  /* ---------- 1. 顶栏 ---------- */
+  const topbar=document.querySelector(".topbar");
+  const topbarInner=topbar?topbar.querySelector(".topbar-inner"):null;
+  const siteNav=topbarInner?topbarInner.querySelector(".nav"):null;
+  const navItemSelector=":scope > a, :scope > button, [data-user-nav] > a, [data-user-nav] > button";
+  const navItems=()=>siteNav?Array.from(siteNav.querySelectorAll(navItemSelector)):[];
+
+  let lastY=Math.max(0,scrollY);
+  let scrollQueued=false;
+  const onScrollFrame=()=>{
+    scrollQueued=false;
+    const y=Math.max(0,scrollY);
+    if(topbar){
+      topbar.classList.toggle("is-scrolled",y>8);
+      if(!compactNav.matches||topbar.classList.contains("nav-open")||y<=80) topbar.classList.remove("topbar-hide");
+      else if(y>lastY+6) topbar.classList.add("topbar-hide");
+      else if(y<lastY-6) topbar.classList.remove("topbar-hide");
     }
-    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.15});document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=`${Math.min(i*40,220)}ms`;io.observe(el)});
-    // 横滑标签条:右边还有内容时挂 scroll-more(CSS 渐隐提示),滑到底自动摘掉;标签由 app.js 动态填充,所以也监听子节点变化。
-    document.querySelectorAll('.tabs,.team-term-switcher,.resource-tabs,.admin-tabs').forEach(el=>{const sync=()=>el.classList.toggle('scroll-more',el.scrollWidth-el.clientWidth-el.scrollLeft>12);el.addEventListener('scroll',sync,{passive:true});addEventListener('resize',sync);new MutationObserver(sync).observe(el,{childList:true,subtree:true});sync()});
-    // 粒子背景：画布被 CSS 隐藏（移动端/减少动效）或标签页不可见时停帧，避免空转烧 CPU。
-    const canvas=document.getElementById('particleCanvas'),ctx=canvas?canvas.getContext('2d'):null;let particles=[];let particlesRunning=false;
-    const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-    function resizeCanvas(){if(!canvas||!ctx)return;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=innerWidth*dpr;canvas.height=innerHeight*dpr;canvas.style.width=`${innerWidth}px`;canvas.style.height=`${innerHeight}px`;ctx.setTransform(dpr,0,0,dpr,0,0);const n=Math.min(76,Math.max(38,Math.floor(innerWidth/20)));particles=Array.from({length:n},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight*.78,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.16,r:Math.random()*1.8+.7,a:Math.random()*.42+.18}))}
-    function drawParticles(){if(!ctx||!particlesRunning)return;ctx.clearRect(0,0,innerWidth,innerHeight);for(const p of particles){p.x+=p.vx;p.y+=p.vy;if(p.x<-20)p.x=innerWidth+20;if(p.x>innerWidth+20)p.x=-20;if(p.y<-20)p.y=innerHeight*.78+20;if(p.y>innerHeight*.82)p.y=-20;ctx.beginPath();ctx.fillStyle=`rgba(73,200,255,${p.a})`;ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()}for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){const a=particles[i],b=particles[j],dx=a.x-b.x,dy=a.y-b.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<115){ctx.beginPath();ctx.strokeStyle=`rgba(73,200,255,${(1-dist/115)*.12})`;ctx.lineWidth=1;ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}requestAnimationFrame(drawParticles)}
-    function syncParticles(){if(!canvas||!ctx)return;const shouldRun=!document.hidden&&!reducedMotion.matches&&getComputedStyle(canvas).display!=='none';if(shouldRun&&!particlesRunning){particlesRunning=true;requestAnimationFrame(drawParticles)}else if(!shouldRun){particlesRunning=false}}
-    resizeCanvas();addEventListener('resize',()=>{resizeCanvas();syncParticles()});document.addEventListener('visibilitychange',syncParticles);reducedMotion.addEventListener?.('change',syncParticles);syncParticles();
+    updateProgress();
+    lastY=y;
+  };
+  const onScroll=()=>{
+    if(scrollQueued) return;
+    scrollQueued=true;
+    requestAnimationFrame(onScrollFrame);
+  };
+  addEventListener("scroll",onScroll,{passive:true});
+  topbar?.addEventListener("focusin",()=>topbar.classList.remove("topbar-hide"));
+
+  if(topbar&&topbarInner&&siteNav){
+    if(!siteNav.id) siteNav.id="siteNav";
+
+    // 汉堡按钮 + 全屏菜单：点链接、点菜单空白处、焦点离开顶栏、按 Esc、回到桌面宽度时收起
+    const navToggle=document.createElement("button");
+    navToggle.type="button";
+    navToggle.className="nav-toggle";
+    navToggle.setAttribute("aria-controls",siteNav.id);
+    navToggle.setAttribute("aria-expanded","false");
+    navToggle.setAttribute("aria-label","打开导航菜单");
+    navToggle.innerHTML="<span></span><span></span>";
+    topbarInner.appendChild(navToggle);
+    const isOpen=()=>topbar.classList.contains("nav-open");
+    const setNavOpen=(open)=>{
+      topbar.classList.toggle("nav-open",open);
+      document.body.classList.toggle("menu-open",open&&compactNav.matches);
+      if(open) topbar.classList.remove("topbar-hide");
+      navToggle.setAttribute("aria-expanded",String(open));
+      navToggle.setAttribute("aria-label",open?"关闭导航菜单":"打开导航菜单");
+    };
+    navToggle.addEventListener("click",()=>setNavOpen(!isOpen()));
+    siteNav.addEventListener("click",e=>{
+      if(!isOpen()) return;
+      if(e.target===siteNav||(e.target instanceof Element&&e.target.closest("a,button"))) setNavOpen(false);
+    });
+    document.addEventListener("click",e=>{if(isOpen()&&e.target instanceof Node&&!topbar.contains(e.target)) setNavOpen(false);});
+    topbar.addEventListener("focusout",e=>{
+      if(isOpen()&&e.relatedTarget instanceof Node&&!topbar.contains(e.relatedTarget)) setNavOpen(false);
+    });
+    addEventListener("keydown",e=>{
+      if(e.key==="Escape"&&isOpen()){setNavOpen(false);navToggle.focus();}
+    });
+    compactNav.addEventListener?.("change",e=>{if(!e.matches) setNavOpen(false);});
+
+    // 菜单项错开入场用的序号（按视觉顺序：普通链接 → CTA → 登录态链接）
+    const indexNavItems=()=>{
+      const items=navItems();
+      const rank=el=>el.classList.contains("nav-cta")?1:(el.parentElement&&el.parentElement.hasAttribute("data-user-nav"))||el.hasAttribute("data-logout")?2:0;
+      items.slice().sort((a,b)=>rank(a)-rank(b)).forEach((el,i)=>el.style.setProperty("--i",String(i)));
+    };
+
+    // 桌面端滑动指示器：静止时停在当前页，悬停 / 键盘聚焦时滑过去
+    const indicator=document.createElement("span");
+    indicator.className="nav-indicator";
+    indicator.setAttribute("aria-hidden","true");
+    siteNav.prepend(indicator);
+    siteNav.classList.add("has-indicator");
+    const indicatorTargets=()=>navItems().filter(el=>!el.classList.contains("nav-cta"));
+    const activeItem=()=>indicatorTargets().find(el=>el.classList.contains("active")||el.getAttribute("aria-current")==="page")||null;
+    let indicatorOn=null;
+    const moveIndicator=(el,instant)=>{
+      if(!el||compactNav.matches){
+        indicator.classList.remove("is-visible");
+        indicatorOn=null;
+        return;
+      }
+      const jump=instant||reduceMotion.matches||!indicator.classList.contains("is-visible");
+      if(jump) indicator.classList.add("no-transition");
+      indicator.style.setProperty("--indicator-x",`${el.offsetLeft}px`);
+      indicator.style.setProperty("--indicator-w",`${el.offsetWidth}px`);
+      indicator.classList.add("is-visible");
+      indicatorOn=el;
+      if(jump){
+        void indicator.offsetWidth;
+        requestAnimationFrame(()=>indicator.classList.remove("no-transition"));
+      }
+    };
+    const itemFrom=target=>{
+      if(!(target instanceof Element)) return null;
+      const el=target.closest("a,button");
+      return el&&indicatorTargets().includes(el)?el:null;
+    };
+    siteNav.addEventListener("pointerover",e=>{const el=itemFrom(e.target);if(el) moveIndicator(el);});
+    siteNav.addEventListener("pointerleave",()=>moveIndicator(activeItem()));
+    siteNav.addEventListener("focusin",e=>{const el=itemFrom(e.target);if(el) moveIndicator(el);});
+    siteNav.addEventListener("focusout",e=>{
+      if(!(e.relatedTarget instanceof Node)||!siteNav.contains(e.relatedTarget)) moveIndicator(activeItem());
+    });
+    const resync=()=>moveIndicator(indicatorOn&&indicatorOn.isConnected?indicatorOn:activeItem(),true);
+    addEventListener("resize",resync);
+    compactNav.addEventListener?.("change",resync);
+    document.fonts?.ready.then(resync);
+    // nav.js 异步替换登录态链接后重新定位、重新编号
+    new MutationObserver(()=>{indexNavItems();resync();}).observe(siteNav,{childList:true,subtree:true});
+    indexNavItems();
+    resync();
+  }
+
+  /* ---------- 8. 阅读进度 ---------- */
+  function updateProgress(){
+    const bars=document.querySelectorAll("[data-scroll-progress]");
+    if(!bars.length) return;
+    bars.forEach(bar=>{
+      const selector=bar.getAttribute("data-scroll-progress");
+      const scope=selector?document.querySelector(selector):null;
+      let start=0;
+      let end=document.documentElement.scrollHeight-innerHeight;
+      if(scope){
+        const rect=scope.getBoundingClientRect();
+        start=rect.top+scrollY-innerHeight*.2;
+        end=rect.bottom+scrollY-innerHeight;
+      }
+      const range=end-start;
+      const progress=range>0?Math.min(1,Math.max(0,(scrollY-start)/range)):0;
+      if(bar instanceof HTMLElement) bar.style.setProperty("--progress",progress.toFixed(4));
+    });
+  }
+  addEventListener("resize",updateProgress);
+  onScrollFrame();
+
+  /* ---------- 2. reveal ---------- */
+  const revealSeen=new WeakSet();
+  const revealIO=hasIO?new IntersectionObserver(entries=>{
+    let batch=0;
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      const el=entry.target;
+      revealIO.unobserve(el);
+      if(batch&&!reduceMotion.matches&&el instanceof HTMLElement) el.style.setProperty("--reveal-delay",`${Math.min(batch*70,350)}ms`);
+      batch+=1;
+      el.classList.add("visible");
+    });
+  },{threshold:0,rootMargin:"0px 0px -8% 0px"}):null;
+  const bindReveal=el=>{
+    if(revealSeen.has(el)||el.classList.contains("visible")) return;
+    revealSeen.add(el);
+    if(revealIO) revealIO.observe(el);
+    else el.classList.add("visible");
+  };
+
+  /* ---------- 3. 横滑标签条 ---------- */
+  const stripSel=".tabs,.team-term-switcher,.resource-tabs,.admin-tabs";
+  const stripSeen=new WeakSet();
+  const bindStrip=el=>{
+    if(stripSeen.has(el)) return;
+    stripSeen.add(el);
+    const sync=()=>el.classList.toggle("scroll-more",el.scrollWidth-el.clientWidth-el.scrollLeft>12);
+    el.addEventListener("scroll",sync,{passive:true});
+    addEventListener("resize",sync);
+    new MutationObserver(sync).observe(el,{childList:true,subtree:true});
+    sync();
+  };
+
+  /* ---------- 5. 计数 ---------- */
+  const countSeen=new WeakSet();
+  const countBound=new WeakSet();
+  const countFrames=new WeakMap();
+  const formatCount=n=>Math.round(n).toLocaleString("zh-CN");
+  const runCount=el=>{
+    const to=Number(el.getAttribute("data-count"));
+    if(!Number.isFinite(to)) return;
+    const previous=countFrames.get(el);
+    if(previous) cancelAnimationFrame(previous);
+    if(reduceMotion.matches||to<=0){el.textContent=formatCount(to);return;}
+    const parsed=parseInt((el.textContent||"").replace(/[^\d]/g,""),10);
+    const from=Number.isFinite(parsed)&&parsed<to?parsed:0;
+    const duration=Math.min(2000,900+Math.log10(to+1)*300);
+    const startAt=performance.now();
+    const step=now=>{
+      const p=Math.min(1,(now-startAt)/duration);
+      const eased=p>=1?1:1-Math.pow(2,-10*p);
+      el.textContent=formatCount(from+(to-from)*eased);
+      if(p<1) countFrames.set(el,requestAnimationFrame(step));
+      else countFrames.delete(el);
+    };
+    countFrames.set(el,requestAnimationFrame(step));
+  };
+  const countIO=hasIO?new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      countIO.unobserve(entry.target);
+      countSeen.add(entry.target);
+      runCount(entry.target);
+    });
+  },{threshold:.5}):null;
+  const countAttrs=new MutationObserver(records=>{
+    records.forEach(record=>{
+      const el=record.target;
+      if(!(el instanceof Element)) return;
+      if(countSeen.has(el)||!countIO) runCount(el);
+      else if(!reduceMotion.matches&&Number.isFinite(Number(el.getAttribute("data-count")))) el.textContent="0";
+    });
+  });
+  const bindCount=el=>{
+    if(countBound.has(el)) return;
+    countBound.add(el);
+    countAttrs.observe(el,{attributes:true,attributeFilter:["data-count"]});
+    if(!countIO){runCount(el);return;}
+    if(!reduceMotion.matches&&Number.isFinite(Number(el.getAttribute("data-count")))) el.textContent="0";
+    countIO.observe(el);
+  };
+
+  /* ---------- 6. 关键词轮换 ---------- */
+  const rotatorSeen=new WeakSet();
+  const bindRotator=el=>{
+    if(rotatorSeen.has(el)) return;
+    rotatorSeen.add(el);
+    const words=Array.from(el.querySelectorAll(".rotator-word"));
+    if(words.length<2||reduceMotion.matches||!(el instanceof HTMLElement)) return;
+    let index=0;
+    el.classList.add("is-ready");
+    words[0].classList.add("is-active");
+    const fit=()=>{el.style.width=`${words[index] instanceof HTMLElement?words[index].offsetWidth:0}px`;};
+    fit();
+    addEventListener("resize",fit);
+    document.fonts?.ready.then(fit);
+    setInterval(()=>{
+      if(document.hidden) return;
+      const prev=words[index];
+      index=(index+1)%words.length;
+      const next=words[index];
+      prev.classList.remove("is-active");
+      prev.classList.add("is-leaving");
+      next.classList.remove("is-leaving");
+      next.classList.add("is-active");
+      fit();
+      setTimeout(()=>prev.classList.remove("is-leaving"),700);
+    },2600);
+  };
+
+  /* ---------- 统一扫描：首屏 + 之后动态插入的节点 ---------- */
+  const scan=()=>{
+    document.querySelectorAll(".reveal").forEach(bindReveal);
+    document.querySelectorAll(stripSel).forEach(bindStrip);
+    document.querySelectorAll("[data-count]").forEach(bindCount);
+    document.querySelectorAll("[data-rotator]").forEach(bindRotator);
+    const enhance=window.blog&&window.blog.enhanceArticleBody;
+    if(typeof enhance==="function") document.querySelectorAll(".article-body").forEach(el=>enhance(el));
+  };
+  scan();
+  let scanQueued=false;
+  new MutationObserver(()=>{
+    if(scanQueued) return;
+    scanQueued=true;
+    requestAnimationFrame(()=>{scanQueued=false;scan();});
+  }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["data-count"]});
+
+  /* ---------- 4. 聚光 ---------- */
+  if(finePointer.matches&&!reduceMotion.matches){
+    let pending=null;
+    let frame=0;
+    document.addEventListener("pointermove",e=>{
+      if(e.pointerType&&e.pointerType!=="mouse") return;
+      const target=e.target instanceof Element?e.target.closest(".spotlight, [data-spotlight] > *"):null;
+      if(!(target instanceof HTMLElement)) return;
+      pending={el:target,x:e.clientX,y:e.clientY};
+      if(frame) return;
+      frame=requestAnimationFrame(()=>{
+        frame=0;
+        if(!pending) return;
+        const rect=pending.el.getBoundingClientRect();
+        pending.el.style.setProperty("--x",`${(pending.x-rect.left).toFixed(1)}px`);
+        pending.el.style.setProperty("--y",`${(pending.y-rect.top).toFixed(1)}px`);
+      });
+    },{passive:true});
+  }
+
+  /* ---------- 7. 快捷键 ---------- */
+  document.addEventListener("keydown",e=>{
+    if(e.defaultPrevented||e.metaKey||e.ctrlKey||e.altKey||e.isComposing) return;
+    const active=e.target;
+    if(active instanceof HTMLElement&&(active.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName))) return;
+    if(document.body.classList.contains("modal-open")) return;
+    const target=Array.from(document.querySelectorAll("[data-hotkey]")).find(el=>el.getAttribute("data-hotkey")===e.key&&el instanceof HTMLElement&&el.offsetParent!==null);
+    if(!(target instanceof HTMLElement)) return;
+    e.preventDefault();
+    target.focus();
+    if(target instanceof HTMLInputElement) target.select();
+  });
+})();
 
 (function(){
   const $=(s,root=document)=>root.querySelector(s);
@@ -173,13 +448,4 @@ const root=document.documentElement;const finePointer=matchMedia('(hover:hover) 
     });
   }
   initOfficeMaps();
-
-  // 装饰动画容器滚出视口后暂停，减少常驻 GPU/CPU 占用。
-  const animRoots=$$('.logo-stage,.page-visual');
-  if(animRoots.length&&'IntersectionObserver' in window){
-    const animIo=new IntersectionObserver(entries=>{
-      entries.forEach(entry=>entry.target.classList.toggle('anim-offscreen',!entry.isIntersecting));
-    },{rootMargin:'80px'});
-    animRoots.forEach(el=>animIo.observe(el));
-  }
 })();

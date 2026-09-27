@@ -1,0 +1,294 @@
+/* pages/login.css —— 后台入口（body.page-admin-login）与 403 无权限页（body.page-403，由 functions/admin/_middleware.ts 输出）。
+   居中精致卡片 + 淡校园照片 + 浅色点阵柔光背景。 */
+
+/* =========================================================
+   舞台：顶栏占位 + 点阵 + 两团柔光
+   ========================================================= */
+:is(.page-admin-login, .page-403) .login-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  min-height: min(100vh, 920px);
+  padding: calc(var(--header-space) + var(--space-7)) var(--gutter) var(--space-9);
+  /* 燕大校园照片作卡片背后的淡背景：中心几乎纯底色，四周隐约露出，底部融进 --c-bg */
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 45%, rgba(var(--bg-rgb), .88) 0%, rgba(var(--bg-rgb), .6) 60%, rgba(var(--bg-rgb), .35) 100%),
+    linear-gradient(180deg, rgba(var(--bg-rgb), 0) 60%, var(--c-bg) 100%),
+    url("/images/campus-bg.webp") center 40% / cover no-repeat fixed,
+    var(--c-bg);
+}
+:is(.page-admin-login, .page-403) .login-dots {
+  opacity: .6;
+  -webkit-mask-image: radial-gradient(ellipse 55% 60% at 50% 40%, #000 15%, transparent 75%);
+  mask-image: radial-gradient(ellipse 55% 60% at 50% 40%, #000 15%, transparent 75%);
+}
+:is(.page-admin-login, .page-403) .login-glow-a {
+  --glow-size: 720px;
+  --glow-alpha: .1;
+  top: -300px;
+  left: 50%;
+  margin-left: -640px;
+}
+:is(.page-admin-login, .page-403) .login-glow-b {
+  --glow-size: 560px;
+  --glow-alpha: .18;
+  --glow-dur: 30s;
+  bottom: -260px;
+  left: 50%;
+  margin-left: 40px;
+  animation-direction: alternate-reverse;
+}
+:is(.page-admin-login, .page-403) .login-center {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 420px;
+}
+
+/* =========================================================
+   后台入口
+   ========================================================= */
+.page-admin-login .login-head {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+.page-admin-login .login-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: var(--space-5);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-sm), 0 0 0 6px rgba(var(--brand-rgb), .06);
+}
+.page-admin-login .login-mark img { width: 28px; height: 28px; }
+.page-admin-login .login-head .eyebrow { margin-bottom: var(--space-2); }
+.page-admin-login .login-head h1 {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4vw, 38px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-display);
+}
+.page-admin-login .login-head .lead {
+  max-width: 360px;
+  margin-top: var(--space-3);
+  font-size: var(--fs-sm);
+}
+
+.page-admin-login .login-card {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-6);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-lg);
+}
+/* 卡片顶沿一道淡品牌色高光 */
+.page-admin-login .login-card::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--brand-rgb), .5), rgba(var(--glow-sky), .7), rgba(var(--brand-rgb), .5), transparent);
+}
+.page-admin-login .login-card-title {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+.page-admin-login .login-facts {
+  display: grid;
+  margin: 0;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-sm);
+  background: var(--c-surface-2);
+}
+.page-admin-login .login-facts > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 10px var(--space-4);
+  font-size: var(--fs-sm);
+}
+.page-admin-login .login-facts > div + div { border-top: 1px solid var(--c-line); }
+.page-admin-login .login-facts dt { color: var(--c-text-3); }
+.page-admin-login .login-facts dd { margin: 0; color: var(--c-text); font-weight: 600; text-align: right; }
+.page-admin-login .login-message { font-size: var(--fs-xs); text-align: center; }
+
+/* 备用账密：折叠起来，不抢主按钮 */
+.page-admin-login .login-fallback {
+  border-top: 1px solid var(--c-line);
+  padding-top: var(--space-3);
+}
+.page-admin-login .login-fallback > summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 6px;
+  border-radius: var(--r-xs);
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+  transition: color var(--motion);
+}
+.page-admin-login .login-fallback > summary::-webkit-details-marker { display: none; }
+.page-admin-login .login-fallback > summary::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform var(--motion);
+}
+.page-admin-login .login-fallback[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
+.page-admin-login .login-fallback > summary:hover { color: var(--c-brand); }
+.page-admin-login .fallback-login {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.page-admin-login .field { display: grid; gap: 6px; }
+.page-admin-login .field label {
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+.page-admin-login [data-fallback-message] {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-xs);
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+  font-size: var(--fs-xs);
+}
+
+/* 登录之后：卡片下方的轻量说明 */
+.page-admin-login .login-scope {
+  width: 100%;
+  padding: 0 var(--space-2);
+  color: var(--c-text-3);
+  font-size: var(--fs-xs);
+  text-align: center;
+}
+.page-admin-login .login-scope h3 {
+  color: var(--c-text-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+.page-admin-login .login-scope > p { margin-top: var(--space-2); }
+.page-admin-login .login-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.page-admin-login .login-steps li {
+  counter-increment: step;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px 0 4px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-pill);
+  background: var(--c-surface-glass);
+  color: var(--c-text-2);
+}
+.page-admin-login .login-steps li::before {
+  content: counter(step);
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--c-brand-soft);
+  color: var(--c-brand-strong);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+}
+
+/* =========================================================
+   403
+   ========================================================= */
+.page-403 .login-center { max-width: 560px; }
+.page-403 .forbidden-card {
+  display: grid;
+  justify-items: center;
+  width: 100%;
+  padding: var(--space-8) var(--space-7);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-xl);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.page-403 .forbidden-code {
+  margin-bottom: var(--space-4);
+  padding-bottom: .1em;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--font-mono);
+  font-size: clamp(56px, 9vw, 88px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -.04em;
+}
+.page-403 .forbidden-card h1 {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3.2vw, 32px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-heading);
+}
+.page-403 .forbidden-card .lead {
+  max-width: 420px;
+  margin-top: var(--space-3);
+  font-size: var(--fs-sm);
+}
+.page-403 .forbidden-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+/* =========================================================
+   断点
+   ========================================================= */
+@media (max-width: 720px) {
+  :is(.page-admin-login, .page-403) .login-stage {
+    min-height: 0;
+    padding-top: calc(var(--header-space) + var(--space-5));
+    padding-bottom: var(--space-8);
+  }
+  .page-admin-login .login-card { padding: var(--space-5); }
+  .page-403 .forbidden-card { padding: var(--space-7) var(--space-5); }
+  .page-403 .forbidden-actions .btn { flex: 1 1 100%; }
+}

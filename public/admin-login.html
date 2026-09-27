@@ -6,101 +6,121 @@
   <title>后台入口 · YUNA.BLOG</title>
   <meta name="description" content="协会成员统一身份登录入口。"/>
   <meta name="robots" content="noindex"/>
-  <link rel="preload" as="image" href="/images/campus-bg.webp"/>
-  <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/styles.css"/>
-    <script>document.documentElement.classList.add("js");</script>
+  <link rel="icon" href="/images/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/components.css" />
+  <link rel="stylesheet" href="/styles/layout.css" />
+  <link rel="stylesheet" href="/styles/fx.css" />
+  <link rel="stylesheet" href="/styles/pages/login.css" />
+  <script>document.documentElement.classList.add("js");</script>
 </head>
-<body>
+<body class="page-admin-login">
+<a class="skip-link" href="#content">跳到正文</a>
 <noscript><p class="empty-state">此页面需要启用 JavaScript。</p></noscript>
-<div class="scroll-progress" id="scrollProgress"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-<div class="cursor-glow" id="cursorGlow"></div>
-<canvas class="particle-canvas" id="particleCanvas"></canvas>
-<div class="aurora-layer"></div>
 <header class="topbar">
   <div class="shell topbar-inner">
-    <a class="brand magnetic" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
-    <nav class="nav">
+    <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+    <nav class="nav" aria-label="站点导航">
       <a href="/">首页</a>
       <a href="/articles.html">文章列表</a>
       <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
       <a href="/lesson-plan.html">授课计划</a>
       <a href="/team.html">关于协会</a>
-      <a href="/join.html">加入我们</a>
+      <a class="nav-cta" href="/join.html">加入我们</a>
       <span data-user-nav data-login-label="后台入口"><a class="active" href="/admin-login.html">后台入口</a></span>
     </nav>
   </div>
 </header>
 
-<div class="page-wrap">
-  <div class="hero-bg" id="heroBg"></div>
-  <div class="mist-top"></div>
-  <div class="mist-bottom"></div>
-  <div class="grid-overlay"></div>
-  <section class="shell page-hero">
-    <div class="reveal" data-editable-block="admin-login-hero-copy" data-editable-title="后台入口主视觉文案">
-      <p class="eyebrow" data-block-field="eyebrow">Admin Portal</p>
-      <h1 data-block-field="title">成员登录与后台入口。</h1>
-      <p class="lead" data-block-field="lead">协会成员通过统一身份登录进入内容维护工作台。完成身份确认后，可以维护文章、资料、成员信息和首页图片。</p>
-      <div class="page-kpi">
-        <div data-editable-block="admin-login-kpi-auth" data-editable-title="后台入口 KPI：Auth"><strong data-block-field="title">Auth</strong><span data-block-field="body">身份确认</span></div>
-        <div data-editable-block="admin-login-kpi-audit" data-editable-title="后台入口 KPI：Audit"><strong data-block-field="title">Audit</strong><span data-block-field="body">内容维护</span></div>
-        <div data-editable-block="admin-login-kpi-logs" data-editable-title="后台入口 KPI：Logs"><strong data-block-field="title">Logs</strong><span data-block-field="body">操作记录</span></div>
-      </div>
-    </div>
-    <div class="page-visual reveal" aria-hidden="true">
-      <div class="tech-sweep"></div>
-      <div class="logo-holo-grid"></div>
-      <div class="scanlines"></div>
-      <div class="tech-web"></div>
-      <div class="visual-lines"></div>
-      <span class="pulse-ring p1"></span>
-      <span class="pulse-ring p2"></span>
-      <span class="pulse-ring p3"></span>
-      <span class="ring r1"></span>
-      <span class="ring r2"></span>
-      <div class="visual-orb"><img src="/images/logo.svg" alt="YUNA"/></div>
-      <span class="tech-pill pill-a">Admin</span>
-      <span class="tech-pill pill-b">Campus</span>
-      <span class="tech-pill pill-c">System</span>
-      <div class="data-stream"><span>YUNA · ADMIN PORTAL · IDENTITY CHECK ·</span><span>ARTICLE · KNOWLEDGE · MEMBER · GALLERY ·</span></div>
-    </div>
-  </section>
-</div>
+<main class="login-stage" id="content">
+  <div class="fx-dots login-dots" aria-hidden="true"></div>
+  <div class="fx-glow login-glow-a" aria-hidden="true"></div>
+  <div class="fx-glow is-sky login-glow-b" aria-hidden="true"></div>
 
-<main class="main page-main" id="content">
-  <div class="shell login-wrap">
-    <section class="visual-card reveal" data-editable-block="admin-login-scope-card" data-editable-title="后台入口：维护范围">
-      <span class="flash"></span>
-      <div class="num">SYS</div>
-      <h3 data-block-field="title">后台维护范围</h3>
-      <p data-block-field="body">用于文章发布、知识库维护、成员信息、首页图片和活动内容管理。完成身份确认后进入维护工作台。</p>
-      <div class="login-status">
-        <div class="login-step"><i>1</i><span data-block-field="step1" data-block-label="步骤 1">点击右侧按钮打开协会统一登录页面。</span></div>
-        <div class="login-step"><i>2</i><span data-block-field="step2" data-block-label="步骤 2">登录系统确认成员身份与维护权限。</span></div>
-        <div class="login-step"><i>3</i><span data-block-field="step3" data-block-label="步骤 3">验证通过后自动进入后台工作台。</span></div>
-      </div>
+  <div class="login-center">
+    <header class="login-head reveal" data-editable-block="admin-login-hero-copy" data-editable-title="后台入口主视觉文案">
+      <span class="login-mark" aria-hidden="true"><img src="/images/logo.svg" alt="" /></span>
+      <p class="eyebrow is-plain" data-block-field="eyebrow">Admin Portal</p>
+      <h1 data-block-field="title">成员登录</h1>
+      <p class="lead" data-block-field="lead">协会成员通过统一身份登录进入内容维护工作台。</p>
+    </header>
+
+    <section class="login-card reveal is-scale" data-editable-block="admin-login-entry-card" data-editable-title="后台入口：登录卡片">
+      <h2 class="login-card-title" data-block-field="title">管理后台入口</h2>
+      <dl class="login-facts">
+        <div><dt data-block-field="loginMethodLabel" data-block-label="字段名：登录方式">登录方式</dt><dd data-block-field="loginMethod" data-block-label="登录方式">协会统一身份登录</dd></div>
+        <div><dt data-block-field="permissionLabel" data-block-label="字段名：可用权限">可用权限</dt><dd data-block-field="permission" data-block-label="可用权限">内容维护成员</dd></div>
+      </dl>
+      <a class="btn primary lg block" href="/api/auth/login?return_to=%2Fadmin%2F" data-block-field="loginAction" data-block-label="登录按钮">验证成员身份<span class="arrow" aria-hidden="true"></span></a>
+      <p class="meta login-message" data-block-field="body">点击后将跳转到统一登录，验证通过后自动进入后台。</p>
+      <details class="login-fallback">
+        <summary data-block-field="fallbackSummary" data-block-label="备用登录折叠标题">统一登录不可用？使用备用账号</summary>
+        <form class="fallback-login" data-fallback-login>
+          <div class="field"><label for="fallbackUser">账号</label><input id="fallbackUser" name="username" type="text" autocomplete="username" required/></div>
+          <div class="field"><label for="fallbackPassword">密码</label><input id="fallbackPassword" name="password" type="password" autocomplete="current-password" required/></div>
+          <button class="btn ink block" type="submit" data-fallback-submit>备用登录</button>
+          <p class="meta" data-fallback-message hidden></p>
+        </form>
+      </details>
     </section>
-    <section class="login-card reveal" data-editable-block="admin-login-entry-card" data-editable-title="后台入口：登录卡片">
-      <h2 class="panel-title" data-block-field="title">管理后台入口</h2>
-      <div class="field"><label>登录方式</label><input value="协会统一身份登录" data-block-field="loginMethod" data-block-label="登录方式" readonly/></div>
-      <div class="field"><label>可用权限</label><input value="内容维护成员" data-block-field="permission" data-block-label="可用权限" readonly/></div>
-      <a class="btn primary magnetic" href="/api/auth/login?return_to=%2Fadmin%2F">验证成员身份</a>
-      <p class="meta login-message" data-login-message data-block-field="body">点击后将跳转到统一登录，验证通过后自动进入后台。</p>
-      <form class="fallback-login" data-fallback-login>
-        <div class="login-divider"><span>统一登录不可用时的备用入口</span></div>
-        <div class="field"><label for="fallbackUser">账号</label><input id="fallbackUser" name="username" type="text" autocomplete="username" required/></div>
-        <div class="field"><label for="fallbackPassword">密码</label><input id="fallbackPassword" name="password" type="password" autocomplete="current-password" required/></div>
-        <button class="btn primary" type="submit" data-fallback-submit>备用登录</button>
-        <p class="meta" data-fallback-message hidden></p>
-      </form>
+
+    <section class="login-scope reveal" data-editable-block="admin-login-scope-card" data-editable-title="后台入口：维护范围">
+      <h3 data-block-field="title">登录之后</h3>
+      <p data-block-field="body">可以维护文章、知识库、成员信息、首页图片和活动内容。</p>
+      <ol class="login-steps">
+        <li><span data-block-field="step1" data-block-label="步骤 1">打开协会统一登录页面</span></li>
+        <li><span data-block-field="step2" data-block-label="步骤 2">确认成员身份与维护权限</span></li>
+        <li><span data-block-field="step3" data-block-label="步骤 3">自动进入后台工作台</span></li>
+      </ol>
     </section>
   </div>
 </main>
 
-<footer class="shell footer"><span>YUNA.BLOG · 后台入口</span><span>成员身份校验</span></footer>
-<script src="/app.js"></script>
+<footer class="site-footer">
+  <div class="shell site-footer-main">
+    <div class="site-footer-brand" data-editable-block="site-footer-brand" data-editable-title="页脚：协会简介">
+      <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+      <p data-block-field="body">燕山大学大学生网络信息协会。学习、实践、分享，把技术热情变成看得见的作品。</p>
+    </div>
+    <nav class="site-footer-nav" aria-label="页脚导航">
+      <div data-editable-block="site-footer-nav-content" data-editable-title="页脚链接栏：内容">
+        <h2 data-block-field="title">内容</h2>
+        <div data-block-links>
+          <a href="/articles.html">文章列表</a>
+          <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
+          <a href="/lesson-plan.html">授课计划</a>
+        </div>
+      </div>
+      <div data-editable-block="site-footer-nav-association" data-editable-title="页脚链接栏：协会">
+        <h2 data-block-field="title">协会</h2>
+        <div data-block-links>
+          <a href="/team.html">关于协会</a>
+          <a href="/departments.html">部门介绍</a>
+          <a href="/join.html">加入我们</a>
+        </div>
+      </div>
+      <div data-editable-block="site-footer-nav-departments" data-editable-title="页脚链接栏：部门">
+        <h2 data-block-field="title">部门</h2>
+        <div data-block-links>
+          <a href="/department-dev.html">开发部</a>
+          <a href="/department-ops.html">运维部</a>
+          <a href="/department-publicity.html">组宣部</a>
+          <a href="/department-security.html">网络安全部</a>
+        </div>
+      </div>
+    </nav>
+  </div>
+  <div class="shell footer">
+    <span>YUNA.BLOG · 后台入口</span>
+    <span>成员身份校验</span>
+  </div>
+</footer>
+<script src="/js/core.js"></script>
+<script src="/js/markdown.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/editable-blocks.js"></script>
+<script src="/js/footer.js"></script>
 <script>
   window.blog.renderUserNav();
   window.blog.renderEditableBlocks();

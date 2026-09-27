@@ -12,106 +12,183 @@
   <meta property="og:url" content="https://www.yuna.team/departments"/>
   <meta property="og:image" content="https://www.yuna.team/images/og-image.png"/>
   <link rel="canonical" href="https://www.yuna.team/departments"/>
-  <link rel="preload" as="image" href="/images/campus-bg.webp"/>
-  <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="icon" href="/images/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/components.css" />
+  <link rel="stylesheet" href="/styles/layout.css" />
+  <link rel="stylesheet" href="/styles/fx.css" />
+  <link rel="stylesheet" href="/styles/pages/departments.css" />
     <script>document.documentElement.classList.add("js");</script>
 </head>
-<body>
+<body class="page-departments">
+<a class="skip-link" href="#content">跳到正文</a>
 <noscript><p class="empty-state">此站点需要启用 JavaScript 才能加载部门内容。</p></noscript>
-<div class="scroll-progress" id="scrollProgress"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-<div class="cursor-glow" id="cursorGlow"></div>
-<canvas class="particle-canvas" id="particleCanvas"></canvas>
-<div class="aurora-layer"></div>
 <header class="topbar">
   <div class="shell topbar-inner">
-    <a class="brand magnetic" href="/" aria-label="返回 YUNA.BLOG 首页"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+    <a class="brand" href="/" aria-label="返回 YUNA.BLOG 首页"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
     <nav class="nav" aria-label="站点导航">
       <a href="/">首页</a>
       <a href="/articles.html">文章列表</a>
       <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
       <a href="/lesson-plan.html">授课计划</a>
       <a class="active" href="/team.html">关于协会</a>
-      <a href="/join.html">加入我们</a>
+      <a class="nav-cta" href="/join.html">加入我们</a>
       <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
     </nav>
   </div>
 </header>
 
 <div class="page-wrap">
-  <div class="hero-bg" id="heroBg"></div>
-  <div class="mist-top"></div>
-  <div class="mist-bottom"></div>
-  <div class="grid-overlay"></div>
-  <section class="shell page-hero">
+  <section class="shell page-hero depts-hero">
     <div class="reveal" data-editable-block="departments-hero-copy" data-editable-title="部门一览主视觉文案">
       <p class="eyebrow" data-block-field="eyebrow">Departments</p>
       <h1 data-block-field="title">部门一览。</h1>
       <p class="lead" data-block-field="lead">协会由这些方向一起支撑，进入各部门页面可以查看具体分工、日常协作内容和适合加入的人群。</p>
       <div class="hero-actions">
-        <a class="btn secondary magnetic" href="/team.html">返回关于协会</a>
+        <a class="btn primary" href="/join.html" data-block-field="primaryAction" data-block-href data-block-label="主按钮">了解加入方式<span class="arrow" aria-hidden="true"></span></a>
+        <a class="btn secondary" href="/team.html" data-block-field="secondaryAction" data-block-href data-block-label="次按钮">返回关于协会</a>
       </div>
-    </div>
-    <div class="page-visual reveal" aria-hidden="true">
-      <div class="tech-sweep"></div>
-      <div class="logo-holo-grid"></div>
-      <div class="scanlines"></div>
-      <div class="tech-web"></div>
-      <span class="pulse-ring p1"></span>
-      <span class="pulse-ring p2"></span>
-      <span class="pulse-ring p3"></span>
-      <span class="ring r1"></span>
-      <span class="ring r2"></span>
-      <div class="visual-orb"><img src="/images/logo.svg" alt=""/></div>
-      <span class="tech-pill pill-a">Dev</span>
-      <span class="tech-pill pill-b">Security</span>
-      <span class="tech-pill pill-c">Ops</span>
-      <div class="data-stream"><span>YUNA · DEPARTMENTS · DEV · SECURITY · OPS ·</span><span>PUBLICITY · SECRETARIAT · CAMPUS TECH COMMUNITY ·</span></div>
     </div>
   </section>
 </div>
 
 <main class="main page-main" id="content">
-  <section class="shell">
-    <div class="member-grid refined-member-grid">
-      <article class="member-card reveal refined-member-card" id="dept-dev">
-        <span class="flash"></span>
-        <h3>开发部</h3>
-        <p>负责协会站点、校园工具、前后端实践和项目协作，把技术学习落到真实作品里。</p>
-        <div class="contact-row"><span class="tag">Web</span><span class="tag">产品实现</span><span class="tag">工程协作</span></div>
-        <div class="member-actions"><a href="/department-dev.html">查看部门详情</a></div>
+  <section class="shell depts-section" aria-label="四个部门">
+    <div class="bento depts-bento">
+      <article class="bento-card span-7 spotlight reveal dept-card is-dev" id="dept-dev" data-editable-block="team-dept-dev-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：开发部">
+        <div class="dept-card-top">
+          <span class="dept-kicker" data-block-field="kicker">01 / Dev</span>
+          <a class="dept-go" href="/department-dev.html" aria-label="查看开发部详情"><span class="arrow" aria-hidden="true"></span></a>
+        </div>
+        <h3 data-block-field="title">开发部</h3>
+        <p data-block-field="body">负责协会站点、校园工具、前后端实践和项目协作，把技术学习落到真实作品里。</p>
+        <div class="contact-row" data-block-tags><span class="tag">Web</span><span class="tag">产品实现</span><span class="tag">工程协作</span></div>
+        <div class="bento-visual" aria-hidden="true">
+          <div class="viz-window">
+            <div class="viz-window-bar"><i></i><i></i><i></i><span>yuna.team/src/build.js</span></div>
+            <pre class="viz-code"><code><span class="t-k">export function</span> <span class="t-f">build</span>(idea) {
+  <span class="t-k">const</span> team = <span class="t-s">"YUNA"</span>;
+  <span class="t-c">// 把想法做成作品</span>
+  <span class="t-k">return</span> <span class="t-f">ship</span>(idea, team);
+}</code></pre>
+          </div>
+        </div>
       </article>
-      <article class="member-card reveal refined-member-card" id="dept-security">
-        <span class="flash"></span>
-        <h3>网络安全部</h3>
-        <p>组织 CTF、逆向、Web 安全和攻防基础训练，用复盘文章沉淀可继续学习的路线。</p>
-        <div class="contact-row"><span class="tag">CTF</span><span class="tag">逆向</span><span class="tag">训练营</span></div>
-        <div class="member-actions"><a href="/department-security.html">查看部门详情</a></div>
+
+      <article class="bento-card span-5 spotlight reveal dept-card is-security" id="dept-security" data-editable-block="team-dept-security-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：网络安全部">
+        <div class="dept-card-top">
+          <span class="dept-kicker" data-block-field="kicker">02 / Security</span>
+          <a class="dept-go" href="/department-security.html" aria-label="查看网络安全部详情"><span class="arrow" aria-hidden="true"></span></a>
+        </div>
+        <h3 data-block-field="title">网络安全部</h3>
+        <p data-block-field="body">组织 CTF、逆向、Web 安全和攻防基础训练，用复盘文章沉淀可继续学习的路线。</p>
+        <div class="contact-row" data-block-tags><span class="tag">CTF</span><span class="tag">逆向</span><span class="tag">训练营</span></div>
+        <div class="bento-visual" aria-hidden="true">
+          <div class="viz-term theme-dark">
+            <p><span class="t-p">$</span> ./challenge --level 1</p>
+            <p class="t-dim">[*] reading the source ...</p>
+            <p class="t-dim">[+] got it</p>
+            <p><span class="t-p">$</span> cat flag.txt</p>
+            <p class="t-flag">flag{keep_learning}<span class="fx-caret"></span></p>
+          </div>
+        </div>
       </article>
-      <article class="member-card reveal refined-member-card" id="dept-ops">
-        <span class="flash"></span>
-        <h3>运维部</h3>
-        <p>维护站点服务、部署流程、域名证书和校园工具运行环境，保障协会内容长期可访问。</p>
-        <div class="contact-row"><span class="tag">部署</span><span class="tag">监控</span><span class="tag">服务维护</span></div>
-        <div class="member-actions"><a href="/department-ops.html">查看部门详情</a></div>
+
+      <article class="bento-card span-5 spotlight reveal dept-card is-ops" id="dept-ops" data-editable-block="team-dept-ops-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：运维部">
+        <div class="dept-card-top">
+          <span class="dept-kicker" data-block-field="kicker">03 / Ops</span>
+          <a class="dept-go" href="/department-ops.html" aria-label="查看运维部详情"><span class="arrow" aria-hidden="true"></span></a>
+        </div>
+        <h3 data-block-field="title">运维部</h3>
+        <p data-block-field="body">维护站点服务、部署流程、域名证书和校园工具运行环境，保障协会内容长期可访问。</p>
+        <div class="contact-row" data-block-tags><span class="tag">部署</span><span class="tag">监控</span><span class="tag">服务维护</span></div>
+        <div class="bento-visual" aria-hidden="true">
+          <div class="viz-flow">
+            <span class="viz-node">build</span>
+            <span class="viz-link"><i></i></span>
+            <span class="viz-node">test</span>
+            <span class="viz-link"><i></i></span>
+            <span class="viz-node is-live">deploy</span>
+          </div>
+        </div>
       </article>
-      <article class="member-card reveal refined-member-card" id="dept-publicity">
-        <span class="flash"></span>
-        <h3>组宣部</h3>
-        <p>负责协会活动记录、视觉物料、图文传播、成员资料和会议档案，让内容展示与日常协作更有秩序。</p>
-        <div class="contact-row"><span class="tag">活动记录</span><span class="tag">图文传播</span><span class="tag">档案流程</span></div>
-        <div class="member-actions"><a href="/department-publicity.html">查看部门详情</a></div>
+
+      <article class="bento-card span-7 spotlight reveal dept-card is-publicity" id="dept-publicity" data-editable-block="team-dept-publicity-card" data-editable-title="部门卡（首页 / 部门一览 / 关于协会 / 加入我们共用）：组宣部">
+        <div class="dept-card-top">
+          <span class="dept-kicker" data-block-field="kicker">04 / Publicity</span>
+          <a class="dept-go" href="/department-publicity.html" aria-label="查看组宣部详情"><span class="arrow" aria-hidden="true"></span></a>
+        </div>
+        <h3 data-block-field="title">组宣部</h3>
+        <p data-block-field="body">负责协会活动记录、视觉物料、图文传播、成员资料和会议档案，让内容展示与日常协作更有秩序。</p>
+        <div class="contact-row" data-block-tags><span class="tag">活动记录</span><span class="tag">图文传播</span><span class="tag">档案流程</span></div>
+        <div class="bento-visual" aria-hidden="true">
+          <div class="viz-specimen">
+            <div class="viz-type"><span class="viz-aa">Aa</span><span class="viz-zh">网协</span></div>
+            <div class="viz-swatches"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div>
       </article>
+    </div>
+  </section>
+
+  <section class="shell section depts-join" aria-labelledby="depts-join-title">
+    <div class="band is-brand depts-join-band reveal is-scale" data-editable-block="departments-join-cta" data-editable-title="部门一览：加入引导">
+      <div class="fx-glow is-sky" aria-hidden="true"></div>
+      <h2 id="depts-join-title" data-block-field="title">还没想好去哪个部门？</h2>
+      <p class="lead" data-block-field="lead">先来看看招新流程，宣讲和答疑时可以和各部门的同学聊聊，再决定也不迟。</p>
+      <div class="hero-actions">
+        <a class="btn primary lg" href="/join.html" data-block-field="primaryAction" data-block-href data-block-label="主按钮">了解加入方式<span class="arrow" aria-hidden="true"></span></a>
+        <a class="btn secondary lg" href="/team.html#members" data-block-field="secondaryAction" data-block-href data-block-label="次按钮">看看往届成员</a>
+      </div>
     </div>
   </section>
 </main>
 
-<footer class="shell footer">
-  <span>YUNA.BLOG · 部门一览</span>
-  <span>方向 · 协作 · 成长</span>
+<footer class="site-footer">
+  <div class="shell site-footer-main">
+    <div class="site-footer-brand" data-editable-block="site-footer-brand" data-editable-title="页脚：协会简介">
+      <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+      <p data-block-field="body">燕山大学大学生网络信息协会。学习、实践、分享，把技术热情变成看得见的作品。</p>
+    </div>
+    <nav class="site-footer-nav" aria-label="页脚导航">
+      <div data-editable-block="site-footer-nav-content" data-editable-title="页脚链接栏：内容">
+        <h2 data-block-field="title">内容</h2>
+        <div data-block-links>
+          <a href="/articles.html">文章列表</a>
+          <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
+          <a href="/lesson-plan.html">授课计划</a>
+        </div>
+      </div>
+      <div data-editable-block="site-footer-nav-association" data-editable-title="页脚链接栏：协会">
+        <h2 data-block-field="title">协会</h2>
+        <div data-block-links>
+          <a href="/team.html">关于协会</a>
+          <a href="/departments.html">部门介绍</a>
+          <a href="/join.html">加入我们</a>
+        </div>
+      </div>
+      <div data-editable-block="site-footer-nav-departments" data-editable-title="页脚链接栏：部门">
+        <h2 data-block-field="title">部门</h2>
+        <div data-block-links>
+          <a href="/department-dev.html">开发部</a>
+          <a href="/department-ops.html">运维部</a>
+          <a href="/department-publicity.html">组宣部</a>
+          <a href="/department-security.html">网络安全部</a>
+        </div>
+      </div>
+    </nav>
+  </div>
+  <div class="shell footer">
+    <span>YUNA.BLOG · 部门一览</span>
+    <span>方向 · 协作 · 成长</span>
+  </div>
 </footer>
-<script src="/app.js"></script>
+<script src="/js/core.js"></script>
+<script src="/js/markdown.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/editable-blocks.js"></script>
+<script src="/js/footer.js"></script>
 <script>
   window.blog.renderUserNav();
   window.blog.renderEditableBlocks();

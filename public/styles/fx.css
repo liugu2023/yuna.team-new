@@ -1,0 +1,218 @@
+/* fx.css —— 动效与小巧思（配合 yuna-ui.js）。prefers-reduced-motion 下全部关闭。
+   API 速查（详见 SYSTEM-v2.md）：
+   .reveal                 进入视口淡入上移（JS 加 .visible；同一批进入的元素自动错开）
+   .spotlight / [data-spotlight] > *   鼠标跟随的边框聚光（JS 写 --x / --y）
+   [data-count="123"]      进入视口后从 0 计数到目标值
+   .rotator[data-rotator] > .rotator-word × N   关键词轮换
+   .fx-dots / .fx-grid / .fx-glow              背景点阵 / 网格线 / 漂移柔光（纯装饰，aria-hidden）
+   .scroll-progress[data-scroll-progress]      顶部阅读进度细线（JS 写 --progress）
+   .fx-caret               闪烁光标 */
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* ---------- reveal ----------
+   用 animation + 独立的 translate/scale 属性，不占用元素自身的 transition / transform，
+   卡片的悬停位移、边框过渡因此不会和入场动画互相覆盖。 */
+.js .reveal { opacity: 0; }
+.js .reveal.visible {
+  opacity: 1;
+  animation: reveal-up .8s var(--ease) var(--reveal-delay, 0ms) both;
+}
+.js .reveal.is-scale.visible { animation-name: reveal-scale; }
+.js .reveal.is-fade.visible { animation-name: reveal-fade; }
+@keyframes reveal-up {
+  from { opacity: 0; translate: 0 18px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes reveal-scale {
+  from { opacity: 0; translate: 0 12px; scale: .975; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes reveal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- 聚光边框 ---------- */
+:where(.spotlight, [data-spotlight] > *) { position: relative; }
+.spotlight,
+[data-spotlight] > * {
+  --x: 50%;
+  --y: 50%;
+  isolation: isolate;
+}
+.spotlight::before,
+[data-spotlight] > *::before,
+.spotlight::after,
+[data-spotlight] > *::after {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-3) var(--ease);
+}
+/* 边框内侧的光：1px 环，用 mask 挖掉内容区。放在 padding box 内（inset:0），
+   这样 overflow:hidden 的卡片（如 .bento-card）也不会把它裁掉。 */
+.spotlight::before,
+[data-spotlight] > *::before {
+  inset: 0;
+  z-index: 1;
+  padding: 1px;
+  background: radial-gradient(280px circle at var(--x) var(--y), var(--spot-color), transparent 65%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+/* 面上的极淡光晕，压在内容之下 */
+.spotlight::after,
+[data-spotlight] > *::after {
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(420px circle at var(--x) var(--y), var(--spot-fill), transparent 60%);
+}
+@media (hover: hover) {
+  .spotlight:hover::before,
+  [data-spotlight] > *:hover::before,
+  .spotlight:hover::after,
+  [data-spotlight] > *:hover::after { opacity: 1; }
+}
+
+/* ---------- 关键词轮换 ---------- */
+.rotator {
+  position: relative;
+  display: inline-block;
+  height: 1.3em;
+  overflow: hidden;
+  vertical-align: bottom;
+  white-space: nowrap;
+  transition: width var(--dur-4) var(--ease);
+}
+.rotator-word {
+  display: inline-block;
+  line-height: 1.3;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.rotator:not(.is-ready) .rotator-word:not(:first-child) { display: none; }
+.rotator.is-ready .rotator-word {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  transform: translateY(70%);
+  transition: opacity var(--dur-3) var(--ease), transform var(--dur-4) var(--ease);
+}
+.rotator.is-ready .rotator-word.is-active { opacity: 1; transform: none; }
+.rotator.is-ready .rotator-word.is-leaving { opacity: 0; transform: translateY(-70%); }
+
+/* ---------- 计数 ---------- */
+[data-count] { font-variant-numeric: tabular-nums; }
+
+/* ---------- 装饰背景 ---------- */
+.fx-dots,
+.fx-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.fx-dots {
+  background-image: radial-gradient(var(--grid-dot) 1px, transparent 1.4px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 65% 60% at 50% 35%, #000 25%, transparent 75%);
+  mask-image: radial-gradient(ellipse 65% 60% at 50% 35%, #000 25%, transparent 75%);
+}
+.fx-grid {
+  background-image:
+    linear-gradient(var(--c-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--c-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 70% at 50% 0%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse 60% 70% at 50% 0%, #000 20%, transparent 75%);
+}
+.fx-glow {
+  position: absolute;
+  z-index: -1;
+  width: var(--glow-size, 640px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--brand-rgb), var(--glow-alpha, .2)), transparent 65%);
+  pointer-events: none;
+  animation: glow-drift var(--glow-dur, 24s) ease-in-out infinite alternate;
+}
+.fx-glow.is-sky { background: radial-gradient(circle, rgba(var(--glow-sky), var(--glow-alpha, .28)), transparent 65%); }
+@keyframes glow-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(6%, -5%, 0) scale(1.08); }
+  100% { transform: translate3d(-5%, 4%, 0) scale(.95); }
+}
+
+/* ---------- 阅读进度 ---------- */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: calc(var(--z-topbar) + 1);
+  height: 2px;
+  background: linear-gradient(90deg, var(--blue-600), var(--c-accent-b));
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+/* ---------- 闪烁光标 ---------- */
+.fx-caret {
+  display: inline-block;
+  width: .55em;
+  height: 1.15em;
+  margin-left: 2px;
+  background: currentColor;
+  vertical-align: text-bottom;
+  animation: caret-blink 1.1s steps(1) infinite;
+}
+@keyframes caret-blink { 50% { opacity: 0; } }
+
+/* ---------- 减少动态效果 ---------- */
+/* ---------- 共用关键帧（组件与页面直接引用；reduced-motion 由下方总开关关闭） ----------
+   fx-ping          圆点外扩的光圈（缩放 + 淡出），可调 --ping-from / --ping-to / --ping-alpha
+   fx-halo          元素自身的 box-shadow 光晕外扩（时间轴节点、倒计时圆点）
+   fx-flow          沿连线横向流动的光点（.viz-link i）
+   fx-target-flash  锚点跳转后标题短暂变品牌色 */
+@keyframes fx-ping {
+  0% { opacity: var(--ping-alpha, .6); transform: scale(var(--ping-from, .6)); }
+  70%, 100% { opacity: 0; transform: scale(var(--ping-to, 1.5)); }
+}
+@keyframes fx-halo {
+  0% { box-shadow: 0 0 0 0 rgba(var(--brand-rgb), .45); }
+  70%, 100% { box-shadow: 0 0 0 7px rgba(var(--brand-rgb), 0); }
+}
+@keyframes fx-flow {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+@keyframes fx-target-flash {
+  0%, 30% { color: var(--c-brand); }
+  100% { color: inherit; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+  .js .reveal { opacity: 1; animation: none; }
+  .spotlight::before,
+  [data-spotlight] > *::before,
+  .spotlight::after,
+  [data-spotlight] > *::after { display: none; }
+}
