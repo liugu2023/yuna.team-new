@@ -4,3 +4,8 @@ node_modules/
 dist/
 *.log
 yuna-blog-db-*.json
+
+# 本地模拟数据生成物（含本地管理员会话），由 npm run db:seed:local 生成
+scripts/seed-local.sql
+# 改版过程笔记
+.ui-notes/

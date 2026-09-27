@@ -4,16 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev public --d1 BLOG_DB --r2 BLOG_BUCKET --compatibility-date=2026-06-19",
+    "dev": "wrangler pages dev public",
+    "dev:prod": "node scripts/dev-prod.mjs",
     "deploy": "wrangler pages deploy public",
     "db:migrate:local": "wrangler d1 migrations apply BLOG_DB --local",
+    "db:seed:local": "node scripts/seed-local.mjs",
     "db:migrate": "wrangler d1 migrations apply BLOG_DB --remote",
     "db:migrate-pages": "node scripts/migrate-pages-to-d1.mjs",
     "db:migrate-posts": "node scripts/migrate-posts-to-d1.mjs",
     "media:migrate": "node scripts/migrate-media.mjs",
     "content:check": "node scripts/check-content.mjs",
     "media:clean": "node scripts/clean-orphan-media.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "styles:check": "node scripts/check-css.mjs",
+    "scripts:check": "node scripts/check-scripts.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260618.0",
