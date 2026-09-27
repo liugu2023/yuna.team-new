@@ -1,4 +1,5 @@
 import { getCookie, serializeCookie, verifySignedValue } from "../_shared/cookies";
+import { safeReturnTo } from "../_shared/http";
 import { exchangeCode, getUserInfo, getUserRoles, redirectUri } from "../_shared/oidc";
 import { createSession } from "../_shared/session";
 import type { Env } from "../_shared/types";
@@ -44,19 +45,3 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     ],
   });
 };
-
-function safeReturnTo(value: string | null): string {
-  if (!value) return "/";
-
-  try {
-    const parsed = new URL(value, "https://yuna.local");
-    if (parsed.origin !== "https://yuna.local") return "/";
-
-    const target = `${parsed.pathname}${parsed.search}${parsed.hash}`;
-    if (!target.startsWith("/") || target.startsWith("//")) return "/";
-    if (target.startsWith("/api/auth/login") || target.startsWith("/auth/callback")) return "/";
-    return target;
-  } catch {
-    return "/";
-  }
-}

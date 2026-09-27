@@ -1,4 +1,5 @@
 import { json } from "../../_shared/http";
+import { humanSize } from "../../_shared/format";
 import { getAdminIdentity } from "../../_shared/session";
 import type { Env, PostRecord, SiteRecord } from "../../_shared/types";
 
@@ -197,16 +198,4 @@ function buildReport(classification: Classification, executed: boolean) {
     legacyPostMd: classification.legacyPostMd,
     unknown: classification.unknown,
   };
-}
-
-function humanSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  const units = ["KB", "MB", "GB"];
-  let value = bytes / 1024;
-  let unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit += 1;
-  }
-  return `${value.toFixed(1)} ${units[unit]}`;
 }

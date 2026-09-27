@@ -1,12 +1,18 @@
 import { badRequest, json, readJson } from "../../_shared/http";
 import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
 import { normalizePostAuthors, serializePostAuthors, type PostAuthor } from "../../_shared/post-authors";
+import {
+  DEFAULT_CREDIT_NAME,
+  isValidStatus,
+  normalizeAvatarUrl,
+  normalizeHttpUrl,
+  normalizeKind,
+  normalizeOptionalText,
+  normalizeTag,
+} from "../../_shared/post-input";
 import { toPublicPost } from "../../_shared/sanitize";
 import { getSession, isAllowedAdmin } from "../../_shared/session";
 import type { Env, PostRecord } from "../../_shared/types";
-
-// 署名与登录账号解绑：作者、最后编辑人都由后台手动维护，留空时统一落到协会名。
-const DEFAULT_CREDIT_NAME = "网络信息协会";
 
 interface CreatePostPayload {
   slug?: string;
@@ -43,9 +49,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   // 列表不输出 author_email：公开接口不暴露成员登录邮箱，展示用 author_name。
   const columns = "id, slug, title, tag, excerpt, cover_url, status, kind, r2_key, author_name, author_url, author_avatar, coauthors_json, editor_name, created_at, updated_at, published_at, view_count";
 
+  // 两条分支都用 COALESCE 排序：导入的历史数据里存在 status='published' 但
+  // published_at 为空的行，只按 published_at 排会把这些行沉到列表最底部。
   const query = includeAll
     ? `SELECT ${columns} FROM posts WHERE kind = ? ORDER BY COALESCE(published_at, updated_at) DESC${usePagination ? " LIMIT ? OFFSET ?" : ""}`
-    : `SELECT ${columns} FROM posts WHERE kind = ? AND status = 'published' ORDER BY published_at DESC${usePagination ? " LIMIT ? OFFSET ?" : ""}`;
+    : `SELECT ${columns} FROM posts WHERE kind = ? AND status = 'published' ORDER BY COALESCE(published_at, updated_at) DESC${usePagination ? " LIMIT ? OFFSET ?" : ""}`;
   const countQuery = includeAll
     ? "SELECT COUNT(*) AS total FROM posts WHERE kind = ?"
     : "SELECT COUNT(*) AS total FROM posts WHERE kind = ? AND status = 'published'";
@@ -155,49 +163,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request, waitUnti
   return json({ post: post ? toPublicPost(post) : null }, { status: 201 });
 };
 
-function isValidStatus(value: string): value is "draft" | "published" {
-  return value === "draft" || value === "published";
-}
-
 function isUniqueConstraintError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return /UNIQUE constraint failed/i.test(message);
-}
-
-function normalizeTag(value: unknown): string {
-  const tag = typeof value === "string" ? value.trim() : "";
-  return tag || "协会动态";
-}
-
-function normalizeOptionalText(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function normalizeHttpUrl(value: unknown): string | null {
-  const raw = normalizeOptionalText(value);
-  if (!raw) return "";
-  if (raw.length > 2048) return null;
-  try {
-    const url = new URL(raw);
-    if ((url.protocol !== "http:" && url.protocol !== "https:") || !url.hostname || url.username || url.password) {
-      return null;
-    }
-    return url.href;
-  } catch {
-    return null;
-  }
-}
-
-function normalizeAvatarUrl(value: unknown): string | null {
-  const raw = normalizeOptionalText(value);
-  if (!raw) return "";
-  if (raw.length > 2048 || /[\0\r\n\\]/.test(raw)) return null;
-  if (raw.startsWith("/media/") && !raw.startsWith("/media//")) return raw;
-  return normalizeHttpUrl(raw);
-}
-
-function normalizeKind(value: unknown): "article" | "knowledge" {
-  return value === "knowledge" ? "knowledge" : "article";
 }
 
 function positiveInteger(value: unknown, fallback: number): number {

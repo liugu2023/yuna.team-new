@@ -1,3 +1,5 @@
+import { normalizeAvatarUrl, normalizeHttpUrl, normalizeOptionalText } from "./post-input";
+
 export interface PostAuthor {
   name: string;
   url: string;
@@ -50,28 +52,19 @@ function readAuthors(value: unknown): PostAuthor[] {
 }
 
 function text(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+  return normalizeOptionalText(value);
 }
 
+// 与文章写入接口共用同一套 URL 校验规则，这里只把"非法"换成带下标的报错，
+// 避免两处规则分叉后协同作者的链接能存进去、主作者的不行。
 function httpUrl(value: unknown, message: string): string {
-  const raw = text(value);
-  if (!raw) return "";
-  if (raw.length > 2048) throw new Error(message);
-  try {
-    const url = new URL(raw);
-    if ((url.protocol !== "http:" && url.protocol !== "https:") || !url.hostname || url.username || url.password) {
-      throw new Error(message);
-    }
-    return url.href;
-  } catch {
-    throw new Error(message);
-  }
+  const normalized = normalizeHttpUrl(value);
+  if (normalized === null) throw new Error(message);
+  return normalized;
 }
 
 function avatarUrl(value: unknown, message: string): string {
-  const raw = text(value);
-  if (!raw) return "";
-  if (raw.length > 2048 || /[\0\r\n\\]/.test(raw)) throw new Error(message);
-  if (raw.startsWith("/media/") && !raw.startsWith("/media//")) return raw;
-  return httpUrl(raw, message);
+  const normalized = normalizeAvatarUrl(value);
+  if (normalized === null) throw new Error(message);
+  return normalized;
 }

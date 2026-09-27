@@ -1,4 +1,5 @@
 import { json } from "../../_shared/http";
+import { humanSize } from "../../_shared/format";
 import { getAdminIdentity } from "../../_shared/session";
 import type { Env } from "../../_shared/types";
 
@@ -15,12 +16,14 @@ interface PrefixMetric {
   bytes: number;
 }
 
+// 注意：byteSql 里的列名是手写的，每加一条迁移都要回来同步，否则后台的
+// 容量数字会静默偏低。view_count(0005) 和 expires_at(0001) 就是这么漏掉的。
 const TABLES = [
   {
     name: "posts",
     label: "文章与知识库",
     byteSql:
-      "SELECT COALESCE(SUM(LENGTH(id) + LENGTH(slug) + LENGTH(title) + LENGTH(tag) + LENGTH(excerpt) + LENGTH(cover_url) + LENGTH(status) + LENGTH(kind) + LENGTH(r2_key) + LENGTH(markdown_content) + LENGTH(author_email) + LENGTH(author_name) + LENGTH(author_url) + LENGTH(author_avatar) + LENGTH(coauthors_json) + LENGTH(editor_name) + LENGTH(created_at) + LENGTH(updated_at) + LENGTH(COALESCE(published_at, ''))), 0) AS bytes FROM posts",
+      "SELECT COALESCE(SUM(LENGTH(id) + LENGTH(slug) + LENGTH(title) + LENGTH(tag) + LENGTH(excerpt) + LENGTH(cover_url) + LENGTH(status) + LENGTH(kind) + LENGTH(r2_key) + LENGTH(markdown_content) + LENGTH(author_email) + LENGTH(author_name) + LENGTH(author_url) + LENGTH(author_avatar) + LENGTH(coauthors_json) + LENGTH(editor_name) + LENGTH(view_count) + LENGTH(created_at) + LENGTH(updated_at) + LENGTH(COALESCE(published_at, ''))), 0) AS bytes FROM posts",
   },
   {
     name: "site_records",
@@ -38,7 +41,7 @@ const TABLES = [
     name: "sessions",
     label: "登录会话",
     byteSql:
-      "SELECT COALESCE(SUM(LENGTH(id) + LENGTH(user_email) + LENGTH(user_name) + LENGTH(user_groups) + LENGTH(created_at)), 0) AS bytes FROM sessions",
+      "SELECT COALESCE(SUM(LENGTH(id) + LENGTH(user_email) + LENGTH(user_name) + LENGTH(user_groups) + LENGTH(created_at) + LENGTH(expires_at)), 0) AS bytes FROM sessions",
   },
 ] as const;
 
@@ -181,17 +184,4 @@ async function collectBucketUsage(env: Env) {
 function topLevelPrefix(key: string): string {
   const index = key.indexOf("/");
   return index > 0 ? `${key.slice(0, index)}/` : "(根目录)";
-}
-
-function humanSize(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
-  if (bytes < 1024) return `${bytes} B`;
-  const units = ["KB", "MB", "GB", "TB"];
-  let value = bytes / 1024;
-  let unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit += 1;
-  }
-  return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unit]}`;
 }

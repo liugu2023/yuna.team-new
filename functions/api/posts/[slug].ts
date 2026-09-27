@@ -2,12 +2,18 @@ import { badRequest, json, notFound, readJson } from "../../_shared/http";
 import { getCookie, serializeCookie } from "../../_shared/cookies";
 import { queueMarkdownGithubSync } from "../../_shared/github-markdown-sync";
 import { normalizePostAuthors, serializePostAuthors, type PostAuthor } from "../../_shared/post-authors";
+import {
+  DEFAULT_CREDIT_NAME,
+  isValidStatus,
+  normalizeAvatarUrl,
+  normalizeHttpUrl,
+  normalizeKind,
+  normalizeOptionalText,
+  normalizeTag,
+} from "../../_shared/post-input";
 import { toPublicPost } from "../../_shared/sanitize";
 import { getSession, isAllowedAdmin } from "../../_shared/session";
 import type { Env, PostRecord } from "../../_shared/types";
-
-// 署名与登录账号解绑：作者、最后编辑人都由后台手动维护，留空时统一落到协会名。
-const DEFAULT_CREDIT_NAME = "网络信息协会";
 
 interface UpdatePostPayload {
   title?: string;
@@ -162,46 +168,6 @@ export const onRequestPut: PagesFunction<Env, "slug"> = async ({ env, params, re
 
   return json({ post: updated ? toPublicPost(updated) : null });
 };
-
-function isValidStatus(value: string): value is "draft" | "published" {
-  return value === "draft" || value === "published";
-}
-
-function normalizeTag(value: unknown): string {
-  const tag = typeof value === "string" ? value.trim() : "";
-  return tag || "协会动态";
-}
-
-function normalizeOptionalText(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function normalizeHttpUrl(value: unknown): string | null {
-  const raw = normalizeOptionalText(value);
-  if (!raw) return "";
-  if (raw.length > 2048) return null;
-  try {
-    const url = new URL(raw);
-    if ((url.protocol !== "http:" && url.protocol !== "https:") || !url.hostname || url.username || url.password) {
-      return null;
-    }
-    return url.href;
-  } catch {
-    return null;
-  }
-}
-
-function normalizeAvatarUrl(value: unknown): string | null {
-  const raw = normalizeOptionalText(value);
-  if (!raw) return "";
-  if (raw.length > 2048 || /[\0\r\n\\]/.test(raw)) return null;
-  if (raw.startsWith("/media/") && !raw.startsWith("/media//")) return raw;
-  return normalizeHttpUrl(raw);
-}
-
-function normalizeKind(value: unknown): "article" | "knowledge" {
-  return value === "knowledge" ? "knowledge" : "article";
-}
 
 export const onRequestDelete: PagesFunction<Env, "slug"> = async ({ env, params, request, waitUntil }) => {
   const session = await getSession(env, request);

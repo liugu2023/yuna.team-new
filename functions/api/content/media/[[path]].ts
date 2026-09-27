@@ -1,12 +1,9 @@
 import { badRequest, forbidden, json } from "../../../_shared/http";
 import {
-  DIRECT_MEDIA_UPLOAD_MAX_BYTES,
   isContentEditorMediaPath,
   isSafeMediaPath,
-  mediaKey,
-  mediaUrl,
-  normalizeMediaPath,
-  resolveStoredContentType,
+  mediaPathFromParams,
+  putMediaObject,
 } from "../../../_shared/media";
 import { getContentEditorIdentity } from "../../../_shared/session";
 import type { Env } from "../../../_shared/types";
@@ -17,38 +14,14 @@ export const onRequestPut: PagesFunction<Env, "path"> = async ({ env, params, re
     return json({ error: "需要页面编辑权限" }, { status: 401 });
   }
 
-  const segments = params.path as string | string[] | undefined;
-  const rawPath = normalizeMediaPath(Array.isArray(segments) ? segments.join("/") : String(segments || ""));
+  const rawPath = mediaPathFromParams(params.path);
   if (!isSafeMediaPath(rawPath)) {
     return badRequest("媒体路径无效");
   }
+  // 页面编辑器只能写 pages/ 前缀，其余前缀走管理端上传。
   if (!isContentEditorMediaPath(rawPath)) {
     return forbidden();
   }
 
-  const declaredLength = Number(request.headers.get("content-length") || "0");
-  if (declaredLength > DIRECT_MEDIA_UPLOAD_MAX_BYTES) {
-    return badRequest("媒体文件不能超过 10MB");
-  }
-
-  if (!request.body) {
-    return badRequest("缺少上传内容");
-  }
-
-  const buffer = await request.arrayBuffer();
-  if (buffer.byteLength > DIRECT_MEDIA_UPLOAD_MAX_BYTES) {
-    return badRequest("媒体文件不能超过 10MB");
-  }
-
-  const contentType = resolveStoredContentType(
-    rawPath,
-    request.headers.get("content-type") || "",
-  );
-  const key = mediaKey(rawPath);
-  await env.BLOG_BUCKET.put(key, buffer, {
-    httpMetadata: { contentType },
-    customMetadata: { uploadedBy: editor },
-  });
-
-  return json({ key, url: mediaUrl(rawPath), contentType });
+  return putMediaObject(env, request, rawPath, editor);
 };
