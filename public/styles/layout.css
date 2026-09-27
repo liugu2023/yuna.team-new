@@ -864,12 +864,17 @@
   .site-footer-main { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
 }
 
+/* 移动端与触屏：不用 fixed（iOS 不支持、安卓滚动重绘），照片按页头铺满 */
+@media (max-width: 1024px), (hover: none) {
+  .page-wrap { background-attachment: scroll; }
+}
+
 @media (max-width: 720px) {
   .page-hero { padding-block: var(--space-7) var(--space-6); }
   .page-wrap {
     background:
       linear-gradient(180deg, rgba(var(--bg-rgb), .62) 0%, rgba(var(--bg-rgb), .74) 60%, var(--c-bg) 100%),
-      url("/images/campus-bg.webp") center 40% / cover no-repeat fixed,
+      url("/images/campus-bg.webp") center 40% / cover no-repeat scroll,
       var(--c-bg);
   }
   .page-kpi { margin-top: var(--space-6); }

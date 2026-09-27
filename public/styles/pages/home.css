@@ -536,6 +536,10 @@
 /* =========================================================
    断点
    ========================================================= */
+@media (max-width: 1024px), (hover: none) {
+  .page-home .hero-bg { background-attachment: scroll; background-position: 60% 35%; }
+}
+
 @media (max-width: 1024px) {
   .page-home .hero-index { grid-template-columns: minmax(0, 1fr); max-width: 520px; }
   .page-home .home-latest-aside {

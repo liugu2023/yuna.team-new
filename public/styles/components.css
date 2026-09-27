@@ -1113,6 +1113,8 @@ a.author-chip:hover { color: var(--c-brand); }
    断点
    ========================================================= */
 @media (max-width: 720px) {
+  /* iOS Safari 聚焦字号 <16px 的输入框会自动放大页面 */
+  input, select, textarea, .admin-input, .select-input, .search-input { font-size: 16px; }
   .modal-overlay { padding: 0; align-items: stretch; }
   .modal { max-width: none; max-height: none; height: 100%; border: 0; border-radius: 0; }
   .modal-head { padding: var(--space-4); }
@@ -1130,4 +1132,22 @@ a.author-chip:hover { color: var(--c-brand); }
   .article-body h3 { font-size: var(--fs-lg); }
   .article-body pre { padding: var(--space-3) var(--space-4); }
   .article-body .custom-block { padding: var(--space-3) var(--space-4); }
+}
+
+/* 触屏：小链接 / 胶囊的触控热区补到 40px（用 ::after 外扩，不改变视觉尺寸） */
+@media (hover: none) {
+  :is(.tab, .team-term-button, .filter-chip, .team-jump > a, .post-back, .post-hero-tags > a, .dept-crumbs > a,
+      .arrow-link, .read-more, .member-actions > a, .stat-link, .dept-go, .heading-anchor, .login-fallback > summary,
+      .site-footer-main a) { position: relative; }
+  :is(.tab, .team-term-button, .filter-chip, .team-jump > a, .post-back, .post-hero-tags > a, .dept-crumbs > a,
+      .arrow-link, .read-more, .member-actions > a, .stat-link, .dept-go, .heading-anchor, .login-fallback > summary,
+      .site-footer-main a)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 40px);
+    height: max(100%, 40px);
+    translate: -50% -50%;
+  }
 }

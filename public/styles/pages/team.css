@@ -111,7 +111,7 @@
   color: var(--c-text-2);
   font-size: var(--fs-sm);
   line-height: 1.7;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
 }
 
@@ -177,7 +177,7 @@
   background: var(--c-brand-soft);
   color: var(--c-brand-strong);
   font-family: var(--font-mono);
-  font-size: var(--fs-2xs);
+  font-size: var(--fs-xs);
   font-weight: 600;
   letter-spacing: .04em;
   white-space: nowrap;
