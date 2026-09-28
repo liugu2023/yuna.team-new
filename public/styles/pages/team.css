@@ -564,6 +564,9 @@
 .page-team .office-map-zoom button + button { border-top: 1px solid var(--c-line); }
 .page-team .office-map-zoom button:hover { background: var(--c-surface-2); }
 .page-team .office-map-zoom button:focus-visible { outline-offset: -2px; }
+@media (hover: none) {
+  .page-team .office-map-zoom button { width: 40px; height: 40px; }
+}
 
 /* =========================================================
    4. 固定页面（body.page-page）：正文面板 + 侧栏；?record= 成员记录

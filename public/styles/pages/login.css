@@ -158,6 +158,9 @@
 }
 .page-admin-login .login-fallback[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
 .page-admin-login .login-fallback > summary:hover { color: var(--c-brand); }
+@media (hover: none) {
+  .page-admin-login .login-fallback > summary { min-height: 40px; }
+}
 .page-admin-login .fallback-login {
   display: grid;
   gap: var(--space-3);

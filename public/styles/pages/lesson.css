@@ -217,6 +217,9 @@
   transition: border-color var(--motion), color var(--motion), background-color var(--motion);
 }
 .page-lesson .lesson-link-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@media (hover: none) {
+  .page-lesson .lesson-links a { min-height: 40px; }
+}
 .page-lesson .lesson-links a:hover {
   border-color: rgba(var(--brand-rgb), .4);
   background: var(--c-brand-soft);
