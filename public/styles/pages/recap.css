@@ -3,9 +3,53 @@
 .page-recap .recap-hero h1 { max-width: 16em; text-wrap: balance; }
 .page-recap .recap-section { min-width: 0; }
 
-/* ---------- 数字行：报告式的四项，默认文案是「待补充」 ---------- */
-.page-recap .recap-kpi strong { display: block; color: var(--c-text); font-size: var(--fs-md); }
-.page-recap .recap-kpi span { display: block; margin-top: var(--space-2); color: var(--c-text-2); font-size: var(--fs-sm); line-height: 1.7; }
+/* ---------- 招新数据：四格数字与一条录取比例 ---------- */
+.page-recap .recap-data {
+  max-width: 760px;
+  margin-top: var(--space-6);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-md);
+  background: var(--c-brand-soft);
+}
+.page-recap .recap-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.page-recap .recap-stat { min-width: 0; padding: var(--space-4); }
+.page-recap .recap-stat + .recap-stat { border-left: 1px solid var(--c-line-strong); }
+.page-recap .recap-stat-value {
+  display: block;
+  color: var(--c-brand-strong);
+  font-family: var(--font-display);
+  font-size: var(--fs-3xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-heading);
+  overflow-wrap: anywhere;
+}
+.page-recap .recap-stat-label {
+  display: block;
+  margin-top: var(--space-2);
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+.page-recap .recap-ratio { padding: var(--space-3) var(--space-4); border-top: 1px solid var(--c-line-strong); }
+.page-recap .recap-ratio-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--fs-sm);
+}
+.page-recap .recap-ratio-heading strong { color: var(--c-brand-strong); font-variant-numeric: tabular-nums; }
+.page-recap .recap-ratio-track {
+  height: var(--space-2);
+  margin-top: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--c-line);
+}
+.page-recap .recap-ratio-fill { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--c-brand); }
+.page-recap .recap-ratio-caption { margin: var(--space-2) 0 0; color: var(--c-text-3); font-size: var(--fs-xs); }
 
 /* ---------- 三栏卡片 ---------- */
 .page-recap .recap-cards {
@@ -37,6 +81,9 @@
 
 /* ---------- 移动端 ---------- */
 @media (max-width: 720px) {
+  .page-recap .recap-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-recap .recap-stat:nth-child(odd) { border-left: 0; }
+  .page-recap .recap-stat:nth-child(n+3) { border-top: 1px solid var(--c-line-strong); }
   .page-recap .recap-cards { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
   .page-recap .recap-card,
   .page-recap .recap-start { padding: var(--space-4); }

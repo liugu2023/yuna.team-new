@@ -1,4 +1,5 @@
 import { allowedOrigins } from "./_shared/oidc";
+import { isRecruitmentClosed, renderRecruitmentRecap } from "./_shared/recruitment";
 import type { Env } from "./_shared/types";
 
 interface PostMetaRow {
@@ -44,7 +45,18 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, next }) => {
     }
   }
 
-  // 仅拦截 /post.html：按 slug 把文章标题、摘要、封面注入 <head>，
+  // 收官页的正文显隐、索引与分享信息都由同一次状态读取决定。
+  if (/^\/recap(\.html)?$/.test(url.pathname) && (request.method === "GET" || request.method === "HEAD")) {
+    const assetRequest = new Request(request);
+    assetRequest.headers.delete("if-none-match");
+    assetRequest.headers.delete("if-modified-since");
+    const response = await next(assetRequest);
+    if (response.status !== 200 || !(response.headers.get("content-type") || "").includes("text/html")) return response;
+    const closed = await isRecruitmentClosed(env);
+    return renderRecruitmentRecap(response, closed, env.PUBLIC_BASE_URL || url.origin);
+  }
+
+  // /post.html：按 slug 把文章标题、摘要、封面注入 <head>，
   // 让搜索引擎与聊天工具分享卡片拿到真实内容。其余请求原样放行。
   // Pages 的 pretty-URL 会把 /post.html 重定向到 /post，两种路径都要接住。
   if (!/^\/post(\.html)?$/.test(url.pathname) || request.method !== "GET") return next();

@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>招新收官 · YUNA.BLOG</title>
-  <meta name="description" content="YUNA 协会本届招新已经结束：这一届招新的记录、没赶上的三条参与路径，以及新成员接下来要做的事。" />
+  <title>招新进行中 · YUNA.BLOG</title>
+  <meta name="description" content="本届招新正在进行中，查看加入方式与公开课安排。" />
+  <meta name="robots" content="noindex, follow" />
   <meta property="og:site_name" content="YUNA.BLOG" />
-  <meta property="og:title" content="招新收官 · YUNA.BLOG" />
-  <meta property="og:description" content="本届招新已结束，看看这一届的情况，以及还能怎么参与。" />
+  <meta property="og:title" content="招新进行中 · YUNA.BLOG" />
+  <meta property="og:description" content="本届招新正在进行中，查看加入方式与公开课安排。" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.yuna.team/recap" />
   <meta property="og:image" content="https://www.yuna.team/images/og-image.png" />
@@ -39,11 +40,12 @@
     </div>
   </header>
 
+  <main id="content">
   <div class="page-wrap">
-    <!-- 招新还没结束时，这一页不该说“已结束”。由后台开关控制，默认隐藏（本页也没有任何入口）。 -->
-    <section class="shell section recap-guard" data-recruitment="open" hidden>
+    <!-- 默认只展示进行中提示；服务器根据开关切换正文，禁用 JS 时同样有效。 -->
+    <section class="shell section recap-guard" data-recruitment="open">
       <div class="band is-brand">
-        <h2>本届招新还在进行中。</h2>
+        <h1>本届招新还在进行中。</h1>
         <p class="lead">这一页是招新结束后的收官记录，现在还不到时候。想加入我们，先看加入方式；想先了解协会，可以从公开课开始。</p>
         <div class="hero-actions">
           <a class="btn primary" href="/join.html">了解加入方式<span class="arrow" aria-hidden="true"></span></a>
@@ -52,7 +54,7 @@
       </div>
     </section>
 
-    <section class="shell page-hero recap-hero">
+    <section class="shell page-hero recap-hero" data-recruitment="closed" hidden>
       <div data-editable-block="recap-hero-copy" data-editable-title="招新收官：页面介绍">
         <p class="eyebrow" data-block-field="eyebrow">Recruitment Closed</p>
         <h1 data-block-field="title">本届招新已结束。</h1>
@@ -62,16 +64,23 @@
           <a class="btn secondary" href="/page.html?p=guide/new-member" data-block-field="secondaryAction" data-block-href>新成员指南</a>
         </div>
       </div>
-      <div class="page-kpi recap-kpi reveal">
-        <div data-editable-block="recap-stat-signup" data-editable-title="招新收官：数字一"><strong data-block-field="title">报名</strong><span data-block-field="body">待补充</span></div>
-        <div data-editable-block="recap-stat-majors" data-editable-title="招新收官：数字二"><strong data-block-field="title">覆盖院系</strong><span data-block-field="body">待补充</span></div>
-        <div data-editable-block="recap-stat-interviews" data-editable-title="招新收官：数字三"><strong data-block-field="title">面试场次</strong><span data-block-field="body">待补充</span></div>
-        <div data-editable-block="recap-stat-admitted" data-editable-title="招新收官：数字四"><strong data-block-field="title">录取</strong><span data-block-field="body">待补充</span></div>
+      <div class="recap-data reveal" role="group" aria-label="本届招新数据">
+        <div class="recap-stats">
+          <div class="recap-stat" data-editable-block="recap-stat-signup" data-editable-title="招新收官：数字一"><span class="recap-stat-value" data-block-field="body">待补充</span><strong class="recap-stat-label" data-block-field="title">报名</strong></div>
+          <div class="recap-stat" data-editable-block="recap-stat-majors" data-editable-title="招新收官：数字二"><span class="recap-stat-value" data-block-field="body">待补充</span><strong class="recap-stat-label" data-block-field="title">覆盖院系</strong></div>
+          <div class="recap-stat" data-editable-block="recap-stat-interviews" data-editable-title="招新收官：数字三"><span class="recap-stat-value" data-block-field="body">待补充</span><strong class="recap-stat-label" data-block-field="title">面试场次</strong></div>
+          <div class="recap-stat" data-editable-block="recap-stat-admitted" data-editable-title="招新收官：数字四"><span class="recap-stat-value" data-block-field="body">待补充</span><strong class="recap-stat-label" data-block-field="title">录取</strong></div>
+        </div>
+        <div class="recap-ratio" data-recap-ratio hidden>
+          <div class="recap-ratio-heading"><span>录取占比</span><strong data-recap-percent></strong></div>
+          <div class="recap-ratio-track" aria-hidden="true"><span class="recap-ratio-fill" data-recap-ratio-bar></span></div>
+          <p class="recap-ratio-caption" data-recap-ratio-caption></p>
+        </div>
       </div>
     </section>
   </div>
 
-  <main class="main page-main" id="content">
+  <div class="main page-main" data-recruitment="closed" hidden>
     <section class="shell section recap-section" aria-labelledby="recap-review-title">
       <div class="section-head">
         <div data-editable-block="recap-review-heading" data-editable-title="招新收官：回顾区标题">
@@ -142,6 +151,7 @@
         </div>
       </div>
     </section>
+  </div>
   </main>
 
   <footer class="site-footer">
@@ -163,6 +173,7 @@
   <script src="/js/markdown.js"></script>
   <script src="/js/nav.js"></script>
   <script src="/js/editable-blocks.js"></script>
+  <script src="/js/recap.js"></script>
   <script src="/js/footer.js"></script>
   <script src="/js/recruitment.js"></script>
   <script>

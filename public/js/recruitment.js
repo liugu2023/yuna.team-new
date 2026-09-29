@@ -20,7 +20,14 @@
     });
   }
 
-  // 先按「进行中」渲染，避免接口返回前闪一下结束态
+  // 收官页由服务器一次性生成正文与元信息，避免再次读取造成两个状态混用或闪烁。
+  const rendered = document.documentElement.dataset.recruitmentRendered;
+  if (rendered === "open" || rendered === "closed") {
+    apply(rendered === "closed");
+    return;
+  }
+
+  // 未经服务器渲染的页面先按「进行中」显示，避免接口返回前闪一下结束态。
   apply(false);
 
   if (!window.blog || typeof window.blog.fetchJson !== "function") return;

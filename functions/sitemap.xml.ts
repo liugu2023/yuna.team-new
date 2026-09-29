@@ -1,4 +1,5 @@
 import type { Env } from "./_shared/types";
+import { isRecruitmentClosed } from "./_shared/recruitment";
 
 // 静态页在这里手写一份：Pages Functions 运行时读不到静态资源目录，
 // 没法自动枚举 public/*.html，新增独立页面时记得同步补进来。
@@ -51,19 +52,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     .all<PostRow>()
     .catch(() => null);
 
-  // 招新收官页只在招新结束后收录：招新进行中时那一页会对访客说“已结束”，不该被搜索引擎索引。
-  // 开关存在 site_records 的 recruitment-status（后台「站点维护 → 招新状态」），读不到就按进行中处理。
-  const recruitment = await env.BLOG_DB.prepare("SELECT content FROM site_records WHERE key = ?")
-    .bind("recruitment-status")
-    .first<{ content: string }>()
-    .catch(() => null);
-  let recruitmentClosed = false;
-  try {
-    const parsed = JSON.parse(recruitment?.content || "{}") as { closed?: boolean } | null;
-    recruitmentClosed = parsed?.closed === true;
-  } catch {
-    recruitmentClosed = false;
-  }
+  // 进行中时收官页同时返回 noindex；移出 sitemap 本身并不能阻止收录。
+  const recruitmentClosed = await isRecruitmentClosed(env);
   const staticEntries = recruitmentClosed
     ? STATIC_ENTRIES
     : STATIC_ENTRIES.filter((entry) => entry.path !== "/recap");
@@ -87,7 +77,7 @@ ${entries.map((entry) => renderUrl(base, entry)).join("\n")}
   return new Response(body, {
     headers: {
       "content-type": "application/xml; charset=utf-8",
-      "cache-control": "public, max-age=3600",
+      "cache-control": "no-store",
     },
   });
 };

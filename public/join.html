@@ -47,7 +47,8 @@
       <h1 data-block-field="title">加入燕山大学大学生网络信息协会。</h1>
       <p class="lead" data-block-field="lead">这里用于集中维护招新说明、报名入口、方向介绍和答疑安排。当前内容为占位，后续可由管理员直接在页面上编辑。</p>
       <div class="hero-actions">
-        <a class="btn primary lg" href="#contact" data-block-field="primaryAction" data-block-href data-block-label="主按钮">报名与联系<span class="arrow" aria-hidden="true"></span></a>
+        <a class="btn primary lg" href="#contact" data-block-field="primaryAction" data-block-href data-block-label="主按钮" data-recruitment="open">报名与联系<span class="arrow" aria-hidden="true"></span></a>
+        <a class="btn primary lg" href="/recap.html" data-recruitment="closed" hidden>查看招新收官<span class="arrow" aria-hidden="true"></span></a>
         <a class="btn secondary lg" href="/departments.html" data-block-field="secondaryAction" data-block-href data-block-label="次按钮">先看看部门</a>
       </div>
     </div>
@@ -68,6 +69,7 @@
       <div class="hero-actions">
         <a class="btn primary" href="/recap.html" data-block-field="primaryAction" data-block-href>查看招新收官<span class="arrow" aria-hidden="true"></span></a>
         <a class="btn secondary" href="/lesson-plan.html" data-block-field="secondaryAction" data-block-href>先来听公开课</a>
+        <a class="btn secondary" href="/team.html#office">联系协会 / 办公室</a>
       </div>
     </div>
   </section>
@@ -150,7 +152,7 @@
     </div>
   </section>
 
-  <section class="shell section join-contact" id="contact" aria-labelledby="join-contact-title">
+  <section class="shell section join-contact" id="contact" aria-labelledby="join-contact-title" data-recruitment="open">
     <div class="band is-brand join-band reveal is-scale" data-editable-block="join-contact-card" data-editable-title="加入我们：联系说明">
       <div class="fx-glow is-sky" aria-hidden="true"></div>
       <button class="band-prompt" type="button" data-copy-command="npx -y yuna-team join" aria-label="复制命令：npx -y yuna-team join"><span aria-hidden="true">$</span> yuna join --with curiosity<span class="fx-caret" aria-hidden="true"></span></button>
