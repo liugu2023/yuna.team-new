@@ -1,0 +1,23 @@
+{
+  "name": "@yuna-team/cli",
+  "version": "0.1.0",
+  "description": "燕山大学大学生网络信息协会（YUNA）命令行工具：招新信息、文章、项目、授课计划。",
+  "keywords": ["yuna", "cli", "club", "blog", "terminal"],
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=18.17"
+  },
+  "bin": {
+    "yuna": "bin/yuna.mjs"
+  },
+  "files": ["bin", "dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0"
+  }
+}

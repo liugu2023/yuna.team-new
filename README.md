@@ -39,6 +39,7 @@ functions/              Cloudflare Pages Functions
 functions/_shared/      鉴权、会话、D1、R2、HTTP 等共享逻辑
 migrations/             D1 数据库迁移脚本
 scripts/                旧内容迁移、媒体迁移、内容检查脚本
+cli/                    命令行工具（独立 workspace 包 @yuna-team/cli，只读公开接口）
 wrangler.toml           Cloudflare 绑定和公开环境变量
 .dev.vars.example       本地 secret 示例
 ```
@@ -295,6 +296,21 @@ npm run db:migrate
 - 项目可标注“公网 / 内网”并按访问范围筛选。旧数据缺少 network 字段时显示“待确认”，不根据 URL 推断；服务访问范围与源码仓库是否公开无关。
 - 项目集合存入 `site_records` 的 `association-projects` JSON 记录，复用现有权限、站点导出和历史备份，不需要新增数据库迁移。
 - 没有项目记录或项目列表为空时都展示空状态，不会回退成示例内容；接口错误单独提示并可重试。
+
+## 命令行工具（yuna CLI）
+
+`cli/` 是一个独立的 npm 包（workspace，`@yuna-team/cli`），把站点公开接口搬到终端：招新信息、文章、项目、授课计划。首页和加入页那句 `yuna join --with curiosity` 就是它，点击会复制安装命令。
+
+```bash
+npm run cli:build        # 编译（tsc → cli/dist）
+npm run cli -- posts -n 5
+node cli/bin/yuna.mjs join --base http://127.0.0.1:8788   # 本地联调
+```
+
+- 命令：`join`、`posts`、`read <slug>`、`projects`、`lesson`、`open <页面>`；全局 `--json`、`--base`（或 `YUNA_API_BASE`）。
+- 只读公开接口，不需要密钥，不写入线上数据；记录缺失时退回页面内置文案，项目为空时输出与网页一致的空状态。
+- 运行时零依赖（Node 18.17+，只用内置模块与全局 `fetch`），后续可用 `bun build --compile` 产出单文件二进制分发到 Homebrew / Scoop / winget。
+- 详见 [cli/README.md](cli/README.md)（含发布清单）。
 
 ## 管理后台
 

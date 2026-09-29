@@ -15,10 +15,16 @@
     "media:migrate": "node scripts/migrate-media.mjs",
     "content:check": "node scripts/check-content.mjs",
     "media:clean": "node scripts/clean-orphan-media.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p cli/tsconfig.json --noEmit",
+    "cli": "node cli/bin/yuna.mjs",
+    "cli:build": "tsc -p cli/tsconfig.json",
+    "cli:typecheck": "tsc -p cli/tsconfig.json --noEmit",
     "styles:check": "node scripts/check-css.mjs",
     "scripts:check": "node scripts/check-scripts.mjs"
   },
+  "workspaces": [
+    "cli"
+  ],
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260618.0",
     "typescript": "^5.8.3",
