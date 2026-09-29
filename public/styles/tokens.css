@@ -108,7 +108,8 @@
   --space-8: 64px;
   --space-9: 96px;
   --space-10: 120px;
-  --section-y: 120px;
+  /* 大区块外部间距：桌面和手机统一；修改这里即可调整全站节奏。 */
+  --section-gap: 64px;
 
   /* ---------- 圆角 ---------- */
   --r-xs: 6px;
@@ -154,14 +155,9 @@
   --z-skip: 200;
 }
 
-@media (max-width: 1024px) {
-  :root { --section-y: 96px; }
-}
-
 @media (max-width: 720px) {
   :root {
     --gutter: 16px;
-    --section-y: 72px;
     --topbar-offset: 8px;
   }
 }

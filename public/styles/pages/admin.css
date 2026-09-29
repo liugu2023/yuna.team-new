@@ -29,7 +29,7 @@
   grid-template-columns: 232px minmax(0, 1fr);
   align-items: start;
   gap: var(--space-7);
-  padding-block: var(--space-6) var(--space-9);
+  padding-block: var(--space-6) var(--section-gap);
 }
 
 /* =========================================================

@@ -196,15 +196,9 @@
 /* =========================================================
    3. 关于协会（body.page-team）
    ========================================================= */
-.page-team .main { padding-block: 0 var(--space-9); }
-.page-team .main > .section + .section { margin-top: 0; }
 .page-team .section { scroll-margin-top: var(--header-space); }
-.page-team .main > .team-depts { padding-top: var(--space-8); }
-/* 往届成员与名人堂两块折叠面板靠近排列 */
-.page-team .main > #members { padding-bottom: var(--space-4); }
 
 /* ---------- 页头 ---------- */
-.page-team .team-hero { padding-bottom: var(--space-8); }
 .page-team .team-hero h1 {
   max-width: 13em;
   font-size: clamp(38px, 6vw, 72px);
@@ -643,7 +637,6 @@
 }
 
 @media (max-width: 720px) {
-  .page-team .team-hero { padding-bottom: var(--space-7); }
   .page-team .team-jump a { height: 32px; padding: 0 12px 0 10px; font-size: 13px; }
   .page-team .team-dept-grid,
   .page-team .office-grid { grid-template-columns: minmax(0, 1fr); }

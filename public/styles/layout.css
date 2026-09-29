@@ -310,7 +310,7 @@
   background: radial-gradient(circle, rgba(var(--brand-rgb), .1), transparent 65%);
   pointer-events: none;
 }
-.page-hero { position: relative; padding-block: 72px 64px; }
+.page-hero { position: relative; padding-block: 72px var(--section-gap); }
 .page-hero h1 {
   max-width: 900px;
   font-size: clamp(34px, 5.2vw, 60px);
@@ -361,9 +361,9 @@
 /* =========================================================
    主体与栅格
    ========================================================= */
-.main { display: block; padding-block: var(--space-8) var(--space-9); }
+.main { display: block; padding-block: 0 var(--section-gap); }
 .main > .shell + .shell,
-.main > section + section { margin-top: var(--space-8); }
+.main > section + section { margin-top: var(--section-gap); }
 
 .content-grid {
   display: grid;
@@ -376,11 +376,8 @@
 /* =========================================================
    版式模式
    ========================================================= */
-/* 区块：上下统一 --section-y */
-.section { position: relative; padding-block: var(--section-y); }
-.section.is-tight { padding-block: calc(var(--section-y) * .6); }
-.section + .section { padding-top: 0; }
-.main > .section + .section { margin-top: 0; }
+/* 区块自身不再叠加上下 padding；相邻区块和页面收尾由 --section-gap 统一。 */
+.section { position: relative; padding-block: 0; }
 
 /* 区块头：左侧眉标 + 大标题 + 导语，右侧可放一个操作（.arrow-link / .btn） */
 .section-head {
@@ -459,7 +456,7 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: clamp(56px, 8vw, 104px) clamp(24px, 6vw, 88px);
+  padding: var(--section-gap) clamp(24px, 6vw, 88px);
   border-radius: var(--r-xl);
   background-color: var(--c-bg);
   color: var(--c-text);
@@ -870,7 +867,7 @@
 }
 
 @media (max-width: 720px) {
-  .page-hero { padding-block: var(--space-7) var(--space-6); }
+  .page-hero { padding-block: var(--space-7) var(--section-gap); }
   .page-wrap {
     background:
       linear-gradient(180deg, rgba(var(--bg-rgb), .62) 0%, rgba(var(--bg-rgb), .74) 60%, var(--c-bg) 100%),
@@ -881,7 +878,6 @@
   .page-kpi > div { flex-basis: 100%; padding: var(--space-3) 0; }
   .page-kpi > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--c-line); }
   .hero-actions .btn { flex: 1 1 auto; }
-  .main { padding-block: var(--space-7) var(--space-8); }
   .section-head { margin-bottom: var(--space-6); }
   .bento { grid-template-columns: minmax(0, 1fr); }
   .bento > *,

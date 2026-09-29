@@ -10,8 +10,8 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  min-height: min(100vh, 920px);
-  padding: calc(var(--header-space) + var(--space-7)) var(--gutter) var(--space-9);
+  min-height: 0;
+  padding: calc(var(--header-space) + var(--space-7)) var(--gutter) var(--section-gap);
   /* 燕大校园照片作卡片背后的淡背景：中心几乎纯底色，四周隐约露出，底部融进 --c-bg */
   background:
     radial-gradient(ellipse 60% 55% at 50% 45%, rgba(var(--bg-rgb), .88) 0%, rgba(var(--bg-rgb), .6) 60%, rgba(var(--bg-rgb), .35) 100%),
@@ -287,9 +287,7 @@
    ========================================================= */
 @media (max-width: 720px) {
   :is(.page-admin-login, .page-403) .login-stage {
-    min-height: 0;
     padding-top: calc(var(--header-space) + var(--space-5));
-    padding-bottom: var(--space-8);
   }
   .page-admin-login .login-card { padding: var(--space-5); }
   .page-403 .forbidden-card { padding: var(--space-7) var(--space-5); }

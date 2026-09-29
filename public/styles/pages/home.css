@@ -1,7 +1,5 @@
 /* pages/home.css —— 首页（body.page-home）。只在这里写首页专属版式；组件与外壳见 components.css / layout.css。 */
 
-.page-home .main { padding-block: 0; }
-.page-home .main > section + section { margin-top: 0; }
 
 /* =========================================================
    Hero
@@ -81,7 +79,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-block: clamp(64px, 11vw, 136px) clamp(56px, 8vw, 96px);
+  padding-block: clamp(64px, 11vw, 136px) var(--section-gap);
   text-align: center;
 }
 .page-home .hero-copy {
@@ -236,7 +234,7 @@
 /* =========================================================
    数字行
    ========================================================= */
-.page-home .home-stats { padding-block: clamp(40px, 6vw, 72px) 0; }
+.page-home .home-stats { padding-block: 0; }
 .page-home .home-stats .stats { border-top: 0; }
 .page-home .home-stats .stats-item { padding-top: var(--space-5); }
 

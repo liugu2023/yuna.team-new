@@ -5,8 +5,6 @@
 /* =========================================================
    2. 部门一览（body.page-departments）
    ========================================================= */
-.page-departments .main { padding-bottom: 0; }
-.page-departments .main > .depts-join { margin-top: 0; }
 
 .page-departments .dept-card { min-height: 400px; }
 .page-departments .dept-card:hover { transform: translateY(-2px); }
@@ -75,7 +73,6 @@
 /* =========================================================
    3. 部门详情（body.page-department）
    ========================================================= */
-.page-department .dept-hero { padding-bottom: var(--space-8); }
 .page-department .dept-crumbs {
   display: flex;
   flex-wrap: wrap;
@@ -99,7 +96,6 @@
   -webkit-text-fill-color: transparent;
 }
 
-.page-department .main { padding-top: var(--space-6); }
 .page-department .dept-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
@@ -189,6 +185,5 @@
   .page-departments .dept-card { min-height: 0; }
   .page-departments .depts-join-band .lead { margin-inline: 0; }
   .page-departments .depts-join-band .hero-actions { justify-content: flex-start; }
-  .page-department .dept-hero { padding-bottom: var(--space-6); }
   .page-department .dept-aside { grid-template-columns: minmax(0, 1fr); }
 }

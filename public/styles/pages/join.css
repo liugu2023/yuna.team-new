@@ -1,11 +1,8 @@
 /* pages/join.css —— 加入我们（body.page-join）。流程时间线 / 方向卡 / 浅色品牌联系带。 */
 
-.page-join .main { padding-block: 0; }
-.page-join .main > .section + .section { margin-top: 0; }
 .page-join .section { scroll-margin-top: var(--header-space); }
 
 /* ---------- 页头 ---------- */
-.page-join .join-hero { padding-bottom: var(--space-8); }
 .page-join .join-hero h1 {
   max-width: 14em;
   padding-bottom: .06em;
@@ -30,7 +27,6 @@
 }
 
 /* ---------- 流程：左标题 / 右时间线 ---------- */
-.page-join .join-process { padding-top: var(--space-8); }
 .page-join .join-process-grid {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
@@ -196,7 +192,6 @@
 }
 
 @media (max-width: 720px) {
-  .page-join .join-hero { padding-bottom: var(--space-7); }
   .page-join .join-steps::before { left: 19px; }
   .page-join .join-step { grid-template-columns: 40px minmax(0, 1fr); gap: var(--space-3); }
   .page-join .join-step-num { width: 40px; height: 40px; font-size: var(--fs-xs); }
