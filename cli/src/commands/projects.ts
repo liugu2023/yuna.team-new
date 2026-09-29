@@ -20,6 +20,12 @@ const NETWORK_LABELS: Record<ProjectEntry["network"], string> = {
   unspecified: "待确认",
 };
 
+/** 与 public/js/projects.js 详情弹窗里的访问范围说明保持一致（内网/待确认才需要解释）。 */
+const ACCESS_NOTES: Partial<Record<ProjectEntry["network"], string>> = {
+  internal: "内网项目：需连接燕山大学校园网才能访问的项目。",
+  unspecified: "访问范围尚未标注，请参考项目说明或联系维护团队。",
+};
+
 function safeUrl(value: unknown): string {
   const raw = String(value ?? "").trim();
   if (!raw || /[\\\u0000-\u0020]/.test(raw)) return "";
@@ -139,4 +145,12 @@ export async function runProjects(ctx: CommandContext): Promise<void> {
     }
     if (position === projects.length - 1) out();
   });
+
+  const needNotes = (["internal", "unspecified"] as const).filter((network) =>
+    projects.some((project) => project.network === network),
+  );
+  if (needNotes.length) {
+    for (const network of needNotes) out(style.dim(`  ${ACCESS_NOTES[network]}`));
+    out();
+  }
 }
