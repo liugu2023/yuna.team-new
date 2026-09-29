@@ -5,21 +5,38 @@
   "keywords": ["yuna", "cli", "club", "blog", "terminal"],
   "type": "module",
   "license": "MIT",
+
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liugu2023/yuna.team-new.git"
+  },
+
+  "bugs": {
+    "url": "https://github.com/liugu2023/yuna.team-new/issues"
+  },
+
+  "homepage": "https://github.com/liugu2023/yuna.team-new#readme",
+
   "engines": {
     "node": ">=18.17"
   },
+
   "bin": {
     "yuna": "bin/yuna.mjs"
   },
+
   "files": ["bin", "dist", "README.md"],
+
   "scripts": {
     "prepack": "npm run build",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
+
   "dependencies": {
     "undici": "^6.21.0"
   },
+
   "devDependencies": {
     "@types/node": "^24.0.0"
   }
