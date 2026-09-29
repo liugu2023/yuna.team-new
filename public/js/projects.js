@@ -185,8 +185,8 @@ async function renderProjectsPage() {
     modal.querySelector("[data-project-detail-meta]").innerHTML = projectNetworkBadge(project)
       + `<span>${escapeHtml(PROJECT_STATUS_LABELS[project.status] + " · " + project.category + " · " + (project.owner || "参与团队待补充"))}</span>`;
     modal.querySelector("[data-project-access-note]").textContent = project.network === "internal"
-      ? "内网项目：请先连接项目指定的网络，访问方式以项目说明为准。"
-      : project.network === "public" ? "公网项目：可通过公网访问，是否需要登录以项目要求为准。"
+      ? "内网项目：需连接燕山大学校园网才能访问的项目。"
+      : project.network === "public" ? "公网项目：可直接通过公网访问的项目。"
       : "访问范围尚未标注，请参考项目说明或联系维护团队。";
     const body = modal.querySelector("[data-project-detail-body]");
     body.innerHTML = markdownToHtml(project.description || project.summary || "项目介绍待补充。");
