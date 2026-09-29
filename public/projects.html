@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>协会项目 · YUNA.BLOG</title>
+  <meta name="description" content="了解燕山大学大学生网络信息协会正在维护、开发与规划的项目，查看项目介绍、参与方向和相关链接。" />
+  <meta property="og:site_name" content="YUNA.BLOG" />
+  <meta property="og:title" content="协会项目 · YUNA.BLOG" />
+  <meta property="og:description" content="查看协会项目进展、参与方向和相关资料。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.yuna.team/projects" />
+  <meta property="og:image" content="https://www.yuna.team/images/og-image.png" />
+  <link rel="canonical" href="https://www.yuna.team/projects" />
+  <link rel="icon" href="/images/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/components.css" />
+  <link rel="stylesheet" href="/styles/layout.css" />
+  <link rel="stylesheet" href="/styles/fx.css" />
+  <link rel="stylesheet" href="/styles/pages/projects.css" />
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+<body class="page-projects">
+  <a class="skip-link" href="#content">跳到正文</a>
+  <noscript><p class="empty-state">请启用 JavaScript 查看和筛选协会项目。</p></noscript>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="/" aria-label="返回 YUNA.BLOG 首页"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+      <nav class="nav" aria-label="站点导航">
+        <a href="/">首页</a>
+        <a href="/articles.html">文章列表</a>
+        <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
+        <a href="/lesson-plan.html">授课计划</a>
+        <a class="active" href="/projects.html" aria-current="page">协会项目</a>
+        <a href="/team.html">关于协会</a>
+        <a class="nav-cta" href="/join.html">加入我们</a>
+        <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
+      </nav>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <section class="shell page-hero projects-hero">
+      <div class="reveal" data-editable-block="projects-hero-copy" data-editable-title="协会项目：页面介绍">
+        <p class="eyebrow" data-block-field="eyebrow">Projects</p>
+        <h1 data-block-field="title">我们正在做的项目。</h1>
+        <p class="lead" data-block-field="lead">查看协会维护的工具、建设中的服务与正在讨论的想法。找到感兴趣的方向，一起把项目继续做下去。</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#project-directory" data-block-field="primaryAction" data-block-href>浏览项目<span class="arrow" aria-hidden="true"></span></a>
+          <a class="btn secondary" href="/contribute.html" data-block-field="secondaryAction" data-block-href>了解参与方式</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <main class="main page-main" id="content">
+    <section class="shell projects-section" id="project-directory" data-project-directory aria-labelledby="projects-heading">
+      <div class="section-head">
+        <div data-editable-block="projects-directory-copy" data-editable-title="协会项目：列表标题">
+          <p class="eyebrow" data-block-field="eyebrow">Our work</p>
+          <h2 id="projects-heading" data-block-field="title">项目一览</h2>
+        </div>
+        <p class="projects-count meta" data-project-count role="status" aria-live="polite">正在加载项目</p>
+      </div>
+      <div class="projects-controls">
+        <label class="input-affix">
+          <input class="search-input" type="search" data-project-search data-hotkey="/" placeholder="搜索项目名称、方向或标签" aria-label="搜索协会项目" />
+          <kbd aria-hidden="true">/</kbd>
+        </label>
+        <div class="project-manage-actions" data-project-admin-actions hidden>
+          <button class="btn primary" type="button" data-project-add>新增项目<span class="arrow" aria-hidden="true"></span></button>
+        </div>
+      </div>
+      <div class="projects-filters filter-chips" data-project-filters role="group" aria-label="按项目进展筛选"></div>
+      <div class="projects-network-filters filter-chips" data-project-network-filters role="group" aria-label="按访问范围筛选"></div>
+      <p class="projects-note meta" data-project-example-note hidden>以下为展示示例，项目名称、进展和参与团队可按协会实际情况调整。</p>
+      <p class="meta" data-project-message role="status" aria-live="polite"></p>
+      <div class="projects-grid" data-project-grid>
+        <div class="empty-state"><p>正在加载协会项目。</p></div>
+      </div>
+    </section>
+
+    <section class="shell section projects-contribute" aria-labelledby="projects-contribute-title">
+      <div class="band is-brand" data-editable-block="projects-contribute-copy" data-editable-title="协会项目：参与引导">
+        <h2 id="projects-contribute-title" data-block-field="title">想参与其中？</h2>
+        <p class="lead" data-block-field="lead">公开仓库欢迎问题反馈、文档和代码贡献。先了解协作流程，再选择感兴趣的项目开始。</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="/contribute.html" data-block-field="primaryAction" data-block-href>查看参与指南<span class="arrow" aria-hidden="true"></span></a>
+          <a class="btn secondary" href="/team.html" data-block-field="secondaryAction" data-block-href>认识协会</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell site-footer-main">
+      <div class="site-footer-brand" data-editable-block="site-footer-brand" data-editable-title="页脚：协会简介">
+        <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+        <p data-block-field="body">燕山大学大学生网络信息协会。学习、实践、分享，把技术热情变成看得见的作品。</p>
+      </div>
+      <nav class="site-footer-nav" aria-label="页脚导航">
+        <div data-editable-block="site-footer-nav-content" data-editable-title="页脚链接栏：内容">
+          <h2 data-block-field="title">内容</h2>
+          <div data-block-links><a href="/articles.html">文章列表</a><a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a><a href="/lesson-plan.html">授课计划</a></div>
+        </div>
+        <div data-editable-block="site-footer-nav-association" data-editable-title="页脚链接栏：协会">
+          <h2 data-block-field="title">协会</h2>
+          <div data-block-links><a href="/team.html">关于协会</a><a href="/departments.html">部门介绍</a><a href="/join.html">加入我们</a></div>
+        </div>
+        <div data-editable-block="site-footer-nav-departments" data-editable-title="页脚链接栏：部门">
+          <h2 data-block-field="title">部门</h2>
+          <div data-block-links><a href="/department-dev.html">开发部</a><a href="/department-ops.html">运维部</a><a href="/department-publicity.html">组宣部</a><a href="/department-security.html">网络安全部</a></div>
+        </div>
+      </nav>
+    </div>
+    <div class="shell footer"><span>YUNA.BLOG · 协会项目</span><span>实践 · 协作 · 分享</span></div>
+  </footer>
+
+  <div class="modal-overlay" data-project-detail hidden>
+    <div class="modal project-detail-modal" role="dialog" aria-modal="true" aria-labelledby="project-detail-title">
+      <div class="modal-head"><h2 id="project-detail-title" data-project-detail-title tabindex="-1">项目详情</h2><button class="icon-button" type="button" data-project-close aria-label="关闭项目详情">×</button></div>
+      <div class="modal-body"><p class="project-detail-meta meta" data-project-detail-meta></p><p class="project-access-note" data-project-access-note></p><div class="project-detail-body article-body" data-project-detail-body></div></div>
+      <div class="modal-foot"><div class="project-detail-links editor-actions" data-project-detail-links><button class="btn secondary" type="button" data-project-close>关闭</button></div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" data-project-editor hidden>
+    <div class="modal project-editor-modal" role="dialog" aria-modal="true" aria-labelledby="project-editor-title">
+      <div class="modal-head"><h2 id="project-editor-title" data-project-editor-title>编辑项目</h2><button class="icon-button" type="button" data-project-close aria-label="关闭项目编辑器">×</button></div>
+      <div class="modal-body">
+        <p class="projects-note meta" data-project-first-save hidden>首次保存后，展示示例将替换为你填写的正式项目。之后可以继续新增项目。</p>
+        <form class="project-editor-form" id="project-editor-form">
+          <div class="project-editor-grid">
+            <label>项目名称<input class="admin-input" name="title" required maxlength="80" placeholder="例如：协会网站" /></label>
+            <label>项目方向<input class="admin-input" name="category" maxlength="40" placeholder="例如：Web 应用" /></label>
+            <label>当前进展<select class="select-input" name="status"><option value="planning">规划中</option><option value="building">开发中</option><option value="maintaining">持续维护</option><option value="archived">已归档</option></select></label>
+            <label>参与团队<input class="admin-input" name="owner" maxlength="120" placeholder="例如：开发部 · 运维部" /></label>
+            <label class="project-editor-wide">服务访问范围<select class="select-input" name="network" required aria-describedby="project-network-help"><option value="">请选择访问范围</option><option value="public">公网项目</option><option value="internal">内网项目</option><option value="unspecified">待确认</option></select><span class="meta" id="project-network-help">表示项目服务的访问环境，与源码仓库是否公开无关；实际访问权限由项目服务控制。</span></label>
+            <label class="project-editor-wide">一句话介绍<textarea class="admin-input" name="summary" rows="3" required maxlength="300" placeholder="这个项目解决什么问题？"></textarea></label>
+            <label class="project-editor-wide">技术或方向标签<input class="admin-input" name="tags" maxlength="240" placeholder="用逗号分隔，例如：Web，协作，校园" /></label>
+            <label>项目地址（选填）<input class="admin-input" name="siteUrl" maxlength="2048" placeholder="https:// 或站内路径 /…" /></label>
+            <label>项目仓库（选填）<input class="admin-input" name="repoUrl" maxlength="2048" placeholder="https://github.com/…" /></label>
+            <label class="project-editor-wide">详细介绍（支持 Markdown）<textarea class="admin-input" name="description" rows="8" maxlength="16000" placeholder="介绍项目目标、当前进展、下一步计划和参与方式。"></textarea></label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-foot">
+        <p class="project-editor-message meta" data-project-editor-message role="status" aria-live="polite"></p>
+        <div class="editor-actions"><button class="btn danger" type="button" data-project-delete hidden>删除项目</button><button class="btn secondary" type="button" data-project-close>取消</button><button class="btn primary" type="submit" form="project-editor-form">保存项目</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/core.js"></script>
+  <script src="/js/markdown.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/editable-blocks.js"></script>
+  <script src="/js/footer.js"></script>
+  <script src="/js/projects.js"></script>
+  <script>
+    window.blog.renderUserNav();
+    window.blog.renderEditableBlocks();
+    window.blog.renderProjectsPage();
+  </script>
+  <script src="/yuna-ui.js"></script>
+</body>
+</html>

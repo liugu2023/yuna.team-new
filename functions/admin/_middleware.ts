@@ -49,6 +49,7 @@ function forbiddenPage(): string {
           <a href="/articles.html">文章列表</a>
           <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
           <a href="/lesson-plan.html">授课计划</a>
+          <a href="/projects.html">协会项目</a>
           <a href="/team.html">关于协会</a>
           <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
         </nav>

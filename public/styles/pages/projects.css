@@ -1,0 +1,159 @@
+/* 协会项目：沿用站点卡片、筛选、表单和弹窗组件。 */
+.page-projects .projects-hero h1 { max-width: 14em; text-wrap: balance; }
+.page-projects .projects-section { min-width: 0; }
+.page-projects .projects-section > .section-head { align-items: baseline; }
+.page-projects .projects-count { color: var(--c-text-3); font-size: var(--fs-sm); }
+
+.page-projects .projects-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-4);
+}
+.page-projects .projects-controls .input-affix { flex: 1 1 280px; min-width: 0; max-width: 560px; }
+.page-projects .projects-controls .search-input { width: 100%; min-width: 0; }
+.page-projects .project-manage-actions,
+.page-projects .project-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.page-projects .project-manage-actions { margin-left: auto; }
+.page-projects .projects-filters { flex-wrap: wrap; margin-bottom: var(--space-5); }
+.page-projects .projects-network-filters {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+.page-projects .projects-filter-label { color: var(--c-text-3); font-size: var(--fs-xs); }
+.page-projects .projects-note {
+  margin-bottom: var(--space-5);
+  color: var(--c-text-3);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+}
+.page-projects .projects-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+.page-projects .project-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+}
+.page-projects .project-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
+.page-projects .project-category { min-width: 0; color: var(--c-text-3); font-size: var(--fs-xs); overflow-wrap: anywhere; }
+.page-projects .project-card-badges { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-width: 0; }
+.page-projects .project-network-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r-xs);
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.page-projects .project-network-badge.is-public { border-color: var(--c-brand-soft); background: var(--c-brand-soft); color: var(--c-brand-strong); }
+.page-projects .project-network-badge.is-internal { border-color: var(--navy-800); background: var(--navy-800); color: var(--blue-50); }
+.page-projects .project-network-badge.is-unspecified { border-style: dashed; }
+.page-projects .project-title {
+  font-size: var(--fs-xl);
+  line-height: 1.35;
+  letter-spacing: var(--tracking-heading);
+  overflow-wrap: anywhere;
+}
+.page-projects .project-summary { color: var(--c-text-2); font-size: var(--fs-sm); line-height: 1.8; overflow-wrap: anywhere; }
+.page-projects .project-card .tag { max-width: 100%; height: auto; min-height: 24px; white-space: normal; overflow-wrap: anywhere; }
+.page-projects .project-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--c-line);
+}
+.page-projects .project-owner { min-width: 0; overflow-wrap: anywhere; }
+.page-projects .project-actions .btn,
+.page-projects .project-manage-actions .btn,
+.page-projects .project-detail-links .btn { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+.page-projects .projects-grid > .empty-state { grid-column: 1 / -1; }
+
+.page-projects .project-detail-modal,
+.page-projects .project-editor-modal { max-width: 880px; }
+.page-projects .project-detail-modal { height: auto; }
+.page-projects .project-detail-modal .modal-head h2,
+.page-projects .project-editor-modal .modal-head h2 { min-width: 0; overflow-wrap: anywhere; }
+.page-projects .project-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--c-line);
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+.page-projects .project-detail-meta dl { display: grid; gap: var(--space-1); min-width: 0; margin: 0; }
+.page-projects .project-detail-meta dt { color: var(--c-text-3); font-size: var(--fs-xs); }
+.page-projects .project-detail-meta dd { margin: 0; }
+.page-projects .project-detail-body { min-width: 0; }
+.page-projects .project-access-note { margin-bottom: var(--space-4); color: var(--c-text-2); font-size: var(--fs-sm); line-height: 1.7; overflow-wrap: anywhere; }
+.page-projects .project-detail-links { flex-wrap: wrap; }
+.page-projects .project-editor-form { min-width: 0; }
+.page-projects .project-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.page-projects .project-editor-grid > label { display: grid; align-content: start; gap: var(--space-2); min-width: 0; color: var(--c-text-2); font-size: var(--fs-sm); }
+.page-projects .project-editor-grid :is(input, select, textarea) { width: 100%; min-width: 0; }
+.page-projects .project-editor-wide { grid-column: 1 / -1; }
+.page-projects .project-editor-grid textarea { min-height: 120px; resize: vertical; }
+.page-projects .project-editor-message { color: var(--c-text-2); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.page-projects .project-editor-message:empty { display: none; }
+.page-projects .projects-contribute .band { gap: var(--space-4); }
+.page-projects .projects-contribute .section-head { margin-bottom: 0; }
+.page-projects .projects-contribute h2 { font-size: clamp(26px, 3.2vw, 36px); line-height: 1.2; }
+.page-projects .projects-contribute .lead { max-width: 640px; }
+.page-projects .projects-contribute .hero-actions { margin-top: var(--space-3); }
+
+@media (max-width: 720px) {
+  .page-projects [data-project-detail] { padding: var(--space-4); align-items: center; }
+  .page-projects .project-detail-modal { max-height: calc(100dvh - var(--space-6)); border: 1px solid var(--c-line); border-radius: var(--r-lg); }
+  .page-projects .projects-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+  .page-projects .project-card { padding: var(--space-4); }
+  .page-projects .projects-controls { align-items: stretch; }
+  .page-projects .projects-controls .input-affix { flex-basis: 100%; max-width: none; }
+  .page-projects .project-manage-actions { width: 100%; margin-left: 0; }
+  .page-projects .project-editor-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (hover: none) {
+  .page-projects .projects-network-filters .filter-chip { min-height: 40px; }
+  .page-projects .projects-filters .filter-chip,
+  .page-projects .project-actions > a,
+  .page-projects .project-detail-links > a { min-height: 40px; }
+}

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>参与项目 · YUNA.BLOG</title>
+  <meta name="description" content="了解如何参与 YUNA 协会项目：从阅读仓库说明、反馈问题和完善文档开始，通过 Issue 与 Pull Request 协作。" />
+  <meta property="og:site_name" content="YUNA.BLOG" />
+  <meta property="og:title" content="参与项目 · YUNA.BLOG" />
+  <meta property="og:description" content="从一个问题、一份文档或一次代码提交开始，参与协会项目。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.yuna.team/contribute" />
+  <meta property="og:image" content="https://www.yuna.team/images/og-image.png" />
+  <link rel="canonical" href="https://www.yuna.team/contribute" />
+  <link rel="icon" href="/images/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/components.css" />
+  <link rel="stylesheet" href="/styles/layout.css" />
+  <link rel="stylesheet" href="/styles/fx.css" />
+  <link rel="stylesheet" href="/styles/pages/contribute.css" />
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+<body class="page-contribute">
+  <a class="skip-link" href="#content">跳到正文</a>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="/" aria-label="返回 YUNA.BLOG 首页"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+      <nav class="nav" aria-label="站点导航">
+        <a href="/">首页</a>
+        <a href="/articles.html">文章列表</a>
+        <a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a>
+        <a href="/lesson-plan.html">授课计划</a>
+        <a class="active" href="/projects.html">协会项目</a>
+        <a href="/team.html">关于协会</a>
+        <a class="nav-cta" href="/join.html">加入我们</a>
+        <span data-user-nav data-login-label="后台入口"><a href="/admin-login.html">后台入口</a></span>
+      </nav>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <section class="shell page-hero contribute-hero">
+      <div data-editable-block="contribute-hero-copy" data-editable-title="参与项目：页面介绍">
+        <p class="eyebrow" data-block-field="eyebrow">Contribute</p>
+        <h1 data-block-field="title">从一次小贡献开始。</h1>
+        <p class="lead" data-block-field="lead">发现问题、补充文档、提交代码，都能帮助项目向前走。公开项目不要求先加入协会，具体参与方式以各仓库说明为准。</p>
+        <div class="hero-actions"><a class="btn primary" href="/projects.html" data-block-field="primaryAction" data-block-href>寻找感兴趣的项目<span class="arrow" aria-hidden="true"></span></a></div>
+      </div>
+    </section>
+  </div>
+
+  <main class="main page-main" id="content">
+    <section class="shell section contribute-section" aria-labelledby="contribute-start-title">
+      <div class="contribute-intro" data-editable-block="contribute-start" data-editable-title="参与项目：开始之前">
+        <p class="eyebrow" data-block-field="eyebrow">先读项目说明</p>
+        <h2 id="contribute-start-title" data-block-field="title">从仓库的 README 开始。</h2>
+        <p data-block-field="body">在项目详情中查看源码地址，先阅读 README，了解项目目标、运行方法与当前进展。如果仓库提供 CONTRIBUTING、Issue 模板或贡献约定，也请先读一遍，再选择适合自己的任务。</p>
+      </div>
+      <div class="contribute-directions">
+        <article class="surface-card contribute-card" data-editable-block="contribute-direction-feedback" data-editable-title="参与方向：反馈问题">
+          <h3 data-block-field="title">反馈问题</h3>
+          <p data-block-field="body">先搜索已有 Issue，确认没有重复反馈。描述遇到的现象、预期结果、复现步骤和运行环境；提出新想法时，说明它要解决的实际问题。</p>
+        </article>
+        <article class="surface-card contribute-card" data-editable-block="contribute-direction-docs" data-editable-title="参与方向：完善文档">
+          <h3 data-block-field="title">完善文档</h3>
+          <p data-block-field="body">修正错别字、补齐安装步骤、解释难懂的用法，或者记录自己排查问题的过程。一次清楚的文档更新，也能让下一位使用者少走弯路。</p>
+        </article>
+        <article class="surface-card contribute-card" data-editable-block="contribute-direction-code" data-editable-title="参与方向：提交代码">
+          <h3 data-block-field="title">提交代码</h3>
+          <p data-block-field="body">从范围明确的小任务开始，例如修复一个 Bug、补充测试或改进已有功能。较大的改动先通过 Issue 与维护者讨论，确认方向后再动手。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="shell section contribute-section" aria-labelledby="contribute-process-title">
+      <div class="section-head" data-editable-block="contribute-process-heading" data-editable-title="参与项目：流程标题">
+        <div><p class="eyebrow" data-block-field="eyebrow">协作流程</p><h2 id="contribute-process-title" data-block-field="title">让一次贡献顺利合入。</h2></div>
+      </div>
+      <ol class="contribute-steps">
+        <li data-editable-block="contribute-step-project" data-editable-title="贡献流程：选择项目"><h3 data-block-field="title">选择一个项目</h3><p data-block-field="body">查看项目介绍与仓库说明，按 README 在本地运行项目。优先选择你能复现、能验证结果的小问题。</p></li>
+        <li data-editable-block="contribute-step-issue" data-editable-title="贡献流程：沟通 Issue"><h3 data-block-field="title">在 Issue 中沟通</h3><p data-block-field="body">确认任务是否已有其他人处理，说明你的思路与计划修改的范围。涉及功能或行为变化时，先与维护者达成共识。</p></li>
+        <li data-editable-block="contribute-step-branch" data-editable-title="贡献流程：分支提交"><h3 data-block-field="title">Fork 或创建分支</h3><p data-block-field="body">按仓库约定 Fork 后创建工作分支；有写入权限时，也可以在仓库内新建分支。围绕一个目标提交改动，保持提交说明清楚。</p></li>
+        <li data-editable-block="contribute-step-pr" data-editable-title="贡献流程：提交 PR"><h3 data-block-field="title">提交 Pull Request</h3><p data-block-field="body">在 PR 中说明改了什么、为什么修改，关联相关 Issue，并写明测试方式与结果。界面改动可附截图，暂未验证的部分也请如实说明。</p></li>
+        <li data-editable-block="contribute-step-review" data-editable-title="贡献流程：等待评审"><h3 data-block-field="title">等待 Review 并跟进</h3><p data-block-field="body">维护者会结合项目安排评审改动。根据反馈补充说明或调整实现，保持讨论聚焦问题；是否合入及处理时间由维护团队决定。</p></li>
+      </ol>
+    </section>
+
+    <section class="shell section contribute-section" aria-labelledby="contribute-notes-title">
+      <div class="contribute-notes">
+        <div data-editable-block="contribute-guidelines" data-editable-title="参与项目：贡献约定"><h2 id="contribute-notes-title" data-block-field="title">提交前，再检查一下。</h2><p data-block-field="body">遵守项目的 License 与贡献约定，确认你有权提交相关代码和素材。不要在代码、Issue、日志或截图中放入密钥、访问令牌或真实个人数据；复现问题时使用脱敏信息和示例数据。</p></div>
+        <div data-editable-block="contribute-private-projects" data-editable-title="参与项目：未开放仓库"><h3 data-block-field="title">还没有公开仓库？</h3><p data-block-field="body">有些项目暂未开放源码。请按照项目详情中的参与说明联系维护团队，确认可参与的工作与访问方式；如果没有相关说明，可以先关注项目后续更新。</p></div>
+      </div>
+    </section>
+
+    <section class="shell section contribute-next" aria-labelledby="contribute-next-title">
+      <div class="band" data-editable-block="contribute-next" data-editable-title="参与项目：下一步">
+        <h2 id="contribute-next-title" data-block-field="title">找一个你想继续完善的项目。</h2>
+        <p class="lead" data-block-field="lead">先了解项目，再选择一件具体的小事开始。如果你也想参与协会的日常学习与活动，可以另行了解加入方式。</p>
+        <div class="hero-actions"><a class="btn primary" href="/projects.html" data-block-field="primaryAction" data-block-href>返回项目列表<span class="arrow" aria-hidden="true"></span></a><a class="btn secondary" href="/join.html" data-block-field="secondaryAction" data-block-href>了解加入协会</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell site-footer-main">
+      <div class="site-footer-brand" data-editable-block="site-footer-brand" data-editable-title="页脚：协会简介">
+        <a class="brand" href="/"><img src="/images/logo.svg" alt="" /><span>YUNA.BLOG</span></a>
+        <p data-block-field="body">燕山大学大学生网络信息协会。学习、实践、分享，把技术热情变成看得见的作品。</p>
+      </div>
+      <nav class="site-footer-nav" aria-label="页脚导航">
+        <div data-editable-block="site-footer-nav-content" data-editable-title="页脚链接栏：内容"><h2 data-block-field="title">内容</h2><div data-block-links><a href="/articles.html">文章列表</a><a href="https://docs.yuna.team/" target="_blank" rel="noopener">知识库</a><a href="/lesson-plan.html">授课计划</a></div></div>
+        <div data-editable-block="site-footer-nav-association" data-editable-title="页脚链接栏：协会"><h2 data-block-field="title">协会</h2><div data-block-links><a href="/team.html">关于协会</a><a href="/departments.html">部门介绍</a><a href="/join.html">加入我们</a></div></div>
+        <div data-editable-block="site-footer-nav-departments" data-editable-title="页脚链接栏：部门"><h2 data-block-field="title">部门</h2><div data-block-links><a href="/department-dev.html">开发部</a><a href="/department-ops.html">运维部</a><a href="/department-publicity.html">组宣部</a><a href="/department-security.html">网络安全部</a></div></div>
+      </nav>
+    </div>
+    <div class="shell footer"><span>YUNA.BLOG · 参与项目</span><span>实践 · 协作 · 分享</span></div>
+  </footer>
+
+  <script src="/js/core.js"></script>
+  <script src="/js/markdown.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/editable-blocks.js"></script>
+  <script src="/js/footer.js"></script>
+  <script>
+    window.blog.renderUserNav();
+    window.blog.renderEditableBlocks();
+  </script>
+  <script src="/yuna-ui.js"></script>
+</body>
+</html>
