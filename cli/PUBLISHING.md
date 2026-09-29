@@ -66,8 +66,13 @@ npm uninstall -g yuna-team
 | Repository | `yuna.team-new` |
 | Workflow filename | `cli.yml`，只填文件名 |
 | Environment | 留空，与当前工作流一致 |
+| Allowed actions | 勾选 **Allow npm publish**，允许直接发布 |
 
-如设置界面提供 Allowed actions，允许 `npm publish`。配置完成后，移除仓库的 `NPM_TOKEN` secret，下次 tag 发布就会进入 OIDC 分支。工作流已经设置 `id-token: write`、Node 22 和新版 npm，并在 OIDC 分支清除临时 `.npmrc` 中的 token 配置，避免干扰身份认证。
+`npm stage publish` 默认被允许，但当前工作流执行的是直接 `npm publish`，必须额外勾选 **Allow npm publish**。否则即使 provenance 签名成功，也会收到 `403 OIDC permission denied for this action`。
+
+`cli/package.json` 的 `repository.url` 也必须匹配此仓库，当前为 `git+https://github.com/liugu2023/yuna.team-new.git`，workspace 目录为 `cli`；发版自检会核对仓库字段。详见 [npm 官方 Trusted Publisher 配置说明](https://docs.npmjs.com/trusted-publishers/)。
+
+配置完成后，移除仓库的 `NPM_TOKEN` secret，下次 tag 发布就会进入 OIDC 分支。工作流已经设置 `id-token: write`、Node 22 和新版 npm，并在 OIDC 分支清除临时 `.npmrc` 中的 token 和旧版 `always-auth` 配置，避免干扰身份认证。
 
 ### NPM_TOKEN
 

@@ -26,6 +26,14 @@ if (pkg.private === true) {
   problems.push('cli/package.json 里还有 "private": true，npm publish 会被拒绝——发布前删掉这一行。');
 }
 
+// npm Trusted Publisher 要求包的来源仓库与运行工作流的仓库一致。
+const expectedRepository = process.env.GITHUB_REPOSITORY || "liugu2023/yuna.team-new";
+const repositoryUrl = typeof pkg.repository === "string" ? pkg.repository : pkg.repository?.url;
+const repository = String(repositoryUrl || "").replace(/^git\+/, "").replace(/\.git\/?$/, "").replace(/\/$/, "");
+if (repository !== `https://github.com/${expectedRepository}`) {
+  problems.push(`cli/package.json 的 repository.url 必须指向 https://github.com/${expectedRepository}.git，才能匹配 npm Trusted Publisher。`);
+}
+
 // 编译成单文件二进制后读不到 package.json，会退回 src/index.ts 里的兜底版本号，两边必须一致。
 const indexPath = path.join(root, "cli", "src", "index.ts");
 const fallback = readFileSync(indexPath, "utf8").match(/export const VERSION = "([^"]+)"/)?.[1];

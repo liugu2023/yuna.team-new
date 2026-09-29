@@ -103,8 +103,8 @@ jobs:
           # setup-node 会在临时 .npmrc 里写 //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}，
           # 走 OIDC 时把它删掉，避免空 token 干扰 npm 的 trusted publishing 判定
           if [ -n "${NPM_CONFIG_USERCONFIG:-}" ] && [ -f "$NPM_CONFIG_USERCONFIG" ]; then
-            sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
-            echo "已从 .npmrc 移除 _authToken 行"
+            sed -i '/_authToken/d; /^[[:space:]]*always-auth[[:space:]]*=/d' "$NPM_CONFIG_USERCONFIG"
+            echo "已从 .npmrc 移除 _authToken 和旧版 always-auth 配置"
           fi
           npm publish
 
