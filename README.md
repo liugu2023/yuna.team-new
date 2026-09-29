@@ -310,7 +310,8 @@ node cli/bin/yuna.mjs join --base http://127.0.0.1:8788   # 本地联调
 - 命令：`join`、`posts`、`read <编号|slug>`、`projects`、`lesson`、`open <页面>`；全局 `--json`、`--base`（或 `YUNA_API_BASE`）、`--proxy`。
 - 只读公开接口，不需要密钥，不写入线上数据；记录缺失时退回页面内置文案，项目为空时输出与网页一致的空状态。
 - 运行时只有一个依赖（undici，仅在传了 `--proxy` 时加载）；后续可用 `bun build --compile` 产出单文件二进制分发到 Homebrew / Scoop / winget。
-- 详见 [cli/README.md](cli/README.md) 与 [cli/PUBLISHING.md](cli/PUBLISHING.md)（发布步骤）。
+- 发版：推 `cli-vX.Y.Z` tag 后由 `.github/workflows/cli.yml` 自动发布到 npm 并编译六平台单文件二进制挂到 Release；日常检查在 `.github/workflows/ci.yml`。
+- 详见 [cli/README.md](cli/README.md) 与 [cli/PUBLISHING.md](cli/PUBLISHING.md)（发布步骤与 token 获取）。
 
 ## 管理后台
 

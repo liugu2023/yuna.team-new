@@ -1,0 +1,59 @@
+# 日常检查：站点与 CLI 的类型/样式/脚本自检。改到哪块就查哪块。
+name: 检查
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  site:
+    name: 站点（Functions 类型 / 样式 / 脚本依赖）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Functions 类型检查
+        run: npx tsc --noEmit
+      - name: 样式自检
+        run: npm run styles:check
+      - name: 脚本依赖自检
+        run: npm run scripts:check
+
+  cli:
+    name: CLI（类型 / 编译 / 冒烟）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run cli:typecheck
+      - run: npm run cli:build
+      - name: 冒烟（不发网络请求）
+        run: |
+          node cli/bin/yuna.mjs --version
+          node cli/bin/yuna.mjs --help > /dev/null
+          if node cli/bin/yuna.mjs posts --nope; then
+            echo "未知参数本应返回非 0"; exit 1
+          fi
+      - name: 打包内容检查（18 个文件，不含 src / tsconfig / PUBLISHING）
+        working-directory: cli
+        run: |
+          npm pack --dry-run 2>&1 | tee /tmp/pack.txt
+          grep -q "total files: 18" /tmp/pack.txt
+          ! grep -q "src/" /tmp/pack.txt

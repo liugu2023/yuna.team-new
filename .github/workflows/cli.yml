@@ -1,0 +1,131 @@
+# yuna CLI 的发版流水线。
+#   打 tag cli-vX.Y.Z 后：类型检查 → 发布到 npm → 编译六个平台单文件二进制 → 建 GitHub Release
+#   需要仓库 secret：NPM_TOKEN（获取方式见 cli/PUBLISHING.md「Token 去哪里拿」）
+#   也可以手动触发（workflow_dispatch），此时只跑检查与二进制编译，不会发布或建 Release。
+#
+# 刻意不在这里写 paths 过滤：GitHub 对 tag 推送不评估路径过滤，把 branches/paths 和 tags 写在同一个
+# push 触发器里容易踩坑，所以这个 workflow 只由 tag 驱动；平时的检查见 ci.yml。
+name: CLI 发版
+
+on:
+  push:
+    tags: ["cli-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: 类型检查与编译
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 类型检查
+        run: npm run cli:typecheck
+      - name: 编译
+        run: npm run cli:build
+      - name: 冒烟（不发网络请求）
+        run: |
+          node cli/bin/yuna.mjs --version
+          node cli/bin/yuna.mjs --help
+          if node cli/bin/yuna.mjs posts --nope; then
+            echo "未知参数本应返回非 0"; exit 1
+          fi
+      - name: 发版自检（tag 与版本号一致、private 已移除）
+        if: startsWith(github.ref, 'refs/tags/cli-v')
+        run: node scripts/check-cli-release.mjs
+
+  publish:
+    name: 发布到 npm
+    needs: check
+    if: startsWith(github.ref, 'refs/tags/cli-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - run: npm ci
+      - run: npm run cli:build
+      - name: 确认将要上传的文件（应为 18 个，不含 src、tsconfig）
+        working-directory: cli
+        run: npm publish --dry-run
+      - name: npm publish
+        working-directory: cli
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  binaries:
+    name: 单文件二进制与 Release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 建 Release、上传资产
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: npm ci
+      - run: npm run cli:build
+      - name: 编译六个平台
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          # 不加 --minify：体积几乎都来自 bun 运行时，minify 没意义；--bytecode 反而更大
+          # （本地实测：windows-x64 82.2MB，linux-x64 77.6MB，darwin-arm64 59.4MB）
+          bun build --compile --target=bun-windows-x64  --outfile dist/yuna-windows-x64.exe  cli/bin/yuna.mjs
+          bun build --compile --target=bun-windows-arm64 --outfile dist/yuna-windows-arm64.exe cli/bin/yuna.mjs
+          bun build --compile --target=bun-darwin-x64   --outfile dist/yuna-darwin-x64    cli/bin/yuna.mjs
+          bun build --compile --target=bun-darwin-arm64 --outfile dist/yuna-darwin-arm64  cli/bin/yuna.mjs
+          bun build --compile --target=bun-linux-x64    --outfile dist/yuna-linux-x64     cli/bin/yuna.mjs
+          bun build --compile --target=bun-linux-arm64  --outfile dist/yuna-linux-arm64   cli/bin/yuna.mjs
+          ls -lh dist
+      - name: 用本机平台产物冒烟（Linux runner 上跑 linux-x64）
+        run: |
+          chmod +x dist/yuna-linux-x64
+          ./dist/yuna-linux-x64 --version
+          ./dist/yuna-linux-x64 --help > /dev/null
+      - name: 打包并算校验和（82MB → zip 约 39MB）
+        run: |
+          set -euo pipefail
+          cd dist
+          zip -9 yuna-windows-x64.zip yuna-windows-x64.exe
+          zip -9 yuna-windows-arm64.zip yuna-windows-arm64.exe
+          tar -czf yuna-darwin-x64.tar.gz yuna-darwin-x64
+          tar -czf yuna-darwin-arm64.tar.gz yuna-darwin-arm64
+          tar -czf yuna-linux-x64.tar.gz yuna-linux-x64
+          tar -czf yuna-linux-arm64.tar.gz yuna-linux-arm64
+          sha256sum yuna-*.zip yuna-*.tar.gz > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: 建 Release 并上传（仅 tag 触发时）
+        if: startsWith(github.ref, 'refs/tags/cli-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/*.zip dist/*.tar.gz dist/SHA256SUMS.txt \
+            --title "yuna CLI $GITHUB_REF_NAME" \
+            --generate-notes
+      - name: 手动触发时只留构建产物
+        if: ${{ !startsWith(github.ref, 'refs/tags/cli-v') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: yuna-cli-binaries
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+            dist/SHA256SUMS.txt

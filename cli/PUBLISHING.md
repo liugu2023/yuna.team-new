@@ -110,7 +110,76 @@ npm unlink -g yuna-team
 public/index.html   public/join.html      （搜索 data-copy-command）
 ```
 
-## 三、单文件二进制与其它包管理器
+## 三、用 tag 一键发版（CI 已配好）
+
+仓库里已经配好两条流水线，正常发版不用手动敲 `npm publish`：
+
+| 文件 | 触发 | 做什么 |
+| --- | --- | --- |
+| `.github/workflows/ci.yml` | 推分支 / PR / 手动 | 站点类型检查、样式与脚本自检；CLI 类型检查、编译、冒烟、打包内容校验 |
+| `.github/workflows/cli.yml` | 推 `cli-v*` tag / 手动 | 检查 → 发布到 npm → 编译六平台单文件二进制 → 建 GitHub Release |
+
+发一个新版本：
+
+```powershell
+# 1) 改版本号（两处，CI 会校验是否一致）
+#    cli/package.json 的 "version"
+#    cli/src/index.ts 的兜底 VERSION
+#    也可以：cd cli; npm version patch --no-git-tag-version
+
+# 2) 本地先自检（检查版本一致、private 已移除）
+npm run cli:release:check -- cli-v0.1.1
+
+# 3) 提交并推 tag
+git add -A
+git commit -m "cli: v0.1.1"
+git tag cli-v0.1.1
+git push origin master --tags
+```
+
+推完在仓库 Actions 页面能看到「CLI 发版」跑起来：npm 上出现新版本，Releases 里出现六个平台的压缩包与 `SHA256SUMS.txt`。
+
+手动触发（Actions → CLI 发版 → Run workflow）只跑检查与二进制编译，**不会**发布、**不会**建 Release，方便先确认产物能编出来。
+
+二进制体积（本地实测，bun 1.4.2）：windows-x64 82.2MB、linux-x64 77.6MB、darwin-arm64 59.4MB；zip 后约 39MB，流水线已压缩后再上传。
+
+## Token 去哪里拿
+
+### NPM_TOKEN（必须，CI 发布用）
+
+1. 打开 https://www.npmjs.com 登录，点右上角头像 → **Access Tokens** → **Generate New Token**。
+2. 二选一：
+   - **Granular Access Token（推荐）**
+     - Name：`yuna-team-ci`
+     - Expiration：90 天或自定义（到期前记得换）
+     - **Packages and scopes** → Permissions 选 **Read and write**；Packages 选 **All packages**（首次发布时还没有这个包，只能选 All）
+     - 必须勾选 **Bypass two-factor authentication (2FA)**，否则 CI 发布会因为要 OTP 而失败
+   - **Classic Token** → 类型选 **Automation**（专给 CI，天然跳过 2FA；代价是权限覆盖你账号下的所有包）
+3. 点生成后 **token 只显示这一次**，立刻复制。
+4. 回到 GitHub 仓库 → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**：
+   - Name：`NPM_TOKEN`
+   - Secret：粘贴刚才那串（`npm_` 开头）
+5. 以后换 token 只更新这个同名 secret，不用动 workflow。
+
+### GITHUB_TOKEN（不用手动创建）
+
+Actions 内置，`permissions: contents: write` 就能建 Release、上传资产——`cli.yml` 里已经这么写了。它只对**当前仓库**有效。
+
+### PAT（以后要自动更新 Homebrew tap / Scoop bucket 才需要）
+
+那种场景要往**别的仓库**写文件，内置 token 不够：
+
+1. GitHub → 右上头像 → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**。
+2. Repository access → Only select repositories → 选中目标仓库（例如 `homebrew-yuna`、`scoop-yuna`）。
+3. Permissions → **Contents: Read and write**。
+4. 生成后存成仓库 secret，例如 `TAP_TOKEN`。
+
+### 别搞混的两个 token
+
+- 站点已有的 **`GITHUB_BACKUP_TOKEN`** 是 Cloudflare Pages 项目的环境变量，给后台同步 Markdown 快照用，跟发版无关，也不是 Actions secret。
+- 本指南要的 `NPM_TOKEN` 是 **npm** 的 token（`npm_` 开头），不是 GitHub 的。
+
+## 四、单文件二进制与其它包管理器
 
 npm 只解决"装了 Node 的人"。其余渠道都要先有单文件二进制：
 
@@ -135,26 +204,28 @@ bun build --compile --target=bun-windows-x64 --outfile dist/yuna-windows-x64.exe
 
 Homebrew 官方 core 需要项目有一定知名度（star/用户量），社团项目一般过不了，用自建 tap 就行。
 
-### 自动发版（可选，等 npm 走顺了再加）
+## 五、发版检查清单
 
-在 `.github/workflows/release.yml` 里做三件事即可：推 tag → `npm ci && npm run cli:build` → `npm publish`（用 `NPM_TOKEN` secret）+ 编译六平台二进制并挂到 Release。二进制挂上去之后，Homebrew/Scoop/winget 的清单才有东西可指。
-
-## 四、发版检查清单
-
-- [ ] `npm run typecheck`、`npm run cli:build` 通过
+- [ ] `npm run typecheck`、`npm run cli:build` 通过（CI 也会跑，见 `ci.yml`）
 - [ ] `cd cli && npm pack` 后本地 `npm i -g` 实测六个命令
-- [ ] `cli/package.json` 版本号与 `src/index.ts` 的兜底 `VERSION` 一致
-- [ ] `"private": true` 已移除
-- [ ] `npm publish --dry-run` 文件清单正确（无 `src/`、无 `tsconfig.json`）
+- [ ] `cli/package.json` 版本号与 `src/index.ts` 的兜底 `VERSION` 一致（`npm run cli:release:check` 会校验）
+- [ ] `"private": true` 已移除（同一个命令也会校验）
+- [ ] `npm publish --dry-run` 文件清单正确（应为 18 个文件，无 `src/`、无 `tsconfig.json`）
+- [ ] 打 tag 后 Actions 里「CLI 发版」三个 job 全绿
 - [ ] 发布后 `npx -y yuna-team --version` 能跑
 - [ ] 官网胶囊的 `data-copy-command` 与实际包名一致
-- [ ] 需要二进制渠道时，GitHub Release 已附六个平台产物与 SHA256
+- [ ] GitHub Release 已附六个平台压缩包与 `SHA256SUMS.txt`
 
-## 五、常见错误
+## 六、常见错误
 
 | 现象 | 原因 |
 | --- | --- |
-| `npm publish` 报 `This package has been marked as private` | 忘了删 `cli/package.json` 的 `"private": true` |
+| `npm publish` 报 `This package has been marked as private` | 忘了删 `cli/package.json` 的 `"private": true`（本地 `npm run cli:release:check` 能提前查出来） |
+| CI 里 `npm publish` 报 `EOTP` / 要求一次性密码 | NPM_TOKEN 没勾 **Bypass two-factor authentication**，换成带该选项的 granular token 或 Classic Automation token |
+| CI 里 `npm publish` 报 401/403 | secret 名字不是 `NPM_TOKEN`，或 token 已过期 |
+| CI 自检报 tag 与版本不一致 | tag 写成 `v0.1.1` 了，本项目约定是 `cli-v0.1.1` |
+| Release job 报 `Resource not accessible by integration` | 缺 `permissions: contents: write`（workflow 里已写，改坏了才会遇到） |
+| 二进制在 macOS 上被 Gatekeeper 拦 | 没做代码签名；主推 npm 渠道，或让用户 `xattr -d com.apple.quarantine` |
 | 报 `You do not have permission to publish "yuna"` | 包名被占，本项目用的是 `yuna-team` |
 | `npm error E404 ... PUT ... yuna-team` | 还没 `npm login`，或 token 没有 publish 权限 |
 | 装完敲 `yuna` 提示找不到命令 | npm 全局 bin 目录不在 PATH：`npm bin -g` 看路径 |
