@@ -507,7 +507,11 @@
   left: 50%;
   margin-left: -260px;
 }
-/* 带内的命令行胶囊：<p class="band-prompt" aria-hidden="true"><span>$</span> 命令<span class="fx-caret"></span></p> */
+/* 带内的命令行胶囊：点击复制真实命令。
+   <button class="band-prompt" type="button" data-copy-command="npx -y @yuna-team/cli join">
+     <span aria-hidden="true">$</span> yuna join --with curiosity<span class="fx-caret" aria-hidden="true"></span>
+   </button>
+   这是站点上唯一一处“可执行的命令行”，行为见 yuna-ui.js；没有脚本时它退化成一行普通文字。 */
 .band-prompt {
   display: inline-flex;
   align-items: center;
@@ -520,9 +524,21 @@
   color: var(--c-text-2);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
+  appearance: none;
+  text-align: left;
+  transition: background var(--motion), border-color var(--motion), color var(--motion);
 }
 .band-prompt > span:first-child { color: var(--c-brand); }
 .band-prompt .fx-caret { width: .5em; height: 1em; color: var(--c-brand); }
+@media (hover: hover) {
+  .band-prompt:not(.is-copied):hover { border-color: var(--c-brand-soft); background: var(--c-surface-2); color: var(--c-text); }
+}
+.band-prompt.is-copied {
+  border-color: var(--c-brand-soft);
+  background: var(--c-brand-soft);
+  color: var(--c-brand-strong);
+}
+.band-prompt.is-copied > span:first-child { color: var(--c-brand-strong); }
 
 /* =========================================================
    部门小窗 .viz-*（首页部门 Bento、部门总览、部门详情侧栏共用）：

@@ -9,6 +9,7 @@
 //   8. 阅读进度：[data-scroll-progress] 写 --progress（0–1）；属性值可填选择器，只统计该元素范围
 //   9. 正文增强：所有 .article-body 自动调用 markdown.js 的 enhanceArticleBody（标题锚点、代码块头栏与复制）
 //  10. 后台标签页、办公室地图（原有功能）
+//  11. 命令行胶囊 [data-copy-command]：点击复制命令（站点上的 `yuna join --with curiosity`）
 // 所有选择器与 API 说明见 .ui-notes/SYSTEM-v2.md。
 (function(){
   const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)");
@@ -448,4 +449,59 @@
     });
   }
   initOfficeMaps();
+})();
+
+/* ---------- 11. 命令行胶囊：点击复制真实命令 ----------
+   站点上的 `yuna join --with curiosity` 只是一个装饰胶囊；这里让它真的可用：
+   复制 data-copy-command 里的命令，复制失败时直接把命令显示出来让人手动选中。 */
+(function(){
+  const buttons=document.querySelectorAll("[data-copy-command]");
+  if(!buttons.length) return;
+
+  function legacyCopy(text){
+    try{
+      const area=document.createElement("textarea");
+      area.value=text;
+      area.setAttribute("readonly","");
+      area.style.position="fixed";
+      area.style.top="-1000px";
+      area.style.opacity="0";
+      document.body.appendChild(area);
+      area.select();
+      const ok=document.execCommand("copy");
+      area.remove();
+      return ok;
+    }catch(error){ return false; }
+  }
+
+  function copyText(text){
+    if(navigator.clipboard&&window.isSecureContext){
+      return navigator.clipboard.writeText(text).then(()=>true,()=>legacyCopy(text));
+    }
+    return Promise.resolve(legacyCopy(text));
+  }
+
+  buttons.forEach((button)=>{
+    const command=button.getAttribute("data-copy-command")||"";
+    if(!command) return;
+    const original=button.innerHTML;
+    let timer=0;
+    let busy=false;
+    button.addEventListener("click",()=>{
+      if(busy) return;
+      busy=true;
+      copyText(command).then((ok)=>{
+        button.classList.toggle("is-copied",ok);
+        button.innerHTML=ok
+          ?'<span aria-hidden="true">$</span> 已复制，粘到终端运行'
+          :'<span aria-hidden="true">$</span> '+command.replace(/[<>&]/g,"");
+        clearTimeout(timer);
+        timer=setTimeout(()=>{
+          button.innerHTML=original;
+          button.classList.remove("is-copied");
+          busy=false;
+        },ok?2400:5000);
+      });
+    });
+  });
 })();
