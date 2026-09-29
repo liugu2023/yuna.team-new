@@ -46,6 +46,9 @@ jobs:
     needs: check
     if: startsWith(github.ref, 'refs/tags/cli-v')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # 换成 trusted publishing（OIDC，不用 token）时需要
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -53,12 +56,34 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
           cache: npm
+      - name: 用较新的 npm（npm 11.15+ 才有 stage 相关能力，OIDC 发布也要它）
+        run: npm install -g npm@latest && npm --version
       - run: npm ci
       - run: npm run cli:build
+      - name: 这个版本是否已经发布过
+        id: exists
+        working-directory: cli
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          if npm view "${name}@${version}" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "${name}@${version} 已经在 npm 上，跳过发布（重跑 tag 也能继续出二进制）"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: 确认将要上传的文件（应为 18 个，不含 src、tsconfig）
+        if: steps.exists.outputs.published == 'false'
         working-directory: cli
         run: npm publish --dry-run
+      # 说明：这里用仓库 secret NPM_TOKEN（npm 的 granular token）。
+      # 创建 token 时权限要选「Read and write」，不要选「Read and write (stage only)」——
+      # stage-only 的 token 被 npm 明确禁止直接 npm publish（见 2026-09-18 npm 公告），
+      # 而且无法创建还不存在的包。
+      # 想彻底不用 token，可在 npmjs.com 的包设置里配 Trusted Publisher（GitHub Actions，
+      # 指向本仓库与本文件名），然后删掉下面的 NODE_AUTH_TOKEN —— 那时走 OIDC，顺带自带 provenance。
       - name: npm publish
+        if: steps.exists.outputs.published == 'false'
         working-directory: cli
         run: npm publish
         env:
