@@ -24,6 +24,7 @@ export interface CliFlags {
   network?: string;
   status?: string;
   term?: string;
+  proxy?: string;
 }
 
 export interface ParsedCli {
@@ -46,6 +47,7 @@ const OPTIONS = {
   network: { type: "string" },
   status: { type: "string" },
   term: { type: "string" },
+  proxy: { type: "string" },
 } as const;
 
 export function parseCli(argv: string[]): ParsedCli {
@@ -73,6 +75,7 @@ export function parseCli(argv: string[]): ParsedCli {
         network: values.network,
         status: values.status,
         term: values.term,
+        proxy: values.proxy,
       },
     };
   } catch (error) {

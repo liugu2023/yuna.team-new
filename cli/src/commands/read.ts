@@ -1,4 +1,5 @@
-// yuna read <slug> —— 在终端读一篇文章（Markdown 渲染）。
+// yuna read <编号|slug> —— 在终端读一篇文章（Markdown 渲染）。
+import type { PublicPost } from "../api.js";
 import { UsageError } from "../args.js";
 import type { CommandContext } from "../context.js";
 import { formatCount, formatDate, joinParts } from "../context.js";
@@ -6,10 +7,39 @@ import { renderMarkdown } from "../markdown.js";
 import { openInBrowser } from "../open.js";
 import { keyValueRows, style, wrapText } from "../ui.js";
 
-export async function runRead(ctx: CommandContext): Promise<void> {
-  const slug = (ctx.positionals[0] ?? "").trim();
-  if (!slug) throw new UsageError("用法：yuna read <slug>（slug 可以从 yuna posts 的输出里看到）");
+const PAGE_SIZE = 50;
+const MAX_PAGES = 10;
 
+/** 支持直接用 `yuna posts` 里的编号；编号按当前已发布列表的顺序解析。 */
+async function resolveSlug(ctx: CommandContext, input: string): Promise<string> {
+  if (!/^\d+$/.test(input)) return input;
+  const index = Number(input);
+  if (index < 1) throw new UsageError("编号从 1 开始。");
+
+  const seen = new Set<string>();
+  const posts: PublicPost[] = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const batch = await ctx.api.listPosts({ limit: PAGE_SIZE, page });
+    for (const post of batch) {
+      if (seen.has(post.slug)) continue;
+      seen.add(post.slug);
+      posts.push(post);
+    }
+    if (batch.length < PAGE_SIZE || posts.length >= index) break;
+  }
+
+  const post = posts[index - 1];
+  if (!post) {
+    throw new UsageError(`没有第 ${index} 篇（当前共 ${posts.length} 篇已发布）。用 yuna posts 查看编号。`);
+  }
+  return post.slug;
+}
+
+export async function runRead(ctx: CommandContext): Promise<void> {
+  const input = (ctx.positionals[0] ?? "").trim();
+  if (!input) throw new UsageError("用法：yuna read <编号|slug>（编号来自 yuna posts 的列表）");
+
+  const slug = await resolveSlug(ctx, input);
   const pageUrl = ctx.api.url(`/post?slug=${encodeURIComponent(slug)}`);
 
   if (ctx.flags.web) {

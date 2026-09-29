@@ -72,10 +72,10 @@ export async function runPosts(ctx: CommandContext): Promise<void> {
     ]);
     out(`  ${style.dim(String(position + 1).padStart(pad, "0"))}  ${style.bold(post.title)}`);
     if (meta) out(`      ${style.dim(meta)}`);
-    out(`      ${style.dim(post.slug)}`);
+    out(`      ${style.underline(ctx.api.url(`/post?slug=${encodeURIComponent(post.slug)}`))}`);
     if (position !== filtered.length - 1) out();
   });
 
   out();
-  out(style.dim(`共 ${filtered.length} 篇。用 yuna read <slug> 阅读全文。`));
+  out(style.dim(`共 ${filtered.length} 篇。用 yuna read <编号> 或 yuna read <slug> 阅读全文。`));
 }

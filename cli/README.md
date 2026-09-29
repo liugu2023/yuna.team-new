@@ -14,17 +14,19 @@ npm i -g yuna-team        # 或全局安装，之后直接敲 yuna
 ```text
 $ yuna join
 $ yuna posts -n 5 --tag 运维
+$ yuna read 1
 $ yuna read docker-compose-in-lab
 $ yuna projects --network public
 $ yuna lesson --term 2026
 $ yuna open projects
+$ yuna posts --proxy http://127.0.0.1:7890
 ```
 
 | 命令 | 说明 |
 | --- | --- |
 | `yuna join` | 招新与加入信息（时间、对象、答疑、流程、报名链接） |
-| `yuna posts` | 已发布文章列表，`-n` 数量、`--tag` 标签、`--kind article\|knowledge`、`--all` 全部 |
-| `yuna read <slug>` | 在终端读一篇文章（Markdown 渲染），`--web` 改用浏览器打开 |
+| `yuna posts` | 已发布文章列表（每条附文章地址），`-n` 数量、`--tag` 标签、`--kind article\|knowledge`、`--all` 全部 |
+| `yuna read <编号\|slug>` | 在终端读一篇文章（Markdown 渲染）；编号来自 `yuna posts`，`--web` 改用浏览器打开 |
 | `yuna projects [关键词]` | 协会项目目录，`--network`、`--status`、`--tag` 筛选 |
 | `yuna lesson` | 授课计划，`--term` 指定届次、`-n` 限制课次、`--all` 全部届次、`--status` 状态 |
 | `yuna open <页面\|路径\|地址>` | 在浏览器打开页面；支持 `post:<slug>`、`page:<名字>` |
@@ -33,6 +35,8 @@ $ yuna open projects
 
 - `--json`：以 JSON 输出，便于脚本处理（`open --json` 只输出地址、不打开浏览器）。
 - `--base <url>`：指定站点地址，默认 `https://www.yuna.team`；也可以用环境变量 `YUNA_API_BASE`。
+- `--proxy <url>`：走代理访问，例如 `--proxy http://127.0.0.1:7890`。Node 的内置 fetch 不接受代理参数，
+  所以传了它才会加载 undici 并把出口交给 `ProxyAgent`；不传就是直连，也不会加载。
 - `-h, --help` / `-v, --version`。
 - 退出码：`0` 成功，`1` 用法错误或接口错误；接口错误信息直接来自站点的 `{ error }` 字段。
 
@@ -69,13 +73,14 @@ cli/
   bin/yuna.mjs        入口（读 package.json 里的版本号）
   src/index.ts        命令表、帮助、错误处理
   src/args.ts         util.parseArgs 解析，未知参数直接报错
-  src/api.ts          公开接口客户端（零依赖，用内置 fetch）
+  src/api.ts          公开接口客户端（用内置 fetch；传了 --proxy 时被 undici 接管）
   src/ui.ts           颜色、中英混排宽度、折行（含中文避头尾）、对齐
   src/markdown.ts     终端 Markdown 渲染（标题/列表/引用/代码块/表格/提示块）
   src/commands/*.ts   六个命令，各自独立
 ```
 
-运行时零依赖（只用 Node 内置模块 + 全局 `fetch`），所以包很小，也容易编译成单文件二进制。
+运行时只有一个依赖：`undici`，用来支持 `--proxy`（Node 的内置 fetch 不接受代理参数），
+而且只在真的传了 `--proxy` 时才动态加载，平时启动不为它付出代价。
 
 ## 本地测试与发布
 

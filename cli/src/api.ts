@@ -1,5 +1,6 @@
 // 站点公开接口客户端。只用公开接口，不需要任何密钥，也不写入线上数据。
 import { style } from "./ui.js";
+import { fetchImpl } from "./net.js";
 
 export const DEFAULT_BASE = "https://www.yuna.team";
 
@@ -95,6 +96,21 @@ function normalizeBase(value: string): string {
   return `https://${raw}`;
 }
 
+/** 把 undici 藏在 error.cause 里的真实原因（ENOTFOUND / ECONNREFUSED / 证书错误…）拿出来。 */
+function describeNetworkError(error: unknown, timeoutMs: number): string {
+  if (error instanceof Error && error.name === "TimeoutError") return `请求超时（${timeoutMs}ms）`;
+  const cause = (error as { cause?: { code?: string; message?: string } } | undefined)?.cause;
+  const detail = cause?.code || cause?.message;
+  const message = error instanceof Error ? error.message : String(error);
+  return detail && detail !== message ? `${message}（${detail}）` : message;
+}
+
+function networkHints(): string {
+  return ["用 --base <地址> 指向其它站点。", "本机需要代理时加 --proxy <地址>，例如 --proxy http://127.0.0.1:7890。"]
+    .map((line) => style.dim(`  提示：${line}`))
+    .join("\n");
+}
+
 export class YunaApi {
   readonly base: string;
   private readonly timeoutMs: number;
@@ -119,13 +135,12 @@ export class YunaApi {
 
     let response: Response;
     try {
-      response = await fetch(url, {
+      response = await fetchImpl()(url, {
         headers: { accept: "application/json", "user-agent": "yuna-cli" },
         signal: AbortSignal.timeout(this.timeoutMs),
       });
     } catch (error) {
-      const reason = error instanceof Error && error.name === "TimeoutError" ? `请求超时（${this.timeoutMs}ms）` : String((error as Error)?.message ?? error);
-      throw new ApiError(`无法连接 ${url.origin}：${reason}\n${style.dim("  提示：用 --base <地址> 或环境变量 YUNA_API_BASE 指定其它站点。")}`);
+      throw new ApiError(`无法连接 ${url.href}：${describeNetworkError(error, this.timeoutMs)}\n${networkHints()}`);
     }
 
     const text = await response.text();

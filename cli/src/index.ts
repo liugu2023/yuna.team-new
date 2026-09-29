@@ -8,6 +8,7 @@ import { runPosts } from "./commands/posts.js";
 import { runProjects } from "./commands/projects.js";
 import { runRead } from "./commands/read.js";
 import type { CommandContext } from "./context.js";
+import { configureProxy, proxyFailureHint, shutdownProxy } from "./net.js";
 import { style } from "./ui.js";
 
 /** 兜底版本号；bin/yuna.mjs 会优先传 cli/package.json 里的版本。 */
@@ -26,7 +27,7 @@ const COMMANDS: Record<string, CommandDefinition> = {
     usage: "yuna posts [-n 数量] [--tag 标签] [--kind article|knowledge] [--all]",
     run: runPosts,
   },
-  read: { summary: "在终端读一篇文章", usage: "yuna read <slug> [--web]", run: runRead },
+  read: { summary: "在终端读一篇文章", usage: "yuna read <编号|slug> [--web]", run: runRead },
   projects: {
     summary: "协会项目目录",
     usage: "yuna projects [关键词] [--network public|internal|unspecified] [--status planning|building|maintaining|archived] [--tag 标签]",
@@ -42,18 +43,26 @@ const COMMANDS: Record<string, CommandDefinition> = {
 
 export interface MainOptions {
   version?: string;
+  proxy?: string;
 }
 
 function terminalWidth(): number {
   return Math.min(Math.max(process.stdout.columns ?? 84, 40), 100);
 }
 
-/** 下游提前关闭管道（`yuna posts | head`）时 node 会抛 EPIPE；这属于正常用法，安静退出即可。 */
+let pipeClosed = false;
+
+/** 下游提前关闭管道（`yuna posts | head`）时 node 会抛 EPIPE；这属于正常用法，安静退出即可。
+ *  注意不要在 uv 的错误回调里直接 process.exit：Windows 上偶发 libuv 断言
+ *  （uv_async_send on closing handle），改成置好退出码、下一轮事件循环再退，并停掉后续写入。 */
 function ignorePipeErrors(): void {
   for (const stream of [process.stdout, process.stderr]) {
     stream.on("error", (error: NodeJS.ErrnoException) => {
-      if (error.code === "EPIPE") process.exit(0);
-      throw error;
+      if (error.code !== "EPIPE") throw error;
+      if (pipeClosed) return;
+      pipeClosed = true;
+      process.exitCode = 0;
+      setTimeout(() => process.exit(0), 0);
     });
   }
 }
@@ -62,6 +71,7 @@ function printHelp(version: string, stream: NodeJS.WriteStream = process.stdout)
   const flagRows: Array<[string, string]> = [
     ["--json", "以 JSON 输出，便于脚本处理"],
     ["--base", "指定站点地址（默认 https://www.yuna.team，也可用环境变量 YUNA_API_BASE）"],
+    ["--proxy", "指定代理地址，例如 --proxy http://127.0.0.1:7890"],
     ["-h, --help", "显示帮助；yuna <命令> --help 查看单个命令"],
     ["-v, --version", "显示版本"],
   ];
@@ -84,6 +94,7 @@ function printHelp(version: string, stream: NodeJS.WriteStream = process.stdout)
     `  ${style.bold("示例")}`,
     `    ${style.dim("$")} yuna join --with curiosity`,
     `    ${style.dim("$")} yuna posts -n 5 --tag 运维`,
+    `    ${style.dim("$")} yuna read 1`,
     `    ${style.dim("$")} yuna read hello-yuna`,
     `    ${style.dim("$")} yuna projects --network public`,
     `    ${style.dim("$")} yuna lesson --term 2026`,
@@ -143,6 +154,11 @@ export async function main(argv: string[], options: MainOptions = {}): Promise<n
   }
 
   const [name, ...rest] = parsed.positionals;
+  // 显式 --help 属于正常请求，返回 0；完全不带参数才按用法错误处理（返回 1）。
+  if (parsed.flags.help && !name) {
+    printHelp(version);
+    return 0;
+  }
   if (!name || name === "help") {
     if (name === "help" && rest[0] && COMMANDS[rest[0]]) {
       printCommandHelp(rest[0], version);
@@ -168,13 +184,20 @@ export async function main(argv: string[], options: MainOptions = {}): Promise<n
     flags: parsed.flags,
     positionals: rest,
     width: terminalWidth(),
-    out: (line = "") => process.stdout.write(`${line}\n`),
+    out: (line = "") => {
+      if (!pipeClosed) process.stdout.write(`${line}\n`);
+    },
   };
+
+  const proxySetup = await configureProxy(options.proxy);
+  if (proxySetup && proxySetup.via === null) process.stderr.write(proxyFailureHint(proxySetup.proxy));
 
   try {
     await command.run(ctx);
     return 0;
   } catch (error) {
     return fail(error);
+  } finally {
+    await shutdownProxy();
   }
 }

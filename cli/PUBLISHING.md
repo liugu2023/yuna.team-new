@@ -58,6 +58,7 @@ npm unlink -g yuna-team
 ### 本地测试要点
 
 - 检查 `yuna --version`、`yuna`（无参数，应打印帮助并返回 1）、`yuna posts --nope`（应报中文错误并返回 1）。
+- 如果本机需要代理，试一次 `yuna posts --proxy http://127.0.0.1:7890`：应当能取到数据，且全局 node_modules 里会装上 `undici` 这一个依赖。
 - 建议在真终端里试，而不是只看重定向输出：颜色、折行、`fx-caret` 那些只在 TTY 下才生效。
 - 试一下管道：`yuna posts | Select-Object -First 3`（Linux/macOS 是 `| head -3`），不应该报 EPIPE。
 - Windows 上新开一个终端再敲 `yuna`，确认 PATH 生效。

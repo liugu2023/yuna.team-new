@@ -17,6 +17,9 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
+  "dependencies": {
+    "undici": "^6.21.0"
+  },
   "devDependencies": {
     "@types/node": "^24.0.0"
   }
