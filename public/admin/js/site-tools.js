@@ -224,6 +224,59 @@ function renderOrphans(data) {
   `;
 }
 
+/* ---------- 招新状态 ----------
+   存在 site_records 的 recruitment-status（JSON：{ version, closed }）。
+   前台 public/js/recruitment.js 读同一条记录来切换「进行中 / 已结束」两套内容。
+   记录不存在时按「进行中」处理，所以首次部署不需要预置数据。 */
+const RECRUITMENT_STATUS_KEY = "recruitment-status";
+
+function setRecruitmentMessage(message) {
+  const node = document.querySelector("[data-recruitment-message]");
+  if (node) node.textContent = message || "";
+}
+
+async function loadRecruitmentStatus() {
+  const select = document.querySelector("[data-recruitment-select]");
+  if (!select) return;
+  try {
+    const data = await window.blog.fetchJson(`/api/site?keys=${RECRUITMENT_STATUS_KEY}`);
+    const record = data && data.records ? data.records[RECRUITMENT_STATUS_KEY] : null;
+    let closed = false;
+    if (record && record.kind === "json") {
+      let parsed = null;
+      try {
+        parsed = JSON.parse(record.content || "{}");
+      } catch {
+        parsed = null;
+      }
+      closed = Boolean(parsed && parsed.closed === true);
+    }
+    select.value = closed ? "closed" : "open";
+    setRecruitmentMessage(closed ? "当前：招新已结束。" : "当前：招新进行中。");
+  } catch (error) {
+    setRecruitmentMessage(`读取招新状态失败：${error.message || error}`);
+  }
+}
+
+async function saveRecruitmentStatus() {
+  const select = document.querySelector("[data-recruitment-select]");
+  if (!select) return;
+  const closed = select.value === "closed";
+  await withLockedButtons("[data-save-recruitment]", async () => {
+    setRecruitmentMessage("正在保存…");
+    try {
+      await saveSiteJsonRecord(RECRUITMENT_STATUS_KEY, "招新状态", { version: 1, closed });
+      setRecruitmentMessage(
+        closed
+          ? "已切换为「已结束」：加入页收起招新流程，首页与加入页显示招新收官入口，sitemap 收录 /recap。"
+          : "已切换为「进行中」：加入页恢复招新流程与报名信息，收官入口隐藏，sitemap 移除 /recap。",
+      );
+    } catch (error) {
+      setRecruitmentMessage(`保存失败：${error.message || error}`);
+    }
+  });
+}
+
 function renderObjectSamples(items, emptyText) {
   if (!items.length) return `<p><span>${emptyText}</span><strong>0 B</strong></p>`;
   return items.slice(0, 6).map((item) => `

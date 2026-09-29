@@ -25,6 +25,7 @@ async function refreshAdminData() {
     ["文章与知识库", refreshPosts],
     ["协会成员", loadMembers],
     ["名人堂", loadFame],
+    ["招新状态", loadRecruitmentStatus],
   ];
   const results = await Promise.allSettled(tasks.map(([, task]) => task()));
   results.forEach((result, index) => {
@@ -118,6 +119,7 @@ bindElement(fields.importModal, "click", (event) => {
 }, "data-import-modal");
 bind("[data-sync-markdown]", "click", syncMarkdownBackup);
 bind("[data-refresh-usage]", "click", loadUsage);
+bind("[data-save-recruitment]", "click", saveRecruitmentStatus);
 bind("[data-scan-orphans]", "click", scanOrphans);
 bind("[data-delete-orphans]", "click", deleteOrphans);
 bindElement(fields.memberList, "click", handleFixedListClick, "data-member-list");

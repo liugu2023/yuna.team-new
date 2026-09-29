@@ -51,7 +51,7 @@
         <a class="btn secondary lg" href="/departments.html" data-block-field="secondaryAction" data-block-href data-block-label="次按钮">先看看部门</a>
       </div>
     </div>
-    <div class="page-kpi reveal">
+    <div class="page-kpi reveal" data-recruitment="open">
       <div data-editable-block="join-kpi-time" data-editable-title="加入我们 KPI：时间"><strong data-block-field="title">时间</strong><span data-block-field="body">待补充</span></div>
       <div data-editable-block="join-kpi-target" data-editable-title="加入我们 KPI：对象"><strong data-block-field="title">对象</strong><span data-block-field="body">面向在校同学</span></div>
       <div data-editable-block="join-kpi-contact" data-editable-title="加入我们 KPI：答疑"><strong data-block-field="title">答疑</strong><span data-block-field="body">待补充</span></div>
@@ -60,8 +60,8 @@
 </div>
 
 <main class="main page-main" id="content">
-  <!-- 招新结束提示：下一届招新开放时删掉这一段即可（文案也可在后台页内编辑） -->
-  <section class="shell section join-closed" aria-labelledby="join-closed-title">
+  <!-- 招新结束提示：招新进行中时隐藏（hidden），由「后台 → 站点维护 → 招新状态」切换为已结束后自动显示 -->
+  <section class="shell section join-closed" aria-labelledby="join-closed-title" data-recruitment="closed" hidden>
     <div class="band is-brand" data-editable-block="join-closed-notice" data-editable-title="加入我们：招新已结束提示">
       <h2 id="join-closed-title" data-block-field="title">本届招新已经结束。</h2>
       <p class="lead" data-block-field="lead">录取结果已陆续发出，请留意短信与协会群消息。没赶上的同学可以看看这一届的收官情况——公开课和知识库也随时欢迎你。</p>
@@ -72,7 +72,7 @@
     </div>
   </section>
 
-  <section class="shell section join-process" aria-labelledby="join-process-title">
+  <section class="shell section join-process" aria-labelledby="join-process-title" data-recruitment="open">
     <div class="join-process-grid">
       <div class="join-process-intro" data-editable-block="join-process-heading" data-editable-title="加入我们：流程区标题">
         <div class="section-title reveal">
@@ -211,6 +211,7 @@
 <script src="/js/nav.js"></script>
 <script src="/js/editable-blocks.js"></script>
 <script src="/js/footer.js"></script>
+<script src="/js/recruitment.js"></script>
 <script>
   window.blog.renderUserNav();
   window.blog.renderEditableBlocks();

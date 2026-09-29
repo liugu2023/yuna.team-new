@@ -40,6 +40,18 @@
   </header>
 
   <div class="page-wrap">
+    <!-- 招新还没结束时，这一页不该说“已结束”。由后台开关控制，默认隐藏（本页也没有任何入口）。 -->
+    <section class="shell section recap-guard" data-recruitment="open" hidden>
+      <div class="band is-brand">
+        <h2>本届招新还在进行中。</h2>
+        <p class="lead">这一页是招新结束后的收官记录，现在还不到时候。想加入我们，先看加入方式；想先了解协会，可以从公开课开始。</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="/join.html">了解加入方式<span class="arrow" aria-hidden="true"></span></a>
+          <a class="btn secondary" href="/lesson-plan.html">先来听公开课</a>
+        </div>
+      </div>
+    </section>
+
     <section class="shell page-hero recap-hero">
       <div data-editable-block="recap-hero-copy" data-editable-title="招新收官：页面介绍">
         <p class="eyebrow" data-block-field="eyebrow">Recruitment Closed</p>
@@ -152,6 +164,7 @@
   <script src="/js/nav.js"></script>
   <script src="/js/editable-blocks.js"></script>
   <script src="/js/footer.js"></script>
+  <script src="/js/recruitment.js"></script>
   <script>
     window.blog.renderUserNav();
     window.blog.renderEditableBlocks();

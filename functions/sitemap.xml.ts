@@ -51,8 +51,25 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     .all<PostRow>()
     .catch(() => null);
 
+  // 招新收官页只在招新结束后收录：招新进行中时那一页会对访客说“已结束”，不该被搜索引擎索引。
+  // 开关存在 site_records 的 recruitment-status（后台「站点维护 → 招新状态」），读不到就按进行中处理。
+  const recruitment = await env.BLOG_DB.prepare("SELECT content FROM site_records WHERE key = ?")
+    .bind("recruitment-status")
+    .first<{ content: string }>()
+    .catch(() => null);
+  let recruitmentClosed = false;
+  try {
+    const parsed = JSON.parse(recruitment?.content || "{}") as { closed?: boolean } | null;
+    recruitmentClosed = parsed?.closed === true;
+  } catch {
+    recruitmentClosed = false;
+  }
+  const staticEntries = recruitmentClosed
+    ? STATIC_ENTRIES
+    : STATIC_ENTRIES.filter((entry) => entry.path !== "/recap");
+
   const entries: SitemapEntry[] = [
-    ...STATIC_ENTRIES,
+    ...staticEntries,
     ...(posts?.results ?? []).map((row) => ({
       path: `/post?slug=${encodeURIComponent(row.slug)}`,
       lastmod: row.lastmod,

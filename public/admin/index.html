@@ -238,6 +238,23 @@
             <div class="tool-grid">
               <section class="tool-card">
                 <div class="tool-card-head">
+                  <h3>招新状态</h3>
+                  <p>控制前台怎么展示招新：进行中时显示招新流程与报名信息；已结束时收起它们，改为显示招新收官提示，并把收官页 /recap 放进 sitemap 与首页入口。</p>
+                </div>
+                <label class="recruit-status">
+                  <span>当前状态</span>
+                  <select class="select-input" data-recruitment-select>
+                    <option value="open">进行中：显示招新流程与报名信息</option>
+                    <option value="closed">已结束：收起招新流程，显示招新收官</option>
+                  </select>
+                </label>
+                <div class="editor-actions tool-card-foot">
+                  <button class="btn primary compact" type="button" data-save-recruitment>保存招新状态</button>
+                </div>
+                <p class="meta" aria-live="polite" data-recruitment-message></p>
+              </section>
+              <section class="tool-card">
+                <div class="tool-card-head">
                   <h3>容量检测</h3>
                   <p>D1 各表记录数与占用估算，R2 存储桶对象数量与已用空间。</p>
                 </div>

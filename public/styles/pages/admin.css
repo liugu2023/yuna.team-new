@@ -860,3 +860,12 @@
   .page-admin .coauthor-row { padding-right: 56px; }
   .page-admin .coauthor-remove { width: 40px; height: 40px; }
 }
+
+/* 招新状态开关：站点维护里的一个 tool-card，用原生 select，不引入新组件 */
+.page-admin .tool-card .recruit-status {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.page-admin .tool-card .recruit-status > span { color: var(--c-text-2); font-size: var(--fs-sm); }
+.page-admin .tool-card .recruit-status .select-input { width: 100%; max-width: 460px; }
