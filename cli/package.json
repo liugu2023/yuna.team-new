@@ -5,10 +5,10 @@
   "keywords": ["yuna", "cli", "club", "blog", "terminal"],
   "type": "module",
   "license": "MIT",
+
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/liugu2023/yuna.team-new.git",
-    "directory": "cli"
+    "url": "git+https://github.com/liugu2023/yuna.team-new.git"
   },
 
   "bugs": {
