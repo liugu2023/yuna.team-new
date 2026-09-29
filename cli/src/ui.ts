@@ -112,11 +112,9 @@ function splitTokens(paragraph: string, width: number): string[] {
       continue;
     }
     if (size === 2) {
-      if (buffer) {
-        const trimmed = buffer.trimEnd();
-        // 只有拉丁词/右括号后面才补空格，避免「“ 嵌套”」「[ 图片]」这种标点后的空档
-        tokens.push(/[A-Za-z0-9)\]]$/.test(trimmed) ? `${trimmed} ` : trimmed);
-      }
+      // 中英之间不额外插空格：终端里 CJK 本来就占两列，插了反而把作者写的「B站」「PS基础」
+      // 变成「B 站」「PS 基础」。源文自带的空格会保留在 buffer 里。
+      if (buffer) tokens.push(buffer);
       buffer = "";
       tokens.push(char);
       continue;

@@ -29,6 +29,22 @@ export function inlineMarkdown(text: string): string {
     return `\u0000${codes.length - 1}\u0000`;
   });
   out = out.replace(/<((?:https?:\/\/|mailto:)[^>\s]+)>/g, (_match, url: string) => style.dim(url));
+  // 站点文章里混着原生 HTML 链接（<a class="link-button" href="…">文字</a>）。
+  // 如果先做去标签，href 会连地址一起被吃掉，所以这里先把链接还原成「文字 ‹地址›」。
+  out = out.replace(/<a\b[^>]*?href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_match, rawUrl: string, rawLabel: string) => {
+    const url = decodeEntities(rawUrl).trim();
+    const label = decodeEntities(rawLabel.replace(/<[^>]+>/g, "")).trim();
+    if (!url) return label;
+    if (!label) return style.dim(`‹${url}›`);
+    if (label === url) return style.underline(label);
+    return `${style.underline(label)} ${style.dim(`‹${url}›`)}`;
+  });
+  out = out.replace(/<img\b([^>]*)>/gi, (_match, attrs: string) => {
+    const alt = decodeEntities(attrs.match(/\balt=["']([^"']*)["']/i)?.[1] ?? "").trim();
+    const src = decodeEntities(attrs.match(/\bsrc=["']([^"']+)["']/i)?.[1] ?? "").trim();
+    return style.dim(alt ? `[图片：${alt}]` : src ? `[图片：${src}]` : "[图片]");
+  });
+  out = out.replace(/<br\s*\/?>/gi, "\n");
   out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_match, alt: string) =>
     style.dim(alt ? `[图片：${alt}]` : "[图片]"),
   );
