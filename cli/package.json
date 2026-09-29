@@ -5,7 +5,6 @@
   "keywords": ["yuna", "cli", "club", "blog", "terminal"],
   "type": "module",
   "license": "MIT",
-  "private": true,
   "engines": {
     "node": ">=18.17"
   },
