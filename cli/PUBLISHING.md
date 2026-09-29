@@ -179,6 +179,54 @@ Actions 内置，`permissions: contents: write` 就能建 Release、上传资产
 - 站点已有的 **`GITHUB_BACKUP_TOKEN`** 是 Cloudflare Pages 项目的环境变量，给后台同步 Markdown 快照用，跟发版无关，也不是 Actions secret。
 - 本指南要的 `NPM_TOKEN` 是 **npm** 的 token（`npm_` 开头），不是 GitHub 的。
 
+### 切换到 Trusted Publisher（以后不再用 token）
+
+npm 的方向是 **OIDC 免 token 发布**：`npm publish` 用 GitHub Actions 的一次性身份令牌换 npm 的临时凭证，不需要长期 token，而且**自带 provenance**（可验证"这个版本确实由该仓库的该 workflow 构建"）。npm 计划 2027 年 1 月取消 bypass-2FA token 直发（[npm roadmap](https://github.com/orgs/community/discussions/208130)），所以这是官方推荐路径。
+
+前置条件（workflow 里都已满足）：
+
+- publish job 声明了 `permissions: id-token: write`
+- Node ≥ 22.14（workflow 用 22）
+- npm CLI ≥ 11.5.1（workflow 里有 `npm install -g npm@latest`）
+- 该包已经成功发布过一次（0.1.0 已发布 ✓）
+
+**第一步：在 npm 上配置**
+
+1. 打开 https://www.npmjs.com/package/yuna-team → 右侧 **Settings** → 找到 **Trusted Publisher** → **Select publisher** → 选 **GitHub Actions**
+2. 填四项，必须与 workflow 完全对应：
+
+   | 字段 | 填什么 |
+   | --- | --- |
+   | Organization or user | `liugu2023` |
+   | Repository | `yuna.team-new` |
+   | Workflow filename | `cli.yml` ← **只填文件名**，不是 `.github/workflows/cli.yml` |
+   | Environment | 留空（workflow 里没有用 environment） |
+
+3. **Allowed actions** 选 `npm publish`，保存
+
+**第二步：删掉 token**
+
+GitHub 仓库 → Settings → Secrets and variables → Actions → 删除 `NPM_TOKEN`。
+
+workflow 已经写成双模式：**有 `NPM_TOKEN` 就用 token，没有就自动走 OIDC**。所以删掉 secret 后不需要改任何代码，下次发版日志里会出现「没有 NPM_TOKEN，按 trusted publishing（OIDC）发布」。
+
+**第三步：验证**
+
+发一个 patch 版本（例如 0.1.1），在 Actions 日志里确认三件事：
+
+- 出现「没有 NPM_TOKEN，按 trusted publishing（OIDC）发布」
+- 出现「已从 .npmrc 移除 _authToken 行」
+- npm 包页面右侧出现 **Provenance** 标记
+
+**如果 OIDC 失败**（日志报 `ENEEDAUTH` / `Unable to authenticate`）：
+
+- workflow filename 是否**只填了文件名** `cli.yml`；仓库名大小写要一致
+- 确认没有残留的 `NODE_AUTH_TOKEN`（双模式下 OIDC 分支不设它；手动加过的话删掉）
+- 确认 npm CLI 已升级（日志里 `npm --version` 应 ≥ 11.5.1）
+- trusted publisher 配好之前不要删 secret，否则两次发版都会失败
+
+**想退回 token 方式**：把 `NPM_TOKEN` secret 加回来即可，workflow 会自动走 token 分支，无需改代码。
+
 ## 四、单文件二进制与其它包管理器
 
 npm 只解决"装了 Node 的人"。其余渠道都要先有单文件二进制：
@@ -222,6 +270,9 @@ Homebrew 官方 core 需要项目有一定知名度（star/用户量），社团
 | --- | --- |
 | `npm publish` 报 `This package has been marked as private` | 忘了删 `cli/package.json` 的 `"private": true`（本地 `npm run cli:release:check` 能提前查出来） |
 | CI 里 `npm publish` 报 `EOTP` / 要求一次性密码 | NPM_TOKEN 没勾 **Bypass two-factor authentication**，换成带该选项的 granular token 或 Classic Automation token |
+| CI 里 `npm publish` 报 `E_STAGE_REQUIRED`（只能发到暂存区） | token 权限选了 **Read and write (stage only)**；改成 **Read and write**，或改用 Trusted Publisher |
+| OIDC 发布报 `ENEEDAUTH` | workflow filename 填成了完整路径、或残留 NODE_AUTH_TOKEN、或 npm CLI 太旧 |
+| CI 里 `npm ci` 报 `EALLOWREMOTE` | package-lock.json 里的 `resolved` 指向第三方镜像；应全部是 `registry.npmjs.org` |
 | CI 里 `npm publish` 报 401/403 | secret 名字不是 `NPM_TOKEN`，或 token 已过期 |
 | CI 自检报 tag 与版本不一致 | tag 写成 `v0.1.1` 了，本项目约定是 `cli-v0.1.1` |
 | Release job 报 `Resource not accessible by integration` | 缺 `permissions: contents: write`（workflow 里已写，改坏了才会遇到） |

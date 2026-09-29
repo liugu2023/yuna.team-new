@@ -72,22 +72,46 @@ jobs:
           else
             echo "published=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: 判断用哪种发布方式
+        id: mode
+        env:
+          HAS_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" = "true" ]; then
+            echo "mode=token" >> "$GITHUB_OUTPUT"
+            echo "检测到 NPM_TOKEN，按 token 方式发布"
+          else
+            echo "mode=oidc" >> "$GITHUB_OUTPUT"
+            echo "没有 NPM_TOKEN，按 trusted publishing（OIDC）发布"
+          fi
+      # 两种方式二选一：
+      #   token —— 仓库 secret NPM_TOKEN（npm granular token，权限需为 Read and write，
+      #            不要选 "Read and write (stage only)"，那种 token 被 npm 禁止直接 publish）
+      #   OIDC  —— trusted publishing：在 npmjs.com 的包设置里配 Trusted Publisher
+      #            （GitHub Actions / liugu2023 / yuna.team-new / cli.yml / 动作 npm publish），
+      #            然后删掉 NPM_TOKEN secret 即可自动切换；无需 token，且自带 provenance。
+      #            要求：本 job 已声明 id-token: write、Node ≥ 22.14、npm CLI ≥ 11.5.1（下面已升级）。
       - name: 确认将要上传的文件（应为 18 个，不含 src、tsconfig）
         if: steps.exists.outputs.published == 'false'
         working-directory: cli
         run: npm publish --dry-run
-      # 说明：这里用仓库 secret NPM_TOKEN（npm 的 granular token）。
-      # 创建 token 时权限要选「Read and write」，不要选「Read and write (stage only)」——
-      # stage-only 的 token 被 npm 明确禁止直接 npm publish（见 2026-09-18 npm 公告），
-      # 而且无法创建还不存在的包。
-      # 想彻底不用 token，可在 npmjs.com 的包设置里配 Trusted Publisher（GitHub Actions，
-      # 指向本仓库与本文件名），然后删掉下面的 NODE_AUTH_TOKEN —— 那时走 OIDC，顺带自带 provenance。
-      - name: npm publish
-        if: steps.exists.outputs.published == 'false'
+      - name: npm publish（NPM_TOKEN）
+        if: steps.exists.outputs.published == 'false' && steps.mode.outputs.mode == 'token'
         working-directory: cli
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: npm publish（trusted publishing / OIDC）
+        if: steps.exists.outputs.published == 'false' && steps.mode.outputs.mode == 'oidc'
+        working-directory: cli
+        run: |
+          # setup-node 会在临时 .npmrc 里写 //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}，
+          # 走 OIDC 时把它删掉，避免空 token 干扰 npm 的 trusted publishing 判定
+          if [ -n "${NPM_CONFIG_USERCONFIG:-}" ] && [ -f "$NPM_CONFIG_USERCONFIG" ]; then
+            sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
+            echo "已从 .npmrc 移除 _authToken 行"
+          fi
+          npm publish
 
   binaries:
     name: 单文件二进制与 Release
