@@ -12,9 +12,13 @@ const ENTITIES: Record<string, string> = {
 };
 
 function decodeEntities(text: string): string {
-  return text.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, code: string) => {
-    if (/^#x/i.test(code)) return String.fromCodePoint(Number.parseInt(code.slice(2), 16));
-    if (code.startsWith("#")) return String.fromCodePoint(Number(code.slice(1)));
+  return text.replace(/&(#(?:[xX][0-9a-fA-F]+|[0-9]+)|[a-zA-Z]+);/g, (match, code: string) => {
+    if (code.startsWith("#")) {
+      const point = /^#x/i.test(code) ? Number.parseInt(code.slice(2), 16) : Number(code.slice(1));
+      // 不可信文章可以包含溢出值、空字符或代理项；保留原文，避免阅读过程抛 RangeError。
+      if (!Number.isInteger(point) || point <= 0 || point > 0x10ffff || (point >= 0xd800 && point <= 0xdfff)) return match;
+      return String.fromCodePoint(point);
+    }
     return ENTITIES[code] ?? match;
   });
 }
@@ -29,6 +33,7 @@ export function inlineMarkdown(text: string): string {
     return `\u0000${codes.length - 1}\u0000`;
   });
   out = out.replace(/<((?:https?:\/\/|mailto:)[^>\s]+)>/g, (_match, url: string) => style.dim(url));
+  out = out.replace(/<([^<>\s@]+@[^<>\s@]+\.[^<>\s@]+)>/g, (_match, email: string) => style.dim(email));
   // 站点文章里混着原生 HTML 链接（<a class="link-button" href="…">文字</a>）。
   // 如果先做去标签，href 会连地址一起被吃掉，所以这里先把链接还原成「文字 ‹地址›」。
   out = out.replace(/<a\b[^>]*?href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_match, rawUrl: string, rawLabel: string) => {
@@ -88,7 +93,7 @@ export function renderMarkdown(source: string, width: number): string {
   const pushListItem = (prefix: string, content: string): void => {
     const room = Math.max(8, width - displayWidth(prefix) - displayWidth("  "));
     const wrapped = wrapText(content, room, "");
-    const hanging = " ".repeat(displayWidth(prefix));
+    const hanging = " ".repeat(displayWidth(prefix) + 2);
     wrapped.forEach((line, position) => push(position === 0 ? `  ${prefix}${line}` : hanging + line));
   };
   const pushTable = (header: string[], rows: string[][]): void => {
@@ -216,11 +221,11 @@ export function renderMarkdown(source: string, width: number): string {
         pushWrapped(style.bold(style.brand(text)));
         push("  " + style.dim("─".repeat(Math.min(displayWidth(text) + 2, Math.max(8, width - 4)))));
       } else if (level === 2) {
-        push(`  ${style.bold(style.brand(text))}`);
+        pushWrapped(style.bold(style.brand(text)));
       } else if (level === 3) {
-        push(`  ${style.bold(text)}`);
+        pushWrapped(style.bold(text));
       } else {
-        push(`  ${style.bold(style.dim(text))}`);
+        pushWrapped(style.bold(style.dim(text)));
       }
       push("");
       index++;
@@ -233,8 +238,8 @@ export function renderMarkdown(source: string, width: number): string {
         parts.push((lines[index] ?? "").trim().replace(/^>\s?/, ""));
         index++;
       }
-      for (const wrapped of wrapText(inlineMarkdown(parts.join(" ")), width, "  ")) {
-        push(`${style.dim("  │")} ${wrapped.trim()}`);
+      for (const wrapped of wrapText(inlineMarkdown(parts.join(" ")), Math.max(1, width - 4))) {
+        push(`${style.dim("  │")} ${wrapped}`);
       }
       push("");
       continue;

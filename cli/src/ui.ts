@@ -23,7 +23,7 @@ export const style = {
 export const COLOR = COLOR_ENABLED;
 
 // eslint-disable-next-line no-control-regex
-const ANSI_PATTERN = /\u001b\[[0-9;]*m/g;
+const ANSI_PATTERN = /\u001b\[[0-?]*[ -/]*[@-~]/g;
 
 export function stripAnsi(text: string): string {
   return text.replace(ANSI_PATTERN, "");
@@ -60,7 +60,7 @@ export function charWidth(char: string): number {
   const codePoint = char.codePointAt(0) ?? 0;
   if (codePoint === 0) return 0;
   if (codePoint < 0x20 || (codePoint >= 0x7f && codePoint < 0xa0)) return 0;
-  if (codePoint >= 0x300 && codePoint <= 0x36f) return 0; // 组合符
+  if (/\p{Mark}/u.test(char) || codePoint === 0x200d) return 0; // 组合符、变体选择符和连接符
   return isWide(codePoint) ? 2 : 1;
 }
 
@@ -76,22 +76,45 @@ export function padEndWidth(text: string, width: number): string {
 }
 
 export function truncateWidth(text: string, width: number): string {
+  if (width <= 0) return "";
   if (displayWidth(text) <= width) return text;
   let out = "";
   let used = 0;
-  for (const char of text) {
-    const size = charWidth(char);
-    if (used + size > width - 1) break;
-    out += char;
-    used += size;
+  for (const unit of terminalUnits(text)) {
+    if (used + unit.width > width - 1) break;
+    out += unit.text;
+    used += unit.width;
   }
-  return out + "…";
+  // 截断可能丢掉原文末尾的 reset；补齐，避免后面的表格列和提示被染色。
+  return out + "…" + (out.includes("\u001b[") ? "\u001b[0m" : "");
+}
+
+interface TerminalUnit {
+  text: string;
+  char: string;
+  width: number;
+}
+
+/** 转义序列是不可拆分的零宽单元，不能把 ESC 后的数字误算成正文。 */
+function terminalUnits(text: string): TerminalUnit[] {
+  const units: TerminalUnit[] = [];
+  let offset = 0;
+  const appendText = (part: string): void => {
+    for (const char of part) units.push({ text: char, char, width: charWidth(char) });
+  };
+  for (const match of text.matchAll(ANSI_PATTERN)) {
+    appendText(text.slice(offset, match.index));
+    units.push({ text: match[0], char: "", width: 0 });
+    offset = (match.index ?? 0) + match[0].length;
+  }
+  appendText(text.slice(offset));
+  return units;
 }
 
 /** 按显示宽度折行：中文可在任意字之间断，英文按词断。 */
 export function wrapText(text: string, width: number, indent = ""): string[] {
   const lines: string[] = [];
-  const available = Math.max(8, width - displayWidth(indent));
+  const available = Math.max(1, Math.floor(width - displayWidth(indent)));
   for (const paragraph of String(text).split("\n")) {
     if (!paragraph.trim()) {
       lines.push("");
@@ -103,47 +126,73 @@ export function wrapText(text: string, width: number, indent = ""): string[] {
 }
 
 function splitTokens(paragraph: string, width: number): string[] {
-  const tokens: string[] = [];
-  let buffer = "";
-  for (const char of paragraph) {
-    const size = charWidth(char);
-    if (char === " ") {
-      buffer += char;
+  const tokens: TerminalUnit[][] = [];
+  let buffer: TerminalUnit[] = [];
+  let kind = "";
+  const flushToken = (): void => {
+    if (buffer.length) tokens.push(buffer);
+    buffer = [];
+    kind = "";
+  };
+  for (const unit of terminalUnits(paragraph)) {
+    if (!unit.char) {
+      buffer.push(unit);
       continue;
     }
-    if (size === 2) {
-      // 中英之间不额外插空格：终端里 CJK 本来就占两列，插了反而把作者写的「B站」「PS基础」
-      // 变成「B 站」「PS 基础」。源文自带的空格会保留在 buffer 里。
-      if (buffer) tokens.push(buffer);
-      buffer = "";
-      tokens.push(char);
-      continue;
-    }
-    buffer += char;
+    const nextKind = /\s/u.test(unit.char) ? "space" : unit.width === 2 ? "wide" : "word";
+    if (kind && (nextKind !== kind || nextKind === "wide")) flushToken();
+    kind = nextKind;
+    buffer.push(unit);
   }
-  if (buffer.trim()) tokens.push(buffer.trimEnd());
-
+  flushToken();
   const lines: string[] = [];
-  let current = "";
+  let current: TerminalUnit[] = [];
+  const visibleWidth = (units: TerminalUnit[]): number => units.reduce((sum, unit) => sum + unit.width, 0);
+  const trimSpaces = (units: TerminalUnit[], fromStart = false): TerminalUnit[] => {
+    const trimmed = [...units];
+    let index = fromStart ? 0 : trimmed.length - 1;
+    while (index >= 0 && index < trimmed.length) {
+      const unit = trimmed[index]!;
+      if (unit.char && !/\s/u.test(unit.char)) break;
+      if (unit.char) trimmed.splice(index, 1);
+      else if (fromStart) index++;
+      if (!fromStart) index--;
+    }
+    return trimmed;
+  };
+  const pushLine = (): void => {
+    lines.push(trimSpaces(current).map((unit) => unit.text).join(""));
+    current = [];
+  };
   for (const token of tokens) {
-    const candidate = current ? current + token : token;
-    if (displayWidth(candidate) > width && current) {
-      const tail = [...current];
-      const lastChar = tail[tail.length - 1] ?? "";
-      // 中文避头尾：行首不放收尾标点，把上一行最后一个字带下来。
-      if (NO_LINE_START.includes(token) && tail.length > 1 && !current.includes("\u001b")) {
-        tail.pop();
-        lines.push(tail.join("").trimEnd());
-        current = lastChar + token;
-      } else {
-        lines.push(current.trimEnd());
-        current = token.trimStart();
+    const plain = token.map((unit) => unit.char).join("");
+    if (!plain.trim()) {
+      current.push(...(visibleWidth(current) ? token : trimSpaces(token, true)));
+      continue;
+    }
+    if (visibleWidth(current) + visibleWidth(token) > width) {
+      current = trimSpaces(current);
+      if (visibleWidth(current)) {
+        let carried: TerminalUnit[] = [];
+        // 中文收尾标点和前一个字一起移到下一行，颜色序列也一起保留。
+        if (plain.length === 1 && NO_LINE_START.includes(plain)) {
+          let last = current.length - 1;
+          while (last >= 0 && (!current[last]!.char || current[last]!.width === 0)) last--;
+          if (last > 0 && visibleWidth(current.slice(0, last)) > 0 && visibleWidth(current.slice(last)) + visibleWidth(token) <= width) {
+            carried = current.splice(last);
+          }
+        }
+        pushLine();
+        current = carried;
       }
-    } else {
-      current = candidate;
+    }
+    // 过长英文词、URL 仍要在字符边界折行，不能把整行推到终端之外。
+    for (const unit of token) {
+      if (unit.width > 0 && visibleWidth(current) > 0 && visibleWidth(current) + unit.width > width) pushLine();
+      current.push(unit);
     }
   }
-  if (current.trim()) lines.push(current.trimEnd());
+  if (current.length) pushLine();
   return lines.length ? lines : [""];
 }
 

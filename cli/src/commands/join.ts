@@ -2,12 +2,16 @@
 // 数据来自 join 页面的可编辑块（site_records 里 key = 块名的 JSON：{ fields, hrefs }），
 // 与前端一致：记录里缺哪个字段就退回页面内置文案，所以没在后台填过也能正常输出。
 import type { CommandContext } from "../context.js";
+import { resolveSafeLink } from "../links.js";
 import { keyValueRows, sectionTitle, style, wrapText } from "../ui.js";
 
 interface BlockContent {
   fields?: Record<string, string>;
   hrefs?: Record<string, string>;
 }
+
+const STATUS_KEY = "recruitment-status";
+const STAT_BLOCKS = ["recap-stat-signup", "recap-stat-majors", "recap-stat-interviews", "recap-stat-admitted"];
 
 const BLOCK_KEYS = [
   "join-hero-copy",
@@ -19,6 +23,10 @@ const BLOCK_KEYS = [
   "join-process-briefing",
   "join-process-result",
   "join-contact-card",
+  "join-closed-notice",
+  "recap-hero-copy",
+  "recap-contact",
+  ...STAT_BLOCKS,
 ];
 
 /** 与 public/join.html 的内置文案保持一致，仅在 D1 里没有对应记录/字段时使用。 */
@@ -61,6 +69,32 @@ const FALLBACK: Record<string, BlockContent> = {
     },
     hrefs: { primaryAction: "/team.html", secondaryAction: "/team.html#office" },
   },
+  "join-closed-notice": {
+    fields: {
+      title: "本届招新已经结束。",
+      lead: "录取结果已陆续发出，请留意短信与协会群消息。没赶上的同学可以看看这一届的收官情况——公开课和知识库也随时欢迎你。",
+      primaryAction: "查看招新收官",
+      secondaryAction: "先来听公开课",
+    },
+    hrefs: { primaryAction: "/recap.html", secondaryAction: "/lesson-plan.html" },
+  },
+  "recap-hero-copy": {
+    fields: { eyebrow: "Recruitment Closed", secondaryAction: "新成员指南" },
+    hrefs: { secondaryAction: "/page.html?p=guide/new-member" },
+  },
+  "recap-contact": {
+    fields: {
+      title: "还有问题？直接找我们。",
+      lead: "办公室在工作日开放，欢迎来坐坐；也可以在协会群里问一句，通常会有人在。关于招新的任何疑问，都可以从这里找到我们。",
+      primaryAction: "办公室位置",
+      secondaryAction: "认识协会",
+    },
+    hrefs: { primaryAction: "/team.html#office", secondaryAction: "/team.html" },
+  },
+  "recap-stat-signup": { fields: { title: "报名", body: "待补充" } },
+  "recap-stat-majors": { fields: { title: "覆盖院系", body: "待补充" } },
+  "recap-stat-interviews": { fields: { title: "面试场次", body: "待补充" } },
+  "recap-stat-admitted": { fields: { title: "录取", body: "待补充" } },
 };
 
 const STEP_BLOCKS: Array<[string, string]> = [
@@ -72,14 +106,23 @@ const STEP_BLOCKS: Array<[string, string]> = [
 const KPI_BLOCKS = ["join-kpi-time", "join-kpi-target", "join-kpi-contact"];
 
 export async function runJoin(ctx: CommandContext): Promise<void> {
-  const records = await ctx.api.getRecords(BLOCK_KEYS);
+  const records = await ctx.api.getRecords([STATUS_KEY, ...BLOCK_KEYS]);
+  let closed = false;
+  const statusRecord = records[STATUS_KEY];
+  if (statusRecord?.kind === "json") {
+    try {
+      closed = JSON.parse(statusRecord.content || "null")?.closed === true;
+    } catch {
+      // 状态缺失或损坏时与网站一样按进行中展示；请求失败仍由 API 报错。
+    }
+  }
   const stored = new Map<string, BlockContent>();
   for (const key of BLOCK_KEYS) {
     const record = records[key];
     if (!record || record.kind !== "json") continue;
     try {
       const parsed = JSON.parse(record.content || "{}") as BlockContent;
-      if (parsed && typeof parsed === "object") stored.set(key, parsed);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) stored.set(key, parsed);
     } catch {
       // 内容坏了就退回内置文案，不影响命令可用
     }
@@ -90,39 +133,54 @@ export async function runJoin(ctx: CommandContext): Promise<void> {
   const href = (key: string, name: string): string =>
     String(stored.get(key)?.hrefs?.[name] ?? FALLBACK[key]?.hrefs?.[name] ?? "").trim();
 
-  const resolveHref = (value: string): string => {
-    if (!value) return "";
-    if (/^https?:\/\//i.test(value)) return value;
-    if (value.startsWith("#")) return `${ctx.api.base}/join${value}`;
-    if (value.startsWith("/")) return `${ctx.api.base}${value}`;
-    return `${ctx.api.base}/join/${value}`;
-  };
-
   const actions: Array<{ label: string; url: string }> = [];
-  for (const [key, name] of [
-    ["join-hero-copy", "primaryAction"],
-    ["join-hero-copy", "secondaryAction"],
-    ["join-contact-card", "primaryAction"],
-    ["join-contact-card", "secondaryAction"],
-  ] as Array<[string, string]>) {
+  const actionFields: Array<[string, string]> = closed
+    ? [
+        ["join-closed-notice", "primaryAction"],
+        ["join-closed-notice", "secondaryAction"],
+        ["recap-hero-copy", "secondaryAction"],
+        ["recap-contact", "primaryAction"],
+        ["recap-contact", "secondaryAction"],
+      ]
+    : [
+        ["join-hero-copy", "primaryAction"],
+        ["join-hero-copy", "secondaryAction"],
+        ["join-contact-card", "primaryAction"],
+        ["join-contact-card", "secondaryAction"],
+      ];
+  for (const [key, name] of actionFields) {
     const label = field(key, name);
-    const url = resolveHref(href(key, name));
+    const url = resolveSafeLink(href(key, name), ctx.api.base, key.startsWith("recap-") ? "/recap" : "/join");
     if (!label || !url) continue;
     if (actions.some((action) => action.url === url && action.label === label)) continue;
     actions.push({ label, url });
   }
 
+  const heroKey = closed ? "join-closed-notice" : "join-hero-copy";
+  const title = field(heroKey, "title");
+  const lead = field(heroKey, "lead");
+  const kpi = closed ? [] : KPI_BLOCKS.map((key) => ({ label: field(key, "title"), value: field(key, "body") }));
+  const stats = closed ? STAT_BLOCKS.map((key) => ({ label: field(key, "title"), value: field(key, "body") })) : [];
+  const steps = closed ? [] : STEP_BLOCKS.map(([key, number]) => ({ number, title: field(key, "title"), body: field(key, "body") }));
+  const contact = closed
+    ? { title: field("recap-contact", "title"), body: field("recap-contact", "lead") }
+    : { title: field("join-contact-card", "title"), body: field("join-contact-card", "body") };
+
   if (ctx.flags.json) {
     ctx.out(
       JSON.stringify(
         {
-          title: field("join-hero-copy", "title"),
-          lead: field("join-hero-copy", "lead"),
-          kpi: KPI_BLOCKS.map((key) => ({ label: field(key, "title"), value: field(key, "body") })),
-          steps: STEP_BLOCKS.map(([key, number]) => ({ number, title: field(key, "title"), body: field(key, "body") })),
-          contact: { title: field("join-contact-card", "title"), body: field("join-contact-card", "body") },
+          closed,
+          recruitmentStatus: closed ? "closed" : "open",
+          title,
+          lead,
+          kpi,
+          stats,
+          steps,
+          contact,
           actions,
           url: `${ctx.api.base}/join`,
+          recapUrl: closed ? `${ctx.api.base}/recap` : null,
         },
         null,
         2,
@@ -132,14 +190,14 @@ export async function runJoin(ctx: CommandContext): Promise<void> {
   }
 
   const out = ctx.out;
-  const eyebrow = field("join-hero-copy", "eyebrow");
+  const eyebrow = field(closed ? "recap-hero-copy" : "join-hero-copy", "eyebrow");
   out();
   out(`${style.bold(style.brand("YUNA"))} ${style.dim("· 燕山大学大学生网络信息协会")}${eyebrow ? style.dim(` · ${eyebrow}`) : ""}`);
   out();
-  out(`  ${style.bold(field("join-hero-copy", "title"))}`);
-  for (const line of wrapText(field("join-hero-copy", "lead"), ctx.width, "  ")) out(line);
+  out(`  ${style.bold(title)}`);
+  for (const line of wrapText(lead, ctx.width, "  ")) out(line);
 
-  const kpiRows = KPI_BLOCKS.map((key) => [field(key, "title"), field(key, "body")] as [string, string]);
+  const kpiRows = (closed ? stats : kpi).map((item) => [item.label, item.value] as [string, string]);
   const renderedKpi = keyValueRows(kpiRows, "  ");
   if (renderedKpi.length) {
     out();
@@ -147,25 +205,22 @@ export async function runJoin(ctx: CommandContext): Promise<void> {
   }
 
   const processTitle = field("join-process-heading", "title") || "招新流程";
-  const steps = STEP_BLOCKS.map(([key, number]) => ({ number, title: field(key, "title"), body: field(key, "body") })).filter(
-    (step) => step.title || step.body,
-  );
   if (steps.length) {
     out();
     out(`  ${sectionTitle(processTitle)}`);
     const note = field("join-process-heading", "note");
     if (note) for (const line of wrapText(note, ctx.width, "  ")) out(style.dim(line));
     out();
-    for (const step of steps) {
+    for (const step of steps.filter((step) => step.title || step.body)) {
       out(`    ${style.brand(step.number)}  ${style.bold(step.title)}`);
       if (step.body) for (const line of wrapText(step.body, ctx.width, "        ")) out(style.dim(line));
     }
   }
 
-  const contactBody = field("join-contact-card", "body");
+  const contactBody = contact.body;
   if (contactBody) {
     out();
-    out(`  ${sectionTitle(field("join-contact-card", "title") || "联系与报名方式")}`);
+    out(`  ${sectionTitle(contact.title || (closed ? "咨询方式" : "联系与报名方式"))}`);
     for (const line of wrapText(contactBody, ctx.width, "  ")) out(line);
   }
 

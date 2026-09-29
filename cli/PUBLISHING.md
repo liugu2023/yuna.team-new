@@ -1,284 +1,138 @@
-# 本地测试与发布指南
+# CLI 本地验证与发布
 
-从零到"别人能 `npx yuna-team join`"的完整步骤。命令都在仓库根目录执行，除非另外说明。
+包名为 `yuna-team`，安装后的命令名为 `yuna`。本文以 **0.2.0** 为例。以下命令默认在仓库根目录执行；本地构建、打包和创建本地 tag 不会发布 npm 包。
 
-## 一、本地测试
-
-### 1. 直接跑源码（最快，改完即测）
+## 本地验证
 
 ```powershell
-npm install          # 第一次，或在依赖变化后
-npm run cli:build    # tsc 编译到 cli/dist
-node cli/bin/yuna.mjs join
+npm ci
+npm run cli:typecheck
+npm run cli:test
+npm run cli:release:check -- cli-v0.2.0
 ```
 
-想连本地预览而不是线上站点：
+`cli:test` 先编译，再用本地模拟 API 执行回归测试，覆盖分页、筛选编号、本地缓存、招新开关、课件链接、终端输出和错误处理。`cli:release:check` 检查包版本、二进制兜底版本、tag 以及实际 npm 文件清单。
+
+包中需要包含 `package.json`、`bin/yuna.mjs`、编译后的 `dist/`、`README.md` 和 `LICENSE`；源码、测试、配置、开发说明和本地数据不应进入包。检查按必要文件与排除项判断，不依赖固定文件数量。
+
+联调本地网站，在另一个终端运行 `npm run dev`，然后：
 
 ```powershell
-npm run dev          # 另开一个终端，站点跑在 http://127.0.0.1:8788
 node cli/bin/yuna.mjs join --base http://127.0.0.1:8788
-# 或者设一次环境变量，后面都不用带 --base
-$env:YUNA_API_BASE = "http://127.0.0.1:8788"
-node cli/bin/yuna.mjs projects
+node cli/bin/yuna.mjs posts -n 5 --tag 运维 --base http://127.0.0.1:8788
+node cli/bin/yuna.mjs read 1 --base http://127.0.0.1:8788
+node cli/bin/yuna.mjs lesson --all --base http://127.0.0.1:8788
 ```
 
-### 2. 模拟"装完之后"的样子（推荐，发布前必做）
+也可在当前终端设置 `$env:YUNA_API_BASE = "http://127.0.0.1:8788"`，省去后续命令的 `--base`。文章编号缓存按站点隔离；用 `$env:YUNA_CACHE_DIR = "$PWD/.ui-notes/cli-cache"` 可将本次测试的快照放到指定目录。
 
-`npm pack` 会打出真正要上传的那个压缩包，`npm i -g` 装它——和用户拿到的东西完全一致。
+检查本地安装包：
 
 ```powershell
 cd cli
-npm pack                              # 产出 yuna-team-0.1.0.tgz
-npm i -g .\yuna-team-0.1.0.tgz        # 全局装，之后任何目录都能敲 yuna
+npm pack
+npm i -g .\yuna-team-0.2.0.tgz
 yuna --version
-yuna join
-yuna posts -n 3
-yuna read docker-compose-in-lab
-yuna projects
-yuna lesson -n 2
-yuna open projects
+yuna --help
+yuna open home --json
+npm uninstall -g yuna-team
 ```
 
-验证完卸载：
+`prepack` 会在 `npm pack` 和 `npm publish` 前自动编译，避免分发旧的 `dist`。全局试装会更改本机的 `yuna` 安装；日常开发直接运行 `node cli/bin/yuna.mjs` 即可。
+
+## CI 与手动构建
+
+| 工作流 | 触发 | 行为 |
+| --- | --- | --- |
+| `.github/workflows/ci.yml` | 分支推送、PR、手动 | 网站检查；Windows / Linux 上的 CLI 检查与回归测试，以及最低 Node 版本验证 |
+| `.github/workflows/cli.yml` | 推送 `cli-v*` tag | 检查、npm 发布、六平台二进制构建、GitHub Release |
+| `.github/workflows/cli.yml` | Actions 手动运行 | 检查与二进制构建，保存 `yuna-cli-binaries` artifact；不发布 npm 或创建 Release |
+
+想先看发布产物，可在 Actions → **CLI 发版** → **Run workflow** 选择分支。成功后从该次运行的 Artifacts 下载压缩包和 `SHA256SUMS.txt`。
+
+二进制覆盖 Windows、macOS、Linux 的 x64 与 arm64。CI 会运行 Linux x64 产物的冒烟检查；其他平台产物由交叉编译生成，运行验证需要对应平台。二进制内置运行时，用户无需另装 Node。
+
+## 发布认证
+
+工作流支持两种 npm 认证方式：存在仓库 secret `NPM_TOKEN` 时使用 token；没有时使用 Trusted Publisher（OIDC）。GitHub Release 使用 Actions 自带的 `GITHUB_TOKEN`，不需要另建 GitHub PAT。
+
+### Trusted Publisher / OIDC
+
+在 npm 的 `yuna-team` 包设置中配置 GitHub Actions Trusted Publisher：
+
+| 字段 | 值 |
+| --- | --- |
+| Organization or user | `liugu2023` |
+| Repository | `yuna.team-new` |
+| Workflow filename | `cli.yml`，只填文件名 |
+| Environment | 留空，与当前工作流一致 |
+
+如设置界面提供 Allowed actions，允许 `npm publish`。配置完成后，移除仓库的 `NPM_TOKEN` secret，下次 tag 发布就会进入 OIDC 分支。工作流已经设置 `id-token: write`、Node 22 和新版 npm，并在 OIDC 分支清除临时 `.npmrc` 中的 token 配置，避免干扰身份认证。
+
+### NPM_TOKEN
+
+如果使用 token，在 npm 创建对 `yuna-team` 有发布权限的 granular access token，并存入 GitHub 仓库 Settings → Secrets and variables → Actions，名称为 `NPM_TOKEN`。
+
+token 应具备该包的 **Read and write** 权限；仅有 stage 权限不能执行当前工作流中的直接发布。无人值守发布还需满足 npm 账号与包的 2FA 策略，使用允许发布且可绕过交互式 2FA 的 token。设置适当有效期并按期更新；无需给其他包授予权限。
+
+认证未配置完成前先使用手动构建验证；它不需要 npm 发布权限。
+
+## 发布 0.2.0
+
+先同步以下版本信息：
+
+- `cli/package.json` 的 `version`。
+- `cli/src/index.ts` 的 `VERSION`，用于单文件二进制兜底。
+- 根目录 `package-lock.json` 中的 CLI workspace 版本。
+
+运行本地检查并提交、推送版本改动。确认 npm 认证已配置后，推送与版本完全一致的 tag：
 
 ```powershell
-npm uninstall -g yuna-team
-Remove-Item .\yuna-team-0.1.0.tgz     # 别把这个文件提交进仓库
+npm run cli:test
+npm run cli:release:check -- cli-v0.2.0
+git tag -a cli-v0.2.0 -m "yuna CLI 0.2.0"
+git push --atomic origin master cli-v0.2.0
 ```
 
-### 3. `npm link`（改代码时更省事）
+若本地 tag 已创建，跳过 `git tag`，可用 `git show --no-patch cli-v0.2.0` 检查其提交。`--atomic` 会一起推送分支与指定 tag，避免只更新一部分；它不会推送其他本地 tag。
+
+推送 tag 会实际触发 npm 发布和 GitHub Release。正常情况下，npm 发布成功后才继续二进制构建；该版本已存在时跳过 npm 发布，继续生成 Release 产物。npm 已发布版本不能覆盖，代码有变化时应使用新版本号。版本说明见 [CHANGELOG.md](CHANGELOG.md)。
+
+若选择手动发布 npm 包，在已登录且有发布权限的本机执行：
 
 ```powershell
 cd cli
-npm link            # 全局出现 yuna，指向当前目录
-yuna join           # 注意：改完 TS 要重新 npm run cli:build
-npm unlink -g yuna-team
+npm login
+npm publish --dry-run
+npm publish
 ```
 
-### 本地测试要点
+手动 npm 发布只上传 npm 包，不会生成 GitHub Release。仓库根包是网站 workspace，不是发布目标；所有 `npm publish` 命令都在 `cli/` 目录执行。
 
-- 检查 `yuna --version`、`yuna`（无参数，应打印帮助并返回 1）、`yuna posts --nope`（应报中文错误并返回 1）。
-- 如果本机需要代理，试一次 `yuna posts --proxy http://127.0.0.1:7890`：应当能取到数据，且全局 node_modules 里会装上 `undici` 这一个依赖。
-- 建议在真终端里试，而不是只看重定向输出：颜色、折行、`fx-caret` 那些只在 TTY 下才生效。
-- 试一下管道：`yuna posts | Select-Object -First 3`（Linux/macOS 是 `| head -3`），不应该报 EPIPE。
-- Windows 上新开一个终端再敲 `yuna`，确认 PATH 生效。
-
-## 二、发布到 npm
-
-包名 `yuna-team`（`yuna` 与 `yuna-cli` 已被占用），命令名 `yuna`。不带 scope，所以**不需要建组织**。
-
-1. 注册/登录 npm 账号，并在账号设置里开启 2FA：
-   ```powershell
-   npm login          # 或 npm login --auth-type=web
-   npm whoami
-   ```
-2. 再确认一次名字没被抢：
-   ```powershell
-   npm view yuna-team     # 期望 404 Not Found
-   ```
-3. 去掉 `cli/package.json` 里的 `"private": true`（保留它的话 `npm publish` 会直接拒绝，这是故意的保险）。
-4. 对齐版本号：`cli/package.json` 的 `version` 与 `cli/src/index.ts` 里的兜底 `VERSION`（正常情况下 `bin/yuna.mjs` 会读 package.json，兜底值只在编译成单文件二进制时用）。
-5. 先干跑一遍，确认要上传的文件清单：
-   ```powershell
-   cd cli
-   npm publish --dry-run
-   ```
-   期望 17 个文件：`bin/`、`dist/`、`package.json`、`README.md`、`LICENSE`；**不应包含** `src/`、`tsconfig.json`。
-6. 正式发布：
-   ```powershell
-   npm run cli:build          # 确保 dist 是最新的（在仓库根执行）
-   cd cli
-   npm publish                # 未加 scope 的包默认 public
-   ```
-7. 立刻验证：
-   ```powershell
-   npm view yuna-team version
-   npx -y yuna-team join
-   ```
-8. 以后发版：改版本号 → `npm publish`。推荐：
-   ```powershell
-   cd cli
-   npm version patch          # 或 minor / major，会自动改 package.json
-   ```
-   注意：仓库根目录的 `yuna-team-blog` 是 `private`，**不要在根目录 publish**。
-
-### 发布后记得同步官网
-
-首页与加入页的胶囊复制的是 `npx -y yuna-team join`。包名如果以后变了，改这两处 `data-copy-command` 即可：
-
-```text
-public/index.html   public/join.html      （搜索 data-copy-command）
-```
-
-## 三、用 tag 一键发版（CI 已配好）
-
-仓库里已经配好两条流水线，正常发版不用手动敲 `npm publish`：
-
-| 文件 | 触发 | 做什么 |
-| --- | --- | --- |
-| `.github/workflows/ci.yml` | 推分支 / PR / 手动 | 站点类型检查、样式与脚本自检；CLI 类型检查、编译、冒烟、打包内容校验 |
-| `.github/workflows/cli.yml` | 推 `cli-v*` tag / 手动 | 检查 → 发布到 npm → 编译六平台单文件二进制 → 建 GitHub Release |
-
-发一个新版本：
+完成发布后验证具体版本：
 
 ```powershell
-# 1) 改版本号（两处，CI 会校验是否一致）
-#    cli/package.json 的 "version"
-#    cli/src/index.ts 的兜底 VERSION
-#    也可以：cd cli; npm version patch --no-git-tag-version
-
-# 2) 本地先自检（检查版本一致、private 已移除）
-npm run cli:release:check -- cli-v0.1.1
-
-# 3) 提交并推 tag
-git add -A
-git commit -m "cli: v0.1.1"
-git tag cli-v0.1.1
-git push origin master --tags
+npm view yuna-team@0.2.0 version
+npx -y yuna-team@0.2.0 --version
+npx -y yuna-team@0.2.0 open home --json
 ```
 
-推完在仓库 Actions 页面能看到「CLI 发版」跑起来：npm 上出现新版本，Releases 里出现六个平台的压缩包与 `SHA256SUMS.txt`。
+同时确认 GitHub Release 包含六个平台压缩包及 `SHA256SUMS.txt`。`npx` 的 `-y` 只是接受安装提示；验证特定版本应显式写 `@0.2.0`，验证最新已发布版本使用 `@latest`。
 
-手动触发（Actions → CLI 发版 → Run workflow）只跑检查与二进制编译，**不会**发布、**不会**建 Release，方便先确认产物能编出来。
+## 常见问题
 
-二进制体积（本地实测，bun 1.4.2）：windows-x64 82.2MB、linux-x64 77.6MB、darwin-arm64 59.4MB；zip 后约 39MB，流水线已压缩后再上传。
-
-## Token 去哪里拿
-
-### NPM_TOKEN（必须，CI 发布用）
-
-1. 打开 https://www.npmjs.com 登录，点右上角头像 → **Access Tokens** → **Generate New Token**。
-2. 二选一：
-   - **Granular Access Token（推荐）**
-     - Name：`yuna-team-ci`
-     - Expiration：90 天或自定义（到期前记得换）
-     - **Packages and scopes** → Permissions 选 **Read and write**；Packages 选 **All packages**（首次发布时还没有这个包，只能选 All）
-     - 必须勾选 **Bypass two-factor authentication (2FA)**，否则 CI 发布会因为要 OTP 而失败
-   - **Classic Token** → 类型选 **Automation**（专给 CI，天然跳过 2FA；代价是权限覆盖你账号下的所有包）
-3. 点生成后 **token 只显示这一次**，立刻复制。
-4. 回到 GitHub 仓库 → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**：
-   - Name：`NPM_TOKEN`
-   - Secret：粘贴刚才那串（`npm_` 开头）
-5. 以后换 token 只更新这个同名 secret，不用动 workflow。
-
-### GITHUB_TOKEN（不用手动创建）
-
-Actions 内置，`permissions: contents: write` 就能建 Release、上传资产——`cli.yml` 里已经这么写了。它只对**当前仓库**有效。
-
-### PAT（以后要自动更新 Homebrew tap / Scoop bucket 才需要）
-
-那种场景要往**别的仓库**写文件，内置 token 不够：
-
-1. GitHub → 右上头像 → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**。
-2. Repository access → Only select repositories → 选中目标仓库（例如 `homebrew-yuna`、`scoop-yuna`）。
-3. Permissions → **Contents: Read and write**。
-4. 生成后存成仓库 secret，例如 `TAP_TOKEN`。
-
-### 别搞混的两个 token
-
-- 站点已有的 **`GITHUB_BACKUP_TOKEN`** 是 Cloudflare Pages 项目的环境变量，给后台同步 Markdown 快照用，跟发版无关，也不是 Actions secret。
-- 本指南要的 `NPM_TOKEN` 是 **npm** 的 token（`npm_` 开头），不是 GitHub 的。
-
-### 切换到 Trusted Publisher（以后不再用 token）
-
-npm 的方向是 **OIDC 免 token 发布**：`npm publish` 用 GitHub Actions 的一次性身份令牌换 npm 的临时凭证，不需要长期 token，而且**自带 provenance**（可验证"这个版本确实由该仓库的该 workflow 构建"）。npm 计划 2027 年 1 月取消 bypass-2FA token 直发（[npm roadmap](https://github.com/orgs/community/discussions/208130)），所以这是官方推荐路径。
-
-前置条件（workflow 里都已满足）：
-
-- publish job 声明了 `permissions: id-token: write`
-- Node ≥ 22.14（workflow 用 22）
-- npm CLI ≥ 11.5.1（workflow 里有 `npm install -g npm@latest`）
-- 该包已经成功发布过一次（0.1.0 已发布 ✓）
-
-**第一步：在 npm 上配置**
-
-1. 打开 https://www.npmjs.com/package/yuna-team → 右侧 **Settings** → 找到 **Trusted Publisher** → **Select publisher** → 选 **GitHub Actions**
-2. 填四项，必须与 workflow 完全对应：
-
-   | 字段 | 填什么 |
-   | --- | --- |
-   | Organization or user | `liugu2023` |
-   | Repository | `yuna.team-new` |
-   | Workflow filename | `cli.yml` ← **只填文件名**，不是 `.github/workflows/cli.yml` |
-   | Environment | 留空（workflow 里没有用 environment） |
-
-3. **Allowed actions** 选 `npm publish`，保存
-
-**第二步：删掉 token**
-
-GitHub 仓库 → Settings → Secrets and variables → Actions → 删除 `NPM_TOKEN`。
-
-workflow 已经写成双模式：**有 `NPM_TOKEN` 就用 token，没有就自动走 OIDC**。所以删掉 secret 后不需要改任何代码，下次发版日志里会出现「没有 NPM_TOKEN，按 trusted publishing（OIDC）发布」。
-
-**第三步：验证**
-
-发一个 patch 版本（例如 0.1.1），在 Actions 日志里确认三件事：
-
-- 出现「没有 NPM_TOKEN，按 trusted publishing（OIDC）发布」
-- 出现「已从 .npmrc 移除 _authToken 行」
-- npm 包页面右侧出现 **Provenance** 标记
-
-**如果 OIDC 失败**（日志报 `ENEEDAUTH` / `Unable to authenticate`）：
-
-- workflow filename 是否**只填了文件名** `cli.yml`；仓库名大小写要一致
-- 确认没有残留的 `NODE_AUTH_TOKEN`（双模式下 OIDC 分支不设它；手动加过的话删掉）
-- 确认 npm CLI 已升级（日志里 `npm --version` 应 ≥ 11.5.1）
-- trusted publisher 配好之前不要删 secret，否则两次发版都会失败
-
-**想退回 token 方式**：把 `NPM_TOKEN` secret 加回来即可，workflow 会自动走 token 分支，无需改代码。
-
-## 四、单文件二进制与其它包管理器
-
-npm 只解决"装了 Node 的人"。其余渠道都要先有单文件二进制：
-
-```powershell
-bun build --compile --target=bun-windows-x64 --outfile dist/yuna-windows-x64.exe cli/bin/yuna.mjs
-```
-
-`--target` 可换 `bun-darwin-arm64` / `bun-linux-x64` 等，一次矩阵编译出六个平台，发布到 GitHub Release 并附 SHA256。
-
-按成本从低到高：
-
-| 渠道 | 用户怎么装 | 要做什么 |
-| --- | --- | --- |
-| GitHub Release | 下载即用 | 打 tag，CI 上传二进制与 SHA256 |
-| Scoop（Windows） | `scoop bucket add yuna https://github.com/<org>/scoop-yuna` | 建 `scoop-yuna` 仓库，写 `bucket/yuna.json`（版本、URL、hash） |
-| Homebrew（mac/Linux） | `brew install <org>/yuna/yuna` | 建 `homebrew-yuna` 仓库，写 `Formula/yuna.rb` |
-| AUR（Arch） | `yay -S yuna-bin` | AUR 账号 + SSH key，写 `PKGBUILD`；每次发版改 `pkgver` 和校验和 |
-| Docker / GHCR | `docker run ghcr.io/<org>/yuna join` | 一个几行的 Dockerfile + workflow |
-| winget（Windows 官方） | `winget install yuna-team.yuna` | PR 到 microsoft/winget-pkgs：`exe` 稳定下载地址 + SHA256 + 清单，人工审核数天 |
-| Chocolatey | `choco install yuna` | 社区审核，同样要安装包与校验和 |
-| apt / rpm 官方源 | — | 没有官方入口，必须自建并托管签名仓库，成本最高，建议最后考虑 |
-
-Homebrew 官方 core 需要项目有一定知名度（star/用户量），社团项目一般过不了，用自建 tap 就行。
-
-## 五、发版检查清单
-
-- [ ] `npm run typecheck`、`npm run cli:build` 通过（CI 也会跑，见 `ci.yml`）
-- [ ] `cd cli && npm pack` 后本地 `npm i -g` 实测六个命令
-- [ ] `cli/package.json` 版本号与 `src/index.ts` 的兜底 `VERSION` 一致（`npm run cli:release:check` 会校验）
-- [ ] `"private": true` 已移除（同一个命令也会校验）
-- [ ] `npm publish --dry-run` 文件清单正确（应为 18 个文件，无 `src/`、无 `tsconfig.json`）
-- [ ] 打 tag 后 Actions 里「CLI 发版」三个 job 全绿
-- [ ] 发布后 `npx -y yuna-team --version` 能跑
-- [ ] 官网胶囊的 `data-copy-command` 与实际包名一致
-- [ ] GitHub Release 已附六个平台压缩包与 `SHA256SUMS.txt`
-
-## 六、常见错误
-
-| 现象 | 原因 |
+| 现象 | 排查方向 |
 | --- | --- |
-| `npm publish` 报 `This package has been marked as private` | 忘了删 `cli/package.json` 的 `"private": true`（本地 `npm run cli:release:check` 能提前查出来） |
-| CI 里 `npm publish` 报 `EOTP` / 要求一次性密码 | NPM_TOKEN 没勾 **Bypass two-factor authentication**，换成带该选项的 granular token 或 Classic Automation token |
-| CI 里 `npm publish` 报 `E_STAGE_REQUIRED`（只能发到暂存区） | token 权限选了 **Read and write (stage only)**；改成 **Read and write**，或改用 Trusted Publisher |
-| OIDC 发布报 `ENEEDAUTH` | workflow filename 填成了完整路径、或残留 NODE_AUTH_TOKEN、或 npm CLI 太旧 |
-| CI 里 `npm ci` 报 `EALLOWREMOTE` | package-lock.json 里的 `resolved` 指向第三方镜像；应全部是 `registry.npmjs.org` |
-| CI 里 `npm publish` 报 401/403 | secret 名字不是 `NPM_TOKEN`，或 token 已过期 |
-| CI 自检报 tag 与版本不一致 | tag 写成 `v0.1.1` 了，本项目约定是 `cli-v0.1.1` |
-| Release job 报 `Resource not accessible by integration` | 缺 `permissions: contents: write`（workflow 里已写，改坏了才会遇到） |
-| 二进制在 macOS 上被 Gatekeeper 拦 | 没做代码签名；主推 npm 渠道，或让用户 `xattr -d com.apple.quarantine` |
-| 报 `You do not have permission to publish "yuna"` | 包名被占，本项目用的是 `yuna-team` |
-| `npm error E404 ... PUT ... yuna-team` | 还没 `npm login`，或 token 没有 publish 权限 |
-| 装完敲 `yuna` 提示找不到命令 | npm 全局 bin 目录不在 PATH：`npm bin -g` 看路径 |
-| `npx yuna-team` 跑的是旧的 | npx 有缓存，加 `-y` 或清 `~/.npm/_npx` |
-| 页面复制出的命令是旧包名 | 忘了改 `public/index.html` 与 `public/join.html` 的 `data-copy-command` |
+| `read 1` 提示没有列表 | 对同一个 `--base` 先运行 `posts`，或直接按 slug 阅读；检查 `YUNA_CACHE_DIR` 是否改变 |
+| 代理失败 | 检查 `--proxy` 的 HTTP(S) 地址和代理服务；CLI 会报错退出，不会自动直连 |
+| OIDC 报 `ENEEDAUTH` | 检查 npm Trusted Publisher 的仓库、`cli.yml` 文件名、environment 是否匹配，及是否残留 token 配置 |
+| token 发布报 `EOTP` | token 或包的 2FA 策略不允许无人值守发布；检查权限或改用 OIDC |
+| token 发布报 `E_STAGE_REQUIRED` | token 仅有 stage 权限，无法直接发布 |
+| npm 发布报 401 / 403 | 检查 token 有效期、`yuna-team` 写权限或 npm Trusted Publisher 配置 |
+| 自检报 tag 不一致 | tag 必须是 `cli-v` 加 `cli/package.json` 的完整版本号 |
+| 打包缺少编译文件 | 检查 `prepack` 是否被 `--ignore-scripts` 跳过；先运行 `npm run cli:build` |
+| Release 没有生成 | 手动运行只留 artifact；tag 发布需通过检查与 npm 发布阶段，Release job 需要 `contents: write` |
+| 全局安装后找不到 `yuna` | 用 `npm prefix -g` 检查全局安装前缀，并确认对应命令目录在 PATH 中 |
+| `npx` 版本不符合预期 | 显式使用 `yuna-team@0.2.0` 或 `yuna-team@latest`，`-y` 不负责刷新缓存 |
+
+目前分发渠道是 npm 和 GitHub Release；Homebrew、Scoop、winget 等渠道尚未接入。

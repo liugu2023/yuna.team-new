@@ -3,6 +3,7 @@ import type { LessonEntry, LessonPlan, LessonTerm } from "../api.js";
 import { positiveInt, UsageError } from "../args.js";
 import type { CommandContext } from "../context.js";
 import { joinParts } from "../context.js";
+import { resolveSafeLink } from "../links.js";
 import { style, wrapText } from "../ui.js";
 
 const LESSON_KEY = "lesson-plan";
@@ -14,18 +15,19 @@ const STATUS_LABELS: Record<LessonEntry["status"], string> = {
   cancelled: "已取消",
 };
 
-function normalizeLinks(value: unknown): Array<{ label: string; url: string }> {
+function normalizeLinks(value: unknown, base: string): Array<{ label: string; url: string }> {
   if (!Array.isArray(value)) return [];
   return value
     .map((item) => {
       const raw = (item ?? {}) as Record<string, unknown>;
-      return { label: String(raw.label ?? "").trim(), url: String(raw.url ?? "").trim() };
+      const url = resolveSafeLink(raw.url, base, "/lesson-plan");
+      return { label: String(raw.label ?? "").trim() || url, url };
     })
-    .filter((link) => link.label && /^https?:\/\//i.test(link.url));
+    .filter((link) => link.url);
 }
 
 /** 与 public/js/lesson-plan.js 的归一化保持一致：没有主题的课次丢弃，非法状态退回 planned。 */
-function normalizePlan(value: unknown): LessonPlan {
+function normalizePlan(value: unknown, base: string): LessonPlan {
   const source = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
   const terms: LessonTerm[] = [];
   for (const item of Array.isArray(source.terms) ? source.terms : []) {
@@ -37,7 +39,7 @@ function normalizePlan(value: unknown): LessonPlan {
       const rawLesson = (lesson ?? {}) as Record<string, unknown>;
       const topic = String(rawLesson.topic ?? "").trim();
       if (!topic) continue;
-      const status = String(rawLesson.status ?? "");
+      const status = String(rawLesson.status ?? "").trim();
       lessons.push({
         date: String(rawLesson.date ?? "").trim(),
         session: String(rawLesson.session ?? rawLesson.week ?? "").trim(),
@@ -46,7 +48,7 @@ function normalizePlan(value: unknown): LessonPlan {
         instructor: String(rawLesson.instructor ?? "").trim(),
         location: String(rawLesson.location ?? "").trim(),
         status: Object.hasOwn(STATUS_LABELS, status) ? (status as LessonEntry["status"]) : "planned",
-        links: normalizeLinks(rawLesson.links),
+        links: normalizeLinks(rawLesson.links, base),
       });
     }
     lessons.sort((a, b) => (a.date || "9999").localeCompare(b.date || "9999") || a.session.localeCompare(b.session, "zh-CN", { numeric: true }));
@@ -57,7 +59,7 @@ function normalizePlan(value: unknown): LessonPlan {
       lessons,
     });
   }
-  terms.sort((a, b) => (b.order || 0) - (a.order || 0) || b.label.localeCompare(a.label, "zh-CN"));
+  terms.sort((a, b) => (b.order || 0) - (a.order || 0) || b.label.localeCompare(a.label, "zh-CN", { numeric: true }));
   return { title: String(source.title ?? "").trim() || DEFAULT_TITLE, terms };
 }
 
@@ -75,7 +77,7 @@ export async function runLesson(ctx: CommandContext): Promise<void> {
   }
 
   const record = await ctx.api.getJsonRecord<unknown>(LESSON_KEY);
-  const plan = normalizePlan(record ?? {});
+  const plan = normalizePlan(record ?? {}, ctx.api.base);
   const keyword = (ctx.flags.term ?? "").trim().toLocaleLowerCase();
   const limit = positiveInt(ctx.flags.limit, 0, "-n / --limit");
 
@@ -124,7 +126,7 @@ export async function runLesson(ctx: CommandContext): Promise<void> {
       const heading = joinParts([lesson.session, lesson.date || "时间待定"]);
       out(`    ${style.bold(heading)}  ${statusLabel(lesson.status)}`);
       for (const line of wrapText(lesson.topic, ctx.width, "      ")) out(line);
-      const details = joinParts([lesson.department, lesson.instructor ? `讲师 ${lesson.instructor}` : null, lesson.location]);
+      const details = joinParts([lesson.department, lesson.instructor ? `授课人 ${lesson.instructor}` : null, lesson.location]);
       if (details) out(`      ${style.dim(details)}`);
       for (const link of lesson.links) out(`      ${style.dim(link.label)}  ${style.underline(link.url)}`);
     }

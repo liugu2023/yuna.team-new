@@ -2,7 +2,7 @@
 import { UsageError } from "../args.js";
 import type { CommandContext } from "../context.js";
 import { openInBrowser } from "../open.js";
-import { style } from "../ui.js";
+import { resolveSafeLink } from "../links.js";
 
 const PAGES: Record<string, string> = {
   home: "/",
@@ -11,6 +11,7 @@ const PAGES: Record<string, string> = {
   contribute: "/contribute",
   team: "/team",
   join: "/join",
+  recap: "/recap",
   departments: "/departments",
   lesson: "/lesson-plan",
   "lesson-plan": "/lesson-plan",
@@ -27,15 +28,18 @@ export async function runOpen(ctx: CommandContext): Promise<void> {
 
   let url: string;
   if (/^https?:\/\//i.test(target)) url = target;
-  else if (target.startsWith("post:")) url = ctx.api.url(`/post?slug=${encodeURIComponent(target.slice(5))}`);
-  else if (target.startsWith("page:")) url = ctx.api.url(`/page?p=${encodeURIComponent(target.slice(5))}`);
+  else if (target.startsWith("post:") && target.slice(5)) url = ctx.api.url(`/post?slug=${encodeURIComponent(target.slice(5))}`);
+  else if (target.startsWith("page:") && target.slice(5)) url = ctx.api.url(`/page?p=${encodeURIComponent(target.slice(5))}`);
   else if (target.startsWith("/")) url = ctx.api.url(target);
-  else if (PAGES[target.toLocaleLowerCase()]) url = ctx.api.url(PAGES[target.toLocaleLowerCase()] as string);
+  else if (Object.hasOwn(PAGES, target.toLocaleLowerCase())) url = ctx.api.url(PAGES[target.toLocaleLowerCase()] as string);
   else {
     throw new UsageError(
       `不认识的页面「${target}」。可用：${Object.keys(PAGES).join(" / ")}，或 post:<slug>、page:<名字>、以 / 开头的路径、完整 URL。`,
     );
   }
+
+  url = resolveSafeLink(url, ctx.api.base);
+  if (!/^https?:\/\//i.test(url)) throw new UsageError("要打开的地址必须是有效的 HTTP(S) 地址。");
 
   if (ctx.flags.json) {
     ctx.out(JSON.stringify({ target, url }, null, 2));
@@ -43,5 +47,5 @@ export async function runOpen(ctx: CommandContext): Promise<void> {
   }
   ctx.out(url);
   const opened = await openInBrowser(url);
-  if (!opened) ctx.out(style.dim("  没有找到可用的浏览器，请手动打开上面的地址。"));
+  if (!opened) throw new UsageError("无法打开浏览器，请手动访问上面的地址。");
 }

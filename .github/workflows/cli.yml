@@ -1,6 +1,6 @@
 # yuna CLI 的发版流水线。
 #   打 tag cli-vX.Y.Z 后：类型检查 → 发布到 npm → 编译六个平台单文件二进制 → 建 GitHub Release
-#   需要仓库 secret：NPM_TOKEN（获取方式见 cli/PUBLISHING.md「Token 去哪里拿」）
+#   npm 使用仓库 secret NPM_TOKEN，或配置 trusted publishing（OIDC）。
 #   也可以手动触发（workflow_dispatch），此时只跑检查与二进制编译，不会发布或建 Release。
 #
 # 刻意不在这里写 paths 过滤：GitHub 对 tag 推送不评估路径过滤，把 branches/paths 和 tags 写在同一个
@@ -28,15 +28,10 @@ jobs:
       - run: npm ci
       - name: 类型检查
         run: npm run cli:typecheck
-      - name: 编译
-        run: npm run cli:build
-      - name: 冒烟（不发网络请求）
-        run: |
-          node cli/bin/yuna.mjs --version
-          node cli/bin/yuna.mjs --help
-          if node cli/bin/yuna.mjs posts --nope; then
-            echo "未知参数本应返回非 0"; exit 1
-          fi
+      - name: 编译与回归测试（本地模拟 API）
+        run: npm run cli:test
+      - name: 检查 npm 包的必要文件和排除项
+        run: node scripts/check-cli-release.mjs --package-only
       - name: 发版自检（tag 与版本号一致、private 已移除）
         if: startsWith(github.ref, 'refs/tags/cli-v')
         run: node scripts/check-cli-release.mjs
@@ -44,7 +39,7 @@ jobs:
   publish:
     name: 发布到 npm
     needs: check
-    if: startsWith(github.ref, 'refs/tags/cli-v')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/cli-v')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -91,7 +86,7 @@ jobs:
       #            （GitHub Actions / liugu2023 / yuna.team-new / cli.yml / 动作 npm publish），
       #            然后删掉 NPM_TOKEN secret 即可自动切换；无需 token，且自带 provenance。
       #            要求：本 job 已声明 id-token: write、Node ≥ 22.14、npm CLI ≥ 11.5.1（下面已升级）。
-      - name: 确认将要上传的文件（应为 18 个，不含 src、tsconfig）
+      - name: 确认将要上传的文件
         if: steps.exists.outputs.published == 'false'
         working-directory: cli
         run: npm publish --dry-run
@@ -115,7 +110,13 @@ jobs:
 
   binaries:
     name: 单文件二进制与 Release
-    needs: publish
+    needs: [check, publish]
+    # 手动构建会跳过 publish；显式状态条件避免依赖跳过导致整个 job 被跳过。
+    # tag 构建仍须发布成功，取消或检查失败时不继续构建。
+    if: >-
+      ${{ always() && !cancelled() && needs.check.result == 'success' &&
+          (needs.publish.result == 'success' ||
+           (github.event_name == 'workflow_dispatch' && needs.publish.result == 'skipped')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write # 建 Release、上传资产
@@ -145,9 +146,15 @@ jobs:
           ls -lh dist
       - name: 用本机平台产物冒烟（Linux runner 上跑 linux-x64）
         run: |
+          set -euo pipefail
           chmod +x dist/yuna-linux-x64
           ./dist/yuna-linux-x64 --version
           ./dist/yuna-linux-x64 --help > /dev/null
+          ./dist/yuna-linux-x64 open home --base https://example.invalid --json > dist/smoke-open.json
+          node --input-type=module -e 'import fs from "node:fs"; import assert from "node:assert/strict"; const result = JSON.parse(fs.readFileSync("dist/smoke-open.json", "utf8")); assert.equal(result.target, "home"); assert.equal(result.url, "https://example.invalid/");'
+          if ./dist/yuna-linux-x64 posts --nope; then
+            echo "未知参数本应返回非 0"; exit 1
+          fi
       - name: 打包并算校验和（82MB → zip 约 39MB）
         run: |
           set -euo pipefail
@@ -160,17 +167,23 @@ jobs:
           tar -czf yuna-linux-arm64.tar.gz yuna-linux-arm64
           sha256sum yuna-*.zip yuna-*.tar.gz > SHA256SUMS.txt
           cat SHA256SUMS.txt
-      - name: 建 Release 并上传（仅 tag 触发时）
-        if: startsWith(github.ref, 'refs/tags/cli-v')
+      - name: 创建或更新 Release 资产（仅 tag 触发时）
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/cli-v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            dist/*.zip dist/*.tar.gz dist/SHA256SUMS.txt \
-            --title "yuna CLI $GITHUB_REF_NAME" \
-            --generate-notes
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" \
+              dist/*.zip dist/*.tar.gz dist/SHA256SUMS.txt --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              dist/*.zip dist/*.tar.gz dist/SHA256SUMS.txt \
+              --title "yuna CLI $GITHUB_REF_NAME" \
+              --generate-notes
+          fi
       - name: 手动触发时只留构建产物
-        if: ${{ !startsWith(github.ref, 'refs/tags/cli-v') }}
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: yuna-cli-binaries

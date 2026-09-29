@@ -33,27 +33,40 @@ jobs:
         run: npm run scripts:check
 
   cli:
-    name: CLI（类型 / 编译 / 冒烟）
+    name: CLI（${{ matrix.os }} / Node ${{ matrix.node }}）
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run cli:typecheck
+      - name: 编译与回归测试（本地模拟 API）
+        run: npm run cli:test
+      - name: 检查 npm 包的必要文件和排除项
+        run: node scripts/check-cli-release.mjs --package-only
+
+  cli-minimum-node:
+    name: CLI 最低运行版本（Node 18.17）
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # 网站开发依赖需要较新的 Node，只有安装和构建使用 Node 22。
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run cli:typecheck
       - run: npm run cli:build
-      - name: 冒烟（不发网络请求）
-        run: |
-          node cli/bin/yuna.mjs --version
-          node cli/bin/yuna.mjs --help > /dev/null
-          if node cli/bin/yuna.mjs posts --nope; then
-            echo "未知参数本应返回非 0"; exit 1
-          fi
-      - name: 打包内容检查（18 个文件，不含 src / tsconfig / PUBLISHING）
-        working-directory: cli
-        run: |
-          npm pack --dry-run 2>&1 | tee /tmp/pack.txt
-          grep -q "total files: 18" /tmp/pack.txt
-          ! grep -q "src/" /tmp/pack.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18.17.0
+      - name: 用包声明的最低 Node 版本运行已编译 CLI 的回归测试
+        run: node scripts/test-cli.mjs

@@ -1,38 +1,31 @@
 // yuna read <编号|slug> —— 在终端读一篇文章（Markdown 渲染）。
-import type { PublicPost } from "../api.js";
-import { UsageError } from "../args.js";
+import { positiveInt, UsageError } from "../args.js";
 import type { CommandContext } from "../context.js";
 import { formatCount, formatDate, joinParts } from "../context.js";
 import { renderMarkdown } from "../markdown.js";
 import { openInBrowser } from "../open.js";
 import { keyValueRows, style, wrapText } from "../ui.js";
+import { loadPostHistory } from "../history.js";
+import { selectPosts } from "../post-list.js";
 
-const PAGE_SIZE = 50;
-const MAX_PAGES = 10;
-
-/** 支持直接用 `yuna posts` 里的编号；编号按当前已发布列表的顺序解析。 */
+/** 无筛选时读取最近一次 posts 的快照；显式筛选则按相同规则查询当前结果。 */
 async function resolveSlug(ctx: CommandContext, input: string): Promise<string> {
-  if (!/^\d+$/.test(input)) return input;
-  const index = Number(input);
-  if (index < 1) throw new UsageError("编号从 1 开始。");
-
-  const seen = new Set<string>();
-  const posts: PublicPost[] = [];
-  for (let page = 1; page <= MAX_PAGES; page++) {
-    const batch = await ctx.api.listPosts({ limit: PAGE_SIZE, page });
-    for (const post of batch) {
-      if (seen.has(post.slug)) continue;
-      seen.add(post.slug);
-      posts.push(post);
-    }
-    if (batch.length < PAGE_SIZE || posts.length >= index) break;
+  if (ctx.flags.slug || !/^\d+$/.test(input)) {
+    if (ctx.flags.tag !== undefined || ctx.flags.kind !== undefined) throw new UsageError("按 slug 阅读时不需要 --tag 或 --kind；筛选只用于编号查询。");
+    return input;
   }
-
-  const post = posts[index - 1];
-  if (!post) {
-    throw new UsageError(`没有第 ${index} 篇（当前共 ${posts.length} 篇已发布）。用 yuna posts 查看编号。`);
+  const index = positiveInt(input, 1, "文章编号");
+  if (ctx.flags.tag !== undefined || ctx.flags.kind !== undefined) {
+    const posts = await selectPosts(ctx.api, { tag: ctx.flags.tag, kind: ctx.flags.kind, limit: index });
+    const post = posts[index - 1];
+    if (!post) throw new UsageError(`筛选结果中没有第 ${index} 篇（共 ${posts.length} 篇）。`);
+    return post.slug;
   }
-  return post.slug;
+  const slugs = await loadPostHistory(ctx.api.base);
+  if (!slugs) throw new UsageError("还没有本站的文章列表。请先运行 yuna posts，或使用 yuna read <slug>。");
+  const slug = slugs[index - 1];
+  if (!slug) throw new UsageError(`最近一次列表只有 ${slugs.length} 篇，没有编号 ${index}。运行 yuna posts --all 获取完整列表。`);
+  return slug;
 }
 
 export async function runRead(ctx: CommandContext): Promise<void> {
@@ -43,9 +36,13 @@ export async function runRead(ctx: CommandContext): Promise<void> {
   const pageUrl = ctx.api.url(`/post?slug=${encodeURIComponent(slug)}`);
 
   if (ctx.flags.web) {
+    if (ctx.flags.json) {
+      ctx.out(JSON.stringify({ slug, url: pageUrl }, null, 2));
+      return;
+    }
     ctx.out(pageUrl);
     const opened = await openInBrowser(pageUrl);
-    if (!opened) ctx.out(style.dim("  没有找到可用的浏览器，请手动打开上面的地址。"));
+    if (!opened) throw new UsageError("无法打开浏览器，请手动访问上面的地址。");
     return;
   }
 

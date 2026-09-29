@@ -19,6 +19,7 @@
     "cli": "node cli/bin/yuna.mjs",
     "cli:build": "tsc -p cli/tsconfig.json",
     "cli:typecheck": "tsc -p cli/tsconfig.json --noEmit",
+    "cli:test": "npm run cli:build && node scripts/test-cli.mjs",
     "cli:release:check": "node scripts/check-cli-release.mjs",
     "styles:check": "node scripts/check-css.mjs",
     "scripts:check": "node scripts/check-scripts.mjs"

@@ -15,12 +15,12 @@ export interface CliFlags {
   json: boolean;
   all: boolean;
   web: boolean;
+  slug?: boolean;
   with: string[];
   base?: string;
   limit?: string;
   tag?: string;
   kind?: string;
-  page?: string;
   network?: string;
   status?: string;
   term?: string;
@@ -38,26 +38,49 @@ const OPTIONS = {
   json: { type: "boolean" },
   all: { type: "boolean" },
   web: { type: "boolean" },
+  slug: { type: "boolean" },
   with: { type: "string", multiple: true },
   base: { type: "string" },
   limit: { type: "string", short: "n" },
   tag: { type: "string" },
   kind: { type: "string" },
-  page: { type: "string" },
   network: { type: "string" },
   status: { type: "string" },
   term: { type: "string" },
   proxy: { type: "string" },
 } as const;
 
+const GLOBAL_OPTIONS = ["help", "version", "json", "base", "proxy"];
+const COMMAND_OPTIONS: Record<string, string[]> = {
+  join: ["with"], posts: ["limit", "tag", "kind", "all"],
+  read: ["web", "slug", "tag", "kind"], projects: ["network", "status", "tag"],
+  lesson: ["term", "all", "limit", "status"], open: [],
+};
+
 export function parseCli(argv: string[]): ParsedCli {
   try {
-    const { values, positionals } = parseArgs({
+    const { values, positionals, tokens } = parseArgs({
       args: argv,
       options: OPTIONS,
       allowPositionals: true,
       strict: true,
+      tokens: true,
     });
+    const command = positionals[0] ?? "";
+    if (Object.hasOwn(COMMAND_OPTIONS, command)) {
+      const allowed = new Set([...GLOBAL_OPTIONS, ...COMMAND_OPTIONS[command]!]);
+      for (const token of tokens) {
+        if (token.kind === "option" && !allowed.has(token.name)) throw new UsageError(`${command} 不支持 --${token.name}。用 yuna ${command} --help 查看用法。`);
+      }
+      if (!values.help && !values.version) {
+        const count = positionals.length - 1;
+        const required = command === "read" || command === "open";
+        const maximum = required || command === "projects" ? 1 : 0;
+        if (count > maximum) throw new UsageError(`${command} 收到了多余的位置参数；包含空格的关键词或地址请加引号。`);
+        if (required && count === 0) throw new UsageError(`请提供${command === "read" ? "文章编号或 slug" : "要打开的页面或地址"}。用 yuna ${command} --help 查看用法。`);
+        if (command === "posts" && values.all && values.limit !== undefined) throw new UsageError("posts 的 --all 和 -n / --limit 不能同时使用。");
+      }
+    }
     return {
       positionals,
       flags: {
@@ -66,12 +89,12 @@ export function parseCli(argv: string[]): ParsedCli {
         json: Boolean(values.json),
         all: Boolean(values.all),
         web: Boolean(values.web),
+        slug: Boolean(values.slug),
         with: values.with ?? [],
         base: values.base,
         limit: values.limit,
         tag: values.tag,
         kind: values.kind,
-        page: values.page,
         network: values.network,
         status: values.status,
         term: values.term,
@@ -79,6 +102,7 @@ export function parseCli(argv: string[]): ParsedCli {
       },
     };
   } catch (error) {
+    if (error instanceof UsageError) throw error;
     const raw = (error as Error).message;
     const unknown = raw.match(/^Unknown option '([^']+)'/);
     if (unknown) throw new UsageError(`未知参数「${unknown[1]}」。用 yuna --help 查看全部参数。`);
@@ -90,6 +114,6 @@ export function parseCli(argv: string[]): ParsedCli {
 export function positiveInt(value: string | undefined, fallback: number, label: string): number {
   if (value === undefined) return fallback;
   const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed <= 0) throw new UsageError(`${label} 需要正整数，收到「${value}」。`);
+  if (!/^\d+$/.test(value.trim()) || !Number.isSafeInteger(parsed) || parsed <= 0) throw new UsageError(`${label} 需要安全范围内的正整数，收到「${value}」。`);
   return parsed;
 }

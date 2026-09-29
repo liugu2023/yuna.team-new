@@ -8,11 +8,11 @@ import { runPosts } from "./commands/posts.js";
 import { runProjects } from "./commands/projects.js";
 import { runRead } from "./commands/read.js";
 import type { CommandContext } from "./context.js";
-import { configureProxy, proxyFailureHint, shutdownProxy } from "./net.js";
+import { configureProxy, shutdownProxy } from "./net.js";
 import { style } from "./ui.js";
 
 /** 兜底版本号；bin/yuna.mjs 会优先传 cli/package.json 里的版本。 */
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 
 interface CommandDefinition {
   summary: string;
@@ -27,7 +27,7 @@ const COMMANDS: Record<string, CommandDefinition> = {
     usage: "yuna posts [-n 数量] [--tag 标签] [--kind article|knowledge] [--all]",
     run: runPosts,
   },
-  read: { summary: "在终端读一篇文章", usage: "yuna read <编号|slug> [--web]", run: runRead },
+  read: { summary: "在终端读一篇文章", usage: "yuna read <编号|slug> [--tag 标签] [--kind article|knowledge] [--slug] [--web]", run: runRead },
   projects: {
     summary: "协会项目目录",
     usage: "yuna projects [关键词] [--network public|internal|unspecified] [--status planning|building|maintaining|archived] [--tag 标签]",
@@ -51,11 +51,14 @@ function terminalWidth(): number {
 }
 
 let pipeClosed = false;
+let pipeHandlersInstalled = false;
 
 /** 下游提前关闭管道（`yuna posts | head`）时 node 会抛 EPIPE；这属于正常用法，安静退出即可。
  *  注意不要在 uv 的错误回调里直接 process.exit：Windows 上偶发 libuv 断言
  *  （uv_async_send on closing handle），改成置好退出码、下一轮事件循环再退，并停掉后续写入。 */
 function ignorePipeErrors(): void {
+  if (pipeHandlersInstalled) return;
+  pipeHandlersInstalled = true;
   for (const stream of [process.stdout, process.stderr]) {
     stream.on("error", (error: NodeJS.ErrnoException) => {
       if (error.code !== "EPIPE") throw error;
@@ -105,7 +108,7 @@ function printHelp(version: string, stream: NodeJS.WriteStream = process.stdout)
 }
 
 function printCommandHelp(name: string, version: string): void {
-  const command = COMMANDS[name];
+  const command = Object.hasOwn(COMMANDS, name) ? COMMANDS[name] : undefined;
   if (!command) {
     printHelp(version);
     return;
@@ -117,7 +120,8 @@ function printCommandHelp(name: string, version: string): void {
       "",
       `  ${style.bold("用法")}   ${command.usage}`,
       "",
-      `  ${style.dim("全局参数同样可用：--json、--base、-h/--help、-v/--version")}`,
+      ...(name === "read" ? ["  编号对应本站最近一次 posts 列表；显式 --tag / --kind 则查询当前筛选结果。", "  纯数字 slug 加 --slug；--web --json 只输出地址，不启动浏览器。", ""] : []),
+      `  ${style.dim("全局参数同样可用：--json、--base、--proxy、-h/--help、-v/--version")}`,
       "",
     ].join("\n") + "\n",
   );
@@ -160,15 +164,16 @@ export async function main(argv: string[], options: MainOptions = {}): Promise<n
     return 0;
   }
   if (!name || name === "help") {
-    if (name === "help" && rest[0] && COMMANDS[rest[0]]) {
+    if (name === "help" && rest[0] && Object.hasOwn(COMMANDS, rest[0])) {
       printCommandHelp(rest[0], version);
       return 0;
     }
+    if (name === "help" && rest[0]) return fail(new UsageError(`不认识的命令「${rest[0]}」。`));
     printHelp(version, name ? process.stdout : process.stderr);
     return name ? 0 : 1;
   }
 
-  const command = COMMANDS[name];
+  const command = Object.hasOwn(COMMANDS, name) ? COMMANDS[name] : undefined;
   if (!command) {
     process.stderr.write(`${style.red("✗")} 不认识的命令「${name}」。\n`);
     printHelp(version, process.stderr);
@@ -179,20 +184,19 @@ export async function main(argv: string[], options: MainOptions = {}): Promise<n
     return 0;
   }
 
-  const ctx: CommandContext = {
-    api: new YunaApi({ base: parsed.flags.base }),
-    flags: parsed.flags,
-    positionals: rest,
-    width: terminalWidth(),
-    out: (line = "") => {
-      if (!pipeClosed) process.stdout.write(`${line}\n`);
-    },
-  };
-
-  const proxySetup = await configureProxy(options.proxy);
-  if (proxySetup && proxySetup.via === null) process.stderr.write(proxyFailureHint(proxySetup.proxy));
-
   try {
+    const ctx: CommandContext = {
+      api: new YunaApi({ base: parsed.flags.base }),
+      flags: parsed.flags,
+      positionals: rest,
+      width: terminalWidth(),
+      out: (line = "") => {
+        if (!pipeClosed) process.stdout.write(`${line}\n`);
+      },
+    };
+
+    await configureProxy(parsed.flags.proxy ?? options.proxy);
+
     await command.run(ctx);
     return 0;
   } catch (error) {

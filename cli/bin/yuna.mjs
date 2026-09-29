@@ -1,21 +1,12 @@
 #!/usr/bin/env node
 // yuna CLI 启动器：版本号优先读 cli/package.json（编译成单文件二进制后读不到就退回内置版本），
-// 并把 --proxy 传给主程序（代理的启用在 src/net.ts 里做）。
+// 参数与代理统一由主程序解析。
 //
 // 这里刻意不用顶层 await：bun build --minify / 其它打包器对入口的顶层 await 支持不一，
 // 用 async 函数 + catch 更稳。
 import { readFile } from "node:fs/promises";
 
 const ARGV = process.argv.slice(2);
-
-function flagValue(name) {
-  const index = ARGV.findIndex((value) => value === name || value.startsWith(`${name}=`));
-  if (index === -1) return "";
-  const value = ARGV[index];
-  if (value.includes("=")) return value.slice(value.indexOf("=") + 1);
-  const next = ARGV[index + 1];
-  return next && !next.startsWith("-") ? next : "";
-}
 
 async function run() {
   const { main } = await import("../dist/index.js");
@@ -28,8 +19,7 @@ async function run() {
     version = undefined;
   }
 
-  const proxy = flagValue("--proxy");
-  process.exitCode = await main(ARGV, version ? { version, proxy } : { proxy });
+  process.exitCode = await main(ARGV, version ? { version } : {});
 }
 
 run().catch((error) => {
