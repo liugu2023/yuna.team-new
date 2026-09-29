@@ -9,13 +9,6 @@ const PROJECT_STATUS_LABELS = {
 
 const PROJECT_NETWORK_LABELS = { public: "公网项目", internal: "内网项目", unspecified: "待确认" };
 
-const PROJECT_EXAMPLES = [
-  { id: "example-site", network: "public", title: "协会网站", category: "Web 应用", status: "maintaining", summary: "集中展示协会文章、部门介绍、成员故事与活动资料，让内容持续积累。", owner: "开发部 · 运维部", tags: ["Web", "内容管理", "协作"], siteUrl: "/", repoUrl: "", description: "## 项目介绍\n这是协会网站的展示示例，可以替换为项目的实际介绍。\n\n- 记录技术文章与活动动态\n- 维护成员、部门与授课资料\n- 持续完善页面体验与内容管理\n\n## 参与方向\n前端开发、内容整理、部署维护与测试。" },
-  { id: "example-knowledge", network: "public", title: "协会知识库", category: "学习资源", status: "maintaining", summary: "把授课课件、实践记录和常见问题整理到一起，方便新成员查阅与补充。", owner: "各部门协作", tags: ["文档", "授课资料", "知识共享"], siteUrl: "https://docs.yuna.team/", repoUrl: "", description: "## 项目介绍\n这是一条知识库项目的展示示例，内容与进展可按实际情况调整。\n\n- 按技术方向整理学习资料\n- 补充环境搭建和常见问题说明\n- 将活动与授课经验沉淀为可复用的文档\n\n## 参与方向\n文档撰写、资料校对与学习路线整理。" },
-  { id: "example-tools", network: "internal", title: "校园工具集", category: "校园服务", status: "building", summary: "从日常遇到的小问题出发，尝试做一些能被同学真正用上的轻量工具。", owner: "参与团队待补充", tags: ["工具", "产品设计", "校园"], siteUrl: "", repoUrl: "", description: "## 展示示例\n此条目用于预览开发中项目的展示效果，不代表已经立项或上线。\n\n可以在这里补充要解决的问题、已经完成的部分、下一步计划以及参与方式。" },
-  { id: "example-events", network: "internal", title: "活动协作工具", category: "协会协作", status: "planning", summary: "围绕活动报名、组织分工和资料归档，探索更顺畅的协会协作方式。", owner: "参与团队待补充", tags: ["活动", "协作", "需求讨论"], siteUrl: "", repoUrl: "", description: "## 展示示例\n此条目用于预览规划中项目的展示效果，名称和内容可替换为协会实际项目。\n\n建议记录项目目标、初步需求、当前进展和希望参与的方向。" },
-];
-
 function projectSafeUrl(value) {
   const raw = String(value || "").trim();
   if (!raw || /[\\\u0000-\u0020]/.test(raw)) return "";
@@ -74,14 +67,13 @@ async function renderProjectsPage() {
   if (!root || root.dataset.bound) return;
   root.dataset.bound = "1";
   const params = new URLSearchParams(location.search);
-  const state = { projects: [], examples: false, admin: false, ready: false, busy: false, editor: null, closeModal: null,
+  const state = { projects: [], admin: false, ready: false, busy: false, editor: null, closeModal: null,
     network: Object.hasOwn(PROJECT_NETWORK_LABELS, params.get("network")) ? params.get("network") : "all",
     query: params.get("q") || "", filter: Object.hasOwn(PROJECT_STATUS_LABELS, params.get("status")) ? params.get("status") : "all" };
   const grid = root.querySelector("[data-project-grid]");
   const search = root.querySelector("[data-project-search]");
   const filters = root.querySelector("[data-project-filters]");
   const networkFilters = root.querySelector("[data-project-network-filters]");
-  const note = root.querySelector("[data-project-example-note]");
   const adminActions = root.querySelector("[data-project-admin-actions]");
   const message = root.querySelector("[data-project-message]");
   search.value = state.query;
@@ -105,7 +97,6 @@ async function renderProjectsPage() {
     const items = state.projects.filter((project) => (state.filter === "all" || project.status === state.filter)
       && (state.network === "all" || project.network === state.network)
       && [project.title, project.summary, project.category, project.owner, PROJECT_NETWORK_LABELS[project.network], ...project.tags].join(" ").toLocaleLowerCase().includes(query));
-    note.hidden = !state.examples;
     adminActions.hidden = !state.admin || !state.ready;
     root.querySelector("[data-project-count]").textContent = `显示 ${items.length} / ${state.projects.length} 个项目`;
     for (const button of filters.querySelectorAll("[data-project-filter]")) {
@@ -145,13 +136,10 @@ async function renderProjectsPage() {
     adminActions.hidden = true;
     message.textContent = "";
     try {
-      const projects = await readProjectCatalog();
-      state.examples = projects === null;
-      state.projects = projects ?? normalizeProjectCatalog({ projects: PROJECT_EXAMPLES });
+      state.projects = (await readProjectCatalog()) ?? [];
       state.ready = true;
       paint();
     } catch (error) {
-      note.hidden = true;
       root.querySelector("[data-project-count]").textContent = "项目加载失败";
       grid.innerHTML = '<div class="empty-state error"><p>暂时无法加载项目，请稍后重试。</p><button type="button" class="btn secondary" data-project-retry>重新加载</button></div>';
       message.textContent = error.message;
@@ -218,12 +206,11 @@ async function renderProjectsPage() {
 
   function openEditor(project = null) {
     if (!state.admin || !state.ready) return;
-    state.editor = { original: state.examples ? null : project, id: !state.examples && project ? project.id : crypto.randomUUID(), snapshot: "" };
+    state.editor = { original: project, id: project ? project.id : crypto.randomUUID(), snapshot: "" };
     for (const name of fieldNames) form.elements.namedItem(name).value = name === "tags" ? (project?.tags || []).join("，") : project?.[name] || (name === "status" ? "planning" : "");
     state.editor.snapshot = JSON.stringify(formValues());
     editor.querySelector("[data-project-editor-title]").textContent = project ? "编辑项目" : "新增项目";
     editor.querySelector("[data-project-delete]").hidden = !state.editor.original;
-    editor.querySelector("[data-project-first-save]").hidden = !state.examples;
     editorMessage.textContent = "";
     editor.querySelector(".modal-body").scrollTop = 0;
     openModal(editor, form.elements.namedItem("title"), () => !state.busy && (JSON.stringify(formValues()) === state.editor.snapshot || window.confirm("还有未保存的修改，确定关闭吗？")));
@@ -267,7 +254,6 @@ async function renderProjectsPage() {
       next = normalizeProjectCatalog({ projects: next });
       if (write) await saveSiteJsonRecord(PROJECT_CATALOG_KEY, '协会项目', { version: 1, projects: next });
       state.projects = next;
-      state.examples = false;
       paint();
       message.textContent = remove ? "项目已删除。" : "项目已保存。";
       state.closeModal(true);
