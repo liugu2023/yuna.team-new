@@ -7,8 +7,8 @@
 ## 使用
 
 ```bash
-npx -y @yuna-team/cli join     # 不安装，直接用
-npm i -g @yuna-team/cli        # 或全局安装，之后直接敲 yuna
+npx -y yuna-team join     # 不安装，直接用
+npm i -g yuna-team        # 或全局安装，之后直接敲 yuna
 ```
 
 ```text
@@ -77,17 +77,27 @@ cli/
 
 运行时零依赖（只用 Node 内置模块 + 全局 `fetch`），所以包很小，也容易编译成单文件二进制。
 
-## 发布清单
+## 本地测试与发布
 
-1. 去掉 `cli/package.json` 里的 `"private": true`。
-2. 确认 npm 上的组织名/包名（`yuna` 与 `yuna-cli` 已被占用，所以用 scope，命令名仍是 `yuna`）。
-3. 版本号同时改 `cli/package.json` 与 `src/index.ts` 的兜底 `VERSION`（`bin/yuna.mjs` 优先读 package.json，二进制里读不到才用兜底值）。
-4. 单文件二进制（Homebrew / Scoop / winget 用）：
-   ```bash
-   bun build --compile --outfile yuna cli/bin/yuna.mjs
-   ```
-5. 六个平台矩阵（win/mac/linux × x64/arm64）由 CI 产出并挂到 GitHub Release，再用各自仓库的清单指向它。
+本地试装（发布前建议做一遍，和用户拿到的东西完全一致）：
+
+```bash
+npm run cli:build          # 仓库根
+cd cli
+npm pack                   # 产出 yuna-team-0.1.0.tgz
+npm i -g ./yuna-team-0.1.0.tgz
+yuna join
+npm uninstall -g yuna-team
+```
+
+发布到 npm：
+
+1. 去掉本目录 `package.json` 里的 `"private": true`。
+2. 确认版本号与 `src/index.ts` 的兜底 `VERSION` 一致。
+3. `npm publish --dry-run` 检查文件清单，再 `npm publish`。
+
+完整的渠道说明（npm、单文件二进制、Homebrew / Scoop / AUR / winget、发版检查清单与常见错误）见仓库里的 `cli/PUBLISHING.md`（该文件不随 npm 包发布）。
 
 ## 许可
 
-MIT
+MIT，见 [LICENSE](LICENSE)。

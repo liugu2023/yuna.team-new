@@ -39,7 +39,7 @@ functions/              Cloudflare Pages Functions
 functions/_shared/      鉴权、会话、D1、R2、HTTP 等共享逻辑
 migrations/             D1 数据库迁移脚本
 scripts/                旧内容迁移、媒体迁移、内容检查脚本
-cli/                    命令行工具（独立 workspace 包 @yuna-team/cli，只读公开接口）
+cli/                    命令行工具（独立 workspace 包 yuna-team，只读公开接口）
 wrangler.toml           Cloudflare 绑定和公开环境变量
 .dev.vars.example       本地 secret 示例
 ```
@@ -299,7 +299,7 @@ npm run db:migrate
 
 ## 命令行工具（yuna CLI）
 
-`cli/` 是一个独立的 npm 包（workspace，`@yuna-team/cli`），把站点公开接口搬到终端：招新信息、文章、项目、授课计划。首页和加入页那句 `yuna join --with curiosity` 就是它，点击会复制安装命令。
+`cli/` 是一个独立的 npm 包（workspace，发布名 `yuna-team`，命令名 `yuna`），把站点公开接口搬到终端：招新信息、文章、项目、授课计划。首页和加入页那句 `yuna join --with curiosity` 就是它，点击会复制安装命令。
 
 ```bash
 npm run cli:build        # 编译（tsc → cli/dist）

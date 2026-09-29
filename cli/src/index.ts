@@ -48,6 +48,16 @@ function terminalWidth(): number {
   return Math.min(Math.max(process.stdout.columns ?? 84, 40), 100);
 }
 
+/** 下游提前关闭管道（`yuna posts | head`）时 node 会抛 EPIPE；这属于正常用法，安静退出即可。 */
+function ignorePipeErrors(): void {
+  for (const stream of [process.stdout, process.stderr]) {
+    stream.on("error", (error: NodeJS.ErrnoException) => {
+      if (error.code === "EPIPE") process.exit(0);
+      throw error;
+    });
+  }
+}
+
 function printHelp(version: string, stream: NodeJS.WriteStream = process.stdout): void {
   const flagRows: Array<[string, string]> = [
     ["--json", "以 JSON 输出，便于脚本处理"],
@@ -118,6 +128,7 @@ function fail(error: unknown): number {
 
 export async function main(argv: string[], options: MainOptions = {}): Promise<number> {
   const version = options.version ?? VERSION;
+  ignorePipeErrors();
 
   let parsed;
   try {

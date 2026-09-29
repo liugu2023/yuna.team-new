@@ -508,7 +508,7 @@
   margin-left: -260px;
 }
 /* 带内的命令行胶囊：点击复制真实命令。
-   <button class="band-prompt" type="button" data-copy-command="npx -y @yuna-team/cli join">
+   <button class="band-prompt" type="button" data-copy-command="npx -y yuna-team join">
      <span aria-hidden="true">$</span> yuna join --with curiosity<span class="fx-caret" aria-hidden="true"></span>
    </button>
    这是站点上唯一一处“可执行的命令行”，行为见 yuna-ui.js；没有脚本时它退化成一行普通文字。 */

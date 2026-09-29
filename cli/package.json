@@ -1,5 +1,5 @@
 {
-  "name": "@yuna-team/cli",
+  "name": "yuna-team",
   "version": "0.1.0",
   "description": "燕山大学大学生网络信息协会（YUNA）命令行工具：招新信息、文章、项目、授课计划。",
   "keywords": ["yuna", "cli", "club", "blog", "terminal"],
