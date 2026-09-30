@@ -43,6 +43,11 @@ if (!fallback) {
   problems.push(`cli/src/index.ts 的兜底 VERSION「${fallback}」与 package.json 的「${pkg.version}」不一致。`);
 }
 
+const lock = JSON.parse(readFileSync(path.join(root, "package-lock.json"), "utf8"));
+if (lock.packages?.cli?.version !== pkg.version) {
+  problems.push("package-lock.json 中 CLI workspace 的版本与 cli/package.json 不一致。");
+}
+
 // 读取 npm 真正打包的清单，不依赖文件总数或 npm 的人类可读日志格式。
 let fileCount = 0;
 try {
@@ -66,7 +71,10 @@ try {
   }
   const files = new Set(packed.files.map((file) => file.path.replaceAll("\\", "/")));
   fileCount = files.size;
-  for (const required of ["package.json", "bin/yuna.mjs", "dist/index.js", "README.md", "LICENSE"]) {
+  for (const required of ["package.json", "bin/yuna.mjs", "dist/index.js", "README.md", "LICENSE",
+    "dist/commands/play.js", "dist/terminal-errors.js", "dist/games/packet-engine.js",
+    "dist/games/packet-controller.js", "dist/games/packet-renderer.js", "dist/games/packet-records.js",
+    "dist/games/packet-review.js", "dist/games/terminal-session.js"]) {
     if (!files.has(required)) problems.push(`npm 包缺少必要文件：${required}。请先运行 npm run cli:build。`);
   }
   for (const file of files) {

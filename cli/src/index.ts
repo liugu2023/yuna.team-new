@@ -4,19 +4,22 @@ import { parseCli, UsageError } from "./args.js";
 import { runJoin } from "./commands/join.js";
 import { runLesson } from "./commands/lesson.js";
 import { runOpen } from "./commands/open.js";
+import { runPlay } from "./commands/play.js";
 import { runPosts } from "./commands/posts.js";
 import { runProjects } from "./commands/projects.js";
 import { runRead } from "./commands/read.js";
 import type { CommandContext } from "./context.js";
 import { configureProxy, shutdownProxy } from "./net.js";
 import { style } from "./ui.js";
+import { isTerminalOutputOwned } from "./terminal-errors.js";
 
 /** 兜底版本号；bin/yuna.mjs 会优先传 cli/package.json 里的版本。 */
-export const VERSION = "0.2.0";
+export const VERSION = "0.3.0";
 
 interface CommandDefinition {
   summary: string;
   usage: string;
+  offline?: boolean;
   run: (ctx: CommandContext) => Promise<void>;
 }
 
@@ -39,6 +42,12 @@ const COMMANDS: Record<string, CommandDefinition> = {
     run: runLesson,
   },
   open: { summary: "在浏览器打开页面", usage: "yuna open <页面|路径|地址>", run: runOpen },
+  play: {
+    summary: "离线小游戏：数据包冒险",
+    usage: "yuna play packet [--seed 地图名字] [--json]",
+    offline: true,
+    run: runPlay,
+  },
 };
 
 export interface MainOptions {
@@ -61,6 +70,8 @@ function ignorePipeErrors(): void {
   pipeHandlersInstalled = true;
   for (const stream of [process.stdout, process.stderr]) {
     stream.on("error", (error: NodeJS.ErrnoException) => {
+      // An interactive session must restore raw input before handling output failure.
+      if (isTerminalOutputOwned(stream)) return;
       if (error.code !== "EPIPE") throw error;
       if (pipeClosed) return;
       pipeClosed = true;
@@ -73,8 +84,8 @@ function ignorePipeErrors(): void {
 function printHelp(version: string, stream: NodeJS.WriteStream = process.stdout): void {
   const flagRows: Array<[string, string]> = [
     ["--json", "以 JSON 输出，便于脚本处理"],
-    ["--base", "指定站点地址（默认 https://www.yuna.team，也可用环境变量 YUNA_API_BASE）"],
-    ["--proxy", "指定代理地址，例如 --proxy http://127.0.0.1:7890"],
+    ["--base", "联网命令指定站点地址（默认 https://www.yuna.team，也可用环境变量 YUNA_API_BASE）"],
+    ["--proxy", "联网命令指定代理地址，例如 --proxy http://127.0.0.1:7890"],
     ["-h, --help", "显示帮助；yuna <命令> --help 查看单个命令"],
     ["-v, --version", "显示版本"],
   ];
@@ -102,6 +113,7 @@ function printHelp(version: string, stream: NodeJS.WriteStream = process.stdout)
     `    ${style.dim("$")} yuna projects --network public`,
     `    ${style.dim("$")} yuna lesson --term 2026`,
     `    ${style.dim("$")} yuna open projects`,
+    `    ${style.dim("$")} yuna play packet`,
     "",
   ];
   stream.write(lines.join("\n") + "\n");
@@ -121,7 +133,24 @@ function printCommandHelp(name: string, version: string): void {
       `  ${style.bold("用法")}   ${command.usage}`,
       "",
       ...(name === "read" ? ["  编号对应本站最近一次 posts 列表；显式 --tag / --kind 则查询当前筛选结果。", "  纯数字 slug 加 --slug；--web --json 只输出地址，不启动浏览器。", ""] : []),
-      `  ${style.dim("全局参数同样可用：--json、--base、--proxy、-h/--help、-v/--version")}`,
+      ...(name === "play" ? [
+        "  你是数据包 []。先经过两个 R 路由（打卡点），再到 G 服务器（终点）。",
+        "  TTL（体力）每步减 1，遇到 ~~ 链路拥塞时减 3；停着思考和撞墙不扣。",
+        "  !! 丢包会消耗 1 次重传机会（护盾），没有机会时再遇到丢包就输了。",
+        "  ++ 补充重传机会，** 是加分的缓存奖励。两个路由先去哪个都行。",
+        "  方向键 / WASD 移动；不知道往哪走就按 T 看提示。",
+        "  P / 空格暂停；H / ? 帮助；R 重开；N 新地图；Q 退出。",
+        "  Esc 返回游戏或退出；结束后 Enter 重玩，V 查看传输复盘。",
+        "  --seed <名字>  指定地图；名字相同，地图就相同。不指定时随机生成。",
+        "  --json         只输出初始地图数据，不进入游戏。",
+        "  自动保存同一地图的最好成绩和上次通关成绩，结束后比较分数和步数。",
+        "  看提示不扣分，但会记录次数；站着不动反复查看只算一次。",
+        "  每次启动默认随机地图；--seed yuna 可玩固定练习图。R 重玩当前图，N 换图。",
+        "  默认铺满终端，缩放窗口会调整地图和布局；至少需要 42 列 × 18 行。",
+        "  不请求网络、不写线上数据。",
+        "",
+        `  ${style.dim("可用通用参数：--json、-h/--help、-v/--version；不接受 --base 或 --proxy。")}`,
+      ] : [`  ${style.dim("全局参数同样可用：--json、--base、--proxy、-h/--help、-v/--version")}`]),
       "",
     ].join("\n") + "\n",
   );
@@ -186,7 +215,8 @@ export async function main(argv: string[], options: MainOptions = {}): Promise<n
 
   try {
     const ctx: CommandContext = {
-      api: new YunaApi({ base: parsed.flags.base }),
+      // 离线命令不读取站点环境变量；仅保留共用上下文的类型兼容。
+      api: new YunaApi({ base: command.offline ? "https://example.invalid" : parsed.flags.base }),
       flags: parsed.flags,
       positionals: rest,
       width: terminalWidth(),
@@ -195,13 +225,14 @@ export async function main(argv: string[], options: MainOptions = {}): Promise<n
       },
     };
 
-    await configureProxy(parsed.flags.proxy ?? options.proxy);
+    if (!command.offline) await configureProxy(parsed.flags.proxy ?? options.proxy);
 
     await command.run(ctx);
-    return 0;
+    // 终端会话收到 Ctrl+C / 信号时保留其退出码，避免启动器覆盖为成功。
+    return command.offline && typeof process.exitCode === "number" ? process.exitCode : 0;
   } catch (error) {
     return fail(error);
   } finally {
-    await shutdownProxy();
+    if (!command.offline) await shutdownProxy();
   }
 }

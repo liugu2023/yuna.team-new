@@ -1,6 +1,6 @@
 # CLI 本地验证与发布
 
-包名为 `yuna-team`，安装后的命令名为 `yuna`。本文以 **0.2.0** 为例。以下命令默认在仓库根目录执行；本地构建、打包和创建本地 tag 不会发布 npm 包。
+包名为 `yuna-team`，安装后的命令名为 `yuna`。本文以 **0.3.0** 为例。以下命令默认在仓库根目录执行；本地构建、打包和创建本地 tag 不会发布 npm 包。
 
 ## 本地验证
 
@@ -8,10 +8,13 @@
 npm ci
 npm run cli:typecheck
 npm run cli:test
-npm run cli:release:check -- cli-v0.2.0
+node cli/bin/yuna.mjs play packet --seed yuna --json
+npm run cli:release:check -- cli-v0.3.0
 ```
 
-`cli:test` 先编译，再用本地模拟 API 执行回归测试，覆盖分页、筛选编号、本地缓存、招新开关、课件链接、终端输出和错误处理。`cli:release:check` 检查包版本、二进制兜底版本、tag 以及实际 npm 文件清单。
+`cli:test` 先编译，再执行回归测试，覆盖本地模拟 API、分页、筛选编号、本地缓存、招新开关、课件链接、小游戏规则与成绩保存、终端刷新和异常收尾。`cli:release:check` 检查包版本、二进制兜底版本、tag 以及实际 npm 文件清单。
+
+`play packet --seed yuna --json` 是无需交互终端的离线冒烟检查：输出应包含 `game: "packet"`、`seed: "yuna"` 和 `status: "playing"`，不访问网站或代理，也不写成绩文件。
 
 包中需要包含 `package.json`、`bin/yuna.mjs`、编译后的 `dist/`、`README.md` 和 `LICENSE`；源码、测试、配置、开发说明和本地数据不应进入包。检查按必要文件与排除项判断，不依赖固定文件数量。
 
@@ -31,10 +34,11 @@ node cli/bin/yuna.mjs lesson --all --base http://127.0.0.1:8788
 ```powershell
 cd cli
 npm pack
-npm i -g .\yuna-team-0.2.0.tgz
+npm i -g .\yuna-team-0.3.0.tgz
 yuna --version
 yuna --help
 yuna open home --json
+yuna play packet --seed yuna --json
 npm uninstall -g yuna-team
 ```
 
@@ -82,7 +86,7 @@ token 应具备该包的 **Read and write** 权限；仅有 stage 权限不能�
 
 认证未配置完成前先使用手动构建验证；它不需要 npm 发布权限。
 
-## 发布 0.2.0
+## 发布 0.3.0
 
 先同步以下版本信息：
 
@@ -94,12 +98,12 @@ token 应具备该包的 **Read and write** 权限；仅有 stage 权限不能�
 
 ```powershell
 npm run cli:test
-npm run cli:release:check -- cli-v0.2.0
-git tag -a cli-v0.2.0 -m "yuna CLI 0.2.0"
-git push --atomic origin master cli-v0.2.0
+npm run cli:release:check -- cli-v0.3.0
+git tag -a cli-v0.3.0 -m "yuna CLI 0.3.0"
+git push --atomic origin master cli-v0.3.0
 ```
 
-若本地 tag 已创建，跳过 `git tag`，可用 `git show --no-patch cli-v0.2.0` 检查其提交。`--atomic` 会一起推送分支与指定 tag，避免只更新一部分；它不会推送其他本地 tag。
+若本地 tag 已创建，跳过 `git tag`，可用 `git show --no-patch cli-v0.3.0` 检查其提交。`--atomic` 会一起推送分支与指定 tag，避免只更新一部分；它不会推送其他本地 tag。
 
 推送 tag 会实际触发 npm 发布和 GitHub Release。正常情况下，npm 发布成功后才继续二进制构建；该版本已存在时跳过 npm 发布，继续生成 Release 产物。npm 已发布版本不能覆盖，代码有变化时应使用新版本号。版本说明见 [CHANGELOG.md](CHANGELOG.md)。
 
@@ -117,12 +121,13 @@ npm publish
 完成发布后验证具体版本：
 
 ```powershell
-npm view yuna-team@0.2.0 version
-npx -y yuna-team@0.2.0 --version
-npx -y yuna-team@0.2.0 open home --json
+npm view yuna-team@0.3.0 version
+npx -y yuna-team@0.3.0 --version
+npx -y yuna-team@0.3.0 open home --json
+npx -y yuna-team@0.3.0 play packet --seed yuna --json
 ```
 
-同时确认 GitHub Release 包含六个平台压缩包及 `SHA256SUMS.txt`。`npx` 的 `-y` 只是接受安装提示；验证特定版本应显式写 `@0.2.0`，验证最新已发布版本使用 `@latest`。
+同时确认 GitHub Release 包含六个平台压缩包及 `SHA256SUMS.txt`。`npx` 的 `-y` 只是接受安装提示；验证特定版本应显式写 `@0.3.0`，验证最新已发布版本使用 `@latest`。
 
 ## 常见问题
 
@@ -138,6 +143,6 @@ npx -y yuna-team@0.2.0 open home --json
 | 打包缺少编译文件 | 检查 `prepack` 是否被 `--ignore-scripts` 跳过；先运行 `npm run cli:build` |
 | Release 没有生成 | 手动运行只留 artifact；tag 发布需通过检查与 npm 发布阶段，Release job 需要 `contents: write` |
 | 全局安装后找不到 `yuna` | 用 `npm prefix -g` 检查全局安装前缀，并确认对应命令目录在 PATH 中 |
-| `npx` 版本不符合预期 | 显式使用 `yuna-team@0.2.0` 或 `yuna-team@latest`，`-y` 不负责刷新缓存 |
+| `npx` 版本不符合预期 | 显式使用 `yuna-team@0.3.0` 或 `yuna-team@latest`，`-y` 不负责刷新缓存 |
 
 目前分发渠道是 npm 和 GitHub Release；Homebrew、Scoop、winget 等渠道尚未接入。

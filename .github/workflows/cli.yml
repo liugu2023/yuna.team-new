@@ -152,6 +152,8 @@ jobs:
           ./dist/yuna-linux-x64 --help > /dev/null
           ./dist/yuna-linux-x64 open home --base https://example.invalid --json > dist/smoke-open.json
           node --input-type=module -e 'import fs from "node:fs"; import assert from "node:assert/strict"; const result = JSON.parse(fs.readFileSync("dist/smoke-open.json", "utf8")); assert.equal(result.target, "home"); assert.equal(result.url, "https://example.invalid/");'
+          ./dist/yuna-linux-x64 play packet --seed yuna --json > dist/smoke-packet.json
+          node --input-type=module -e 'import fs from "node:fs"; import assert from "node:assert/strict"; const result = JSON.parse(fs.readFileSync("dist/smoke-packet.json", "utf8")); assert.equal(result.game, "packet"); assert.equal(result.seed, "yuna"); assert.equal(result.status, "playing"); assert.equal(result.moves, 0); assert.equal(result.grid[result.position.y][result.position.x], "S");'
           if ./dist/yuna-linux-x64 posts --nope; then
             echo "未知参数本应返回非 0"; exit 1
           fi

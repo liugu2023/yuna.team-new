@@ -25,6 +25,7 @@ export interface CliFlags {
   status?: string;
   term?: string;
   proxy?: string;
+  seed?: string;
 }
 
 export interface ParsedCli {
@@ -48,13 +49,14 @@ const OPTIONS = {
   status: { type: "string" },
   term: { type: "string" },
   proxy: { type: "string" },
+  seed: { type: "string" },
 } as const;
 
 const GLOBAL_OPTIONS = ["help", "version", "json", "base", "proxy"];
 const COMMAND_OPTIONS: Record<string, string[]> = {
   join: ["with"], posts: ["limit", "tag", "kind", "all"],
   read: ["web", "slug", "tag", "kind"], projects: ["network", "status", "tag"],
-  lesson: ["term", "all", "limit", "status"], open: [],
+  lesson: ["term", "all", "limit", "status"], open: [], play: ["seed"],
 };
 
 export function parseCli(argv: string[]): ParsedCli {
@@ -68,16 +70,17 @@ export function parseCli(argv: string[]): ParsedCli {
     });
     const command = positionals[0] ?? "";
     if (Object.hasOwn(COMMAND_OPTIONS, command)) {
-      const allowed = new Set([...GLOBAL_OPTIONS, ...COMMAND_OPTIONS[command]!]);
+      const globalOptions = command === "play" ? ["help", "version", "json"] : GLOBAL_OPTIONS;
+      const allowed = new Set([...globalOptions, ...COMMAND_OPTIONS[command]!]);
       for (const token of tokens) {
         if (token.kind === "option" && !allowed.has(token.name)) throw new UsageError(`${command} 不支持 --${token.name}。用 yuna ${command} --help 查看用法。`);
       }
       if (!values.help && !values.version) {
         const count = positionals.length - 1;
-        const required = command === "read" || command === "open";
+        const required = command === "read" || command === "open" || command === "play";
         const maximum = required || command === "projects" ? 1 : 0;
         if (count > maximum) throw new UsageError(`${command} 收到了多余的位置参数；包含空格的关键词或地址请加引号。`);
-        if (required && count === 0) throw new UsageError(`请提供${command === "read" ? "文章编号或 slug" : "要打开的页面或地址"}。用 yuna ${command} --help 查看用法。`);
+        if (required && count === 0) throw new UsageError(`请提供${command === "read" ? "文章编号或 slug" : command === "play" ? "小游戏名称，例如 yuna play packet" : "要打开的页面或地址"}。用 yuna ${command} --help 查看用法。`);
         if (command === "posts" && values.all && values.limit !== undefined) throw new UsageError("posts 的 --all 和 -n / --limit 不能同时使用。");
       }
     }
@@ -99,6 +102,7 @@ export function parseCli(argv: string[]): ParsedCli {
         status: values.status,
         term: values.term,
         proxy: values.proxy,
+        seed: values.seed,
       },
     };
   } catch (error) {
