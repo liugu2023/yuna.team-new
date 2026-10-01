@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
-import test, { after, afterEach, before, beforeEach } from "node:test";
+import test, { after, before, afterEach, beforeEach, describe } from "node:test";
 import http from "node:http";
 import { configureProxy, fetchImpl, shutdownProxy } from "../dist/net.js";
 
+// 显式套件让 Node 18.17 在测试结束时执行 after，不必等监听中的服务器自行退出。
+describe("network lifecycle", () => {
 const originalFetch = globalThis.fetch;
 let server, base, requests, nativeCalls;
 
@@ -36,7 +38,10 @@ afterEach(async () => {
 });
 
 after(async () => {
-  await new Promise(resolve => server.close(resolve));
+  await new Promise(resolve => {
+    server.close(resolve);
+    server.closeAllConnections();
+  });
 });
 
 test("native fetch stays preferred when it succeeds, including HTTP error responses", async () => {
@@ -156,4 +161,5 @@ test("an explicitly empty proxy is invalid rather than interpreted as direct mod
   }
   assert.equal(nativeCalls, 0);
   assert.equal(requests, 0);
+});
 });

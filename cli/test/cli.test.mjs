@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test, { after, before, beforeEach } from "node:test";
+import test, { after, before, beforeEach, describe } from "node:test";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
@@ -17,6 +17,8 @@ const makePost = (slug, kind = "article", tag = "常规") => ({
   id: slug, slug, title: `标题 ${slug}`, kind, tag, status: "published", author_name: "测试作者",
 });
 const fixture = Array.from({ length: 600 }, (_, index) => makePost(`post-${index + 1}`, "article", index === 550 ? "运维" : "开发"));
+// Node 18.17 的顶层 after 等事件循环空闲才执行；监听中的服务器必须由显式套件收尾。
+describe("CLI integration", () => {
 let posts, mode, requests, directory, base, server;
 
 before(async () => {
@@ -59,8 +61,10 @@ beforeEach(() => {
 });
 
 after(async () => {
-  server.closeAllConnections();
-  await new Promise(resolve => server.close(resolve));
+  await new Promise(resolve => {
+    server.close(resolve);
+    server.closeAllConnections();
+  });
   assert.ok(path.resolve(directory).startsWith(path.join(path.resolve(os.tmpdir()), "yuna-cli-test-")));
   await rm(directory, { recursive: true, force: true });
 });
@@ -200,14 +204,15 @@ test("an explicit proxy really routes traffic and invalid proxies never silently
     assert.equal(invalid.code, 1);
     assert.equal(requests, beforeInvalid);
     await configureProxy(address);
-    await fetchImpl()(base + '/api/site');
+    await (await fetchImpl()(base + '/api/site')).text();
     await shutdownProxy();
     const beforeDirect = connections;
-    await fetchImpl()(base + '/api/site');
+    await (await fetchImpl()(base + '/api/site')).text();
     assert.equal(connections, beforeDirect);
   } finally {
     await shutdownProxy();
     for (const socket of sockets) socket.destroy();
     await new Promise(resolve => proxy.close(resolve));
   }
+});
 });

@@ -50,7 +50,8 @@ test("help and JSON snapshots neither fetch nor initialize the supplied proxy", 
     const script = `
       import assert from "node:assert/strict";
       import { createRequire } from "node:module";
-      const require = createRequire(import.meta.url);
+      // Node 18.17 的 --eval 模块没有 import.meta.url，使用实际入口的文件 URL。
+      const require = createRequire(${JSON.stringify(mainUrl)});
       let requests = 0;
       globalThis.fetch = async () => { requests++; throw new Error("unexpected network request"); };
       const { main } = await import(${JSON.stringify(mainUrl)});

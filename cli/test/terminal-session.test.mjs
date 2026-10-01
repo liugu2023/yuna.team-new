@@ -436,7 +436,10 @@ test("the full-screen game resizes without stale cells or changes to the current
     return renderPacketFrame(game, tty.output.columns, tty.output.rows, { ...view, color: true });
   };
   let consumed = 0;
-  const check = () => {
+  const check = async () => {
+    // Large frames can hit Writable's highWaterMark even with a synchronous
+    // write callback on Node 18. Let drain flush the latest pending frame.
+    await new Promise(resolve => setImmediate(resolve));
     for (; consumed < tty.writes.length; consumed++) screen.write(tty.writes[consumed]);
     screen.assertFrame(render());
   };
@@ -448,26 +451,26 @@ test("the full-screen game resizes without stale cells or changes to the current
     const direction = solveGame(controller.getState().game)[0];
     tty.input.write(directionKeys[direction]);
     assert.equal(controller.getState().game.moves, 1);
-    check();
+    await check();
     tty.input.write("t");
-    check();
+    await check();
     const before = controller.getState().game;
     for (const [columns, rows] of [[120, 40], [42, 18], [35, 14], [160, 50], [80, 24]]) {
       tty.output.columns = columns;
       tty.output.rows = rows;
       screen.resize(columns, rows);
       tty.output.emit("resize");
-      check();
+      await check();
       assert.strictEqual(controller.getState().game, before);
       if (columns < MIN_COLUMNS || rows < MIN_ROWS) {
         tty.input.write(directionKeys[direction]);
         assert.strictEqual(controller.getState().game, before);
-        check();
+        await check();
       }
     }
     for (const key of ["p", "h", "h", "p"]) {
       tty.input.write(key);
-      check();
+      await check();
       assert.strictEqual(controller.getState().game, before);
     }
   } finally {

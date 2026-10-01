@@ -9,3 +9,4 @@ yuna-blog-db-*.json
 scripts/seed-local.sql
 # 改版过程笔记
 .ui-notes/
+/ROADMAP.md
